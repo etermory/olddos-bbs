@@ -141,6 +141,27 @@ yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel
 - `bin/mailsend` (비밀번호 찾기 메일) 는 `src/mailsend/` 의 소스를 빌드해 넣습니다 (`BUILD.TXT` 참고).
 - 글쓰기 화면 편집기는 `bin/pico` 를 실행합니다. 빌드한 nano 를 `bin/pico` 로 두세요.
 
+### 업데이트 (`update.sh`)
+
+소스를 고쳤거나 저장소가 바뀌었으면 BBS 홈에서 `update.sh` 를 실행합니다.
+
+```bash
+/home/olddos/olddos-bbs/update.sh
+```
+
+| 순서 | 하는 일 |
+|---|---|
+| 1 | `git pull` 로 소스 받기. 화면 파일(`txt/`)과 메뉴(`*.mnu`)는 이것으로 바로 반영 |
+| 2 | 임시 디렉터리(`/tmp/olddos-bbs-build`)에 `src` 를 복사해 **처음부터** `make all` (makefile 에 헤더 의존성이 없어 예전 `.o` 를 쓰지 않음) |
+| 3 | 모두 성공했을 때만 바뀐 실행 파일을 `bin/` 과 BBS 홈(`ctime`)에 반영 |
+
+- 빌드가 하나라도 실패하면 아무것도 바꾸지 않습니다. 오류 줄을 보여 주고, 전체 기록은 `/tmp/olddos-bbs-build.log` 에 남습니다.
+- 실행 파일은 임시 이름으로 복사한 뒤 `mv` 로 바꿉니다. 접속 중인 사용자는 기존 프로그램을 계속 쓰고, **다음 접속부터 새 버전**이 실행됩니다. 따로 재시작할 것은 없습니다.
+- 끝에 바뀐 프로그램 목록을 보여 줍니다.
+- `NOPULL=1 ./update.sh` 는 `git pull` 을 건너뜁니다.
+- 데이터베이스 테이블 변경(새 칸 추가 등)은 프로그램이 처음 실행될 때 자동으로 합니다.
+- 쥬라기공원 머드는 `src/jurassic/update.sh` 로 따로 합니다 (아래 머드 게임 항목).
+
 머드 게임
 -
 대문 메뉴의 **7. 머드 게임** (`go game`) 에서 두 가지 텍스트 게임을 즐길 수 있습니다.
