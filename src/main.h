@@ -90,6 +90,7 @@ namespace database {
 	bool open();
 	bool close();
 	std::string escape(const char *str);
+	void ensure_indexes(const std::vector<std::string> &boards);
 	bool create_attachment(void);
 	bool create_board(char *table_name);
 	int add_article(char *table_name, char *user_id, char *date, char *time, char *title, char *content);

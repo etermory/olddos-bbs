@@ -22,6 +22,38 @@ namespace database {
 		return true;
 	}
 
+	// 자주 조회하는 컬럼에 인덱스를 만든다.
+	// 접속할 때마다 ALTER 하지 않도록 한 번 만든 뒤 표시 파일을 남긴다.
+	// (이미 있는 인덱스면 MySQL 이 오류를 내므로 오류는 무시)
+	void ensure_indexes(const std::vector<std::string> &boards)
+	{
+		char marker[1024];
+		snprintf(marker, sizeof(marker), "%s/tmp/.db_index_v1", getenv("HANULSO"));
+		if ( access(marker, F_OK) == 0 ) {
+			return;
+		}
+
+		std::vector<std::string> sqls;
+		sqls.push_back("ALTER TABLE member ADD INDEX idx_user_id (USER_ID(40))");
+		sqls.push_back("ALTER TABLE member ADD INDEX idx_nick_name (NICK_NAME(40))");
+		sqls.push_back("ALTER TABLE member ADD INDEX idx_email (EMAIL(60))");
+		sqls.push_back("ALTER TABLE attachment ADD INDEX idx_family (FAMILY_TABLE(40), FAMILY_ID)");
+		sqls.push_back("ALTER TABLE memo ADD INDEX idx_recipient (RECIPIENT_USER_ID(40))");
+		for (unsigned int i=0; i<boards.size(); i++) {
+			// 게시판 목록 정렬 (ORDER BY FAMILY DESC, ORDERBY ASC)
+			sqls.push_back("ALTER TABLE " + boards[i] + " ADD INDEX idx_family_order (FAMILY, ORDERBY)");
+		}
+
+		for (unsigned int i=0; i<sqls.size(); i++) {
+			mysql_query(mysql, sqls[i].c_str());
+		}
+
+		FILE *fp = fopen(marker, "w");
+		if ( fp != NULL ) {
+			fclose(fp);
+		}
+	}
+
 	// SQL 문자열 이스케이프
 	std::string escape(const char *str)
 	{

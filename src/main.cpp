@@ -199,6 +199,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// 인덱스가 없으면 만든다 (처음 한 번만)
+	database::ensure_indexes(table_names);
+
 #if 0
 	// 공지 보여주기
 	pugi::xml_node notice = find_node_by_id(root_node, "notice");

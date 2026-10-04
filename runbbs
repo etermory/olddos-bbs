@@ -1,4 +1,5 @@
 #!/bin/bash
 export HANULSO=/home/olddos/olddos-bbs
 cd $HANULSO
-./ctime
+# exec: bash 가 남아 있지 않도록 ctime 으로 바꿔 실행 (접속자마다 프로세스 1개 절약)
+exec ./ctime
