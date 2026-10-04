@@ -626,7 +626,8 @@ void show_calendar(void)
 		print_header(buf);
 
 		for (int i=0; i<7; i++) {
-			printf("%7s    ", weekdays[i]);
+			// 요일, 양력 날짜, 음력 날짜 모두 칸의 6 번째 글자에 오른쪽 끝을 맞춘다 (한 칸 11 자)
+			printf("%6s     ", weekdays[i]);
 		}
 		printf("\r\n%s\r\n", repeat("─", 39).c_str());
 
@@ -650,13 +651,13 @@ void show_calendar(void)
 			const char *mark = " ";
 			if ( y == cur_y && m == cur_m && day == cur_d ) mark = "<";
 			else if ( is_holiday(y, m, day) ) mark = "*";
-			snprintf(c1, sizeof(c1), "%7d%s   ", day, mark);
+			snprintf(c1, sizeof(c1), "%6d%s    ", day, mark);
 
 			// 음력 1일이나 이 달의 첫날은 월도 표시
 			char ldate[16];
 			if ( ld == 1 || day == 1 ) snprintf(ldate, sizeof(ldate), "%s%d.%d", leap ? "윤" : "", lm, ld);
 			else snprintf(ldate, sizeof(ldate), "%d", ld);
-			snprintf(c2, sizeof(c2), "%8s   ", ldate);
+			snprintf(c2, sizeof(c2), "%6s     ", ldate);
 
 			line1 += c1;
 			line2 += c2;
