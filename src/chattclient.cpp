@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termio.h>
+#include <sys/ioctl.h>
 #include <pthread.h>
 #include <signal.h>
 
@@ -125,6 +126,51 @@ void raw_mode(void)
     ioctl(0, TCSETAF, &tbuf);
 
 	return;
+}
+
+// 터미널 줄 수 알아내기
+// 커서를 맨 아래로 보낸 뒤 위치 보고(ESC[6n)를 요청해 응답 ESC[행;열R 을 읽는다.
+// 응답이 없으면 telnet 이 알려준 창 크기, 그것도 없으면 24 줄
+int detect_screen_rows(void)
+{
+	int rows = 0;
+
+	printf("\033[999;1H\033[6n");
+	fflush(stdout);
+
+	char buf[32];
+	int len = 0;
+	while (len < (int)sizeof(buf)-1) {
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		if (select(1, &fds, NULL, NULL, &tv) <= 0) break;
+
+		char ch;
+		if (read(0, &ch, 1) != 1) break;
+		buf[len++] = ch;
+		if (ch == 'R') break;
+	}
+	buf[len] = 0;
+
+	char *p = strchr(buf, '[');
+	int r, c;
+	if (p != NULL && sscanf(p+1, "%d;%d", &r, &c) == 2) {
+		rows = r;
+	}
+
+	if (rows < 10) {
+		struct winsize ws;
+		if (ioctl(0, TIOCGWINSZ, &ws) == 0 && ws.ws_row >= 10) {
+			rows = ws.ws_row;
+		}
+	}
+
+	if (rows < 10) rows = 24;
+	return rows;
 }
 
 void print_message(char *msg)
@@ -268,6 +314,9 @@ int main(int argc,char *argv[])
     
 	raw_mode();
 	umask(0111);
+
+	// 화면 맨 아래 2 줄은 안내줄과 입력줄, 그 위는 대화 스크롤 영역
+	scroll_endy = detect_screen_rows() - 2;
 
 	printf(ESC_CLEAR);
 
