@@ -1,0 +1,47 @@
+name : Jurassic
+port number : 4444
+address server ip : localhost
+address server port : 2994
+maximum users : 50
+mudlib directory : ../lib
+binary directory : ./
+domain directory : d
+swap file : /adm/tmp/swap
+secure directory : /adm/master
+master file : /adm/master/basic.c
+config directory : /adm/config
+log directory : /log
+include directories : /adm/include
+simulated efun file : /adm/master/simul_efun
+access allow file : /adm/config/access.allow
+access log file : /log/access.allow.log
+time to clean up : 300
+time to swap : 0
+time to reset : 540
+allowed ed commands : 20
+evaluator stack size : 1000
+compiler stack size : 200
+maximum call depth : 30
+maximum bits in a bitfield : 1200
+maximum local variables : 20
+maximum evaluation cost : 3000000
+maximum array size : 10000
+maximum mapping size : 5000
+maximum string length : 1000000
+maximum log size : 200000
+maximum read file size : 200000 
+maximum commands per heartbeat : 5
+maximum byte transfer : 20000
+reserved size : 1500
+hash table size : 4096
+living hash table size : 103
+object table size : 1009
+inherit chain size : 20
+default error message : ^^V
+default fail message  : ^^;
+save binaries directory : /data/binaries
+maximum buffer size : 200000
+debug log file : debug.log
+global include file : <mudlib.h>
+ok ansi : 1
+escape characters : !

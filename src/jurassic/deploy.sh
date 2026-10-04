@@ -1,0 +1,91 @@
+#!/bin/bash
+# 쥬라기공원 머드 설치 / 갱신
+#   ./deploy.sh <설치 디렉터리> [빌드 디렉터리] [원본 lib 디렉터리]
+#   예) ./build.sh /tmp/jurassic-build
+#       ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
+#
+# 원본 머드 라이브러리(lib)는 권리 관계가 확인되지 않아 저장소에 넣지 않는다.
+# jp2_v15.tgz 를 리눅스에서 풀어 HanLP/lib 를 src/jurassic/lib 로 두거나,
+# 세 번째 인자로 그 위치를 준다.
+#
+# - 원본 lib 위에 libpatch/ (원본 MudOS 로 옮기며 고친 파일) 를 덮어쓴다.
+# - 파일 이름은 EUC-KR 로 설치한다. 원본이 UTF-8 이름(윈도우에서 복사)이면 바꾸고,
+#   이미 EUC-KR 이름(리눅스에서 푼 것)이면 그대로 쓴다. (파일 내용은 원래 EUC-KR)
+# - 다시 설치해도 lib/data (사용자 자료), lib/log 의 기존 파일은 덮어쓰지 않는다.
+set -e
+
+# 파일 이름을 바이트 그대로 다룬다. UTF-8 로캘에서는 bash read 가 EUC-KR 이름을
+# 깨진 UTF-8 로 보고 줄바꿈까지 삼켜 두 경로가 붙어 버린다.
+export LC_ALL=C
+
+SRC=$(cd "$(dirname "$0")" && pwd)
+DEST=${1:?usage: $0 <설치 디렉터리> [빌드 디렉터리] [원본 lib 디렉터리]}
+BUILD=${2:-/tmp/jurassic-build}
+LIB=${3:-$SRC/lib}
+
+if [ ! -x "$BUILD/driver/driver" ]; then
+	echo "드라이버가 없습니다: $BUILD/driver/driver (먼저 ./build.sh $BUILD)"
+	exit 1
+fi
+if [ ! -f "$LIB/adm/master/simul_efun.c" ]; then
+	echo "원본 머드 라이브러리가 없습니다: $LIB"
+	echo "jp2_v15.tgz 를 풀어 HanLP/lib 를 $SRC/lib 로 복사하세요."
+	exit 1
+fi
+
+mkdir -p "$DEST/bin" "$DEST/lib"
+
+# 파일 이름을 EUC-KR 로 (CONVERT=1 일 때만 UTF-8 -> EUC-KR)
+CONVERT=0
+euckr_name() {
+	if [ "$CONVERT" = 1 ]; then
+		printf '%s' "$1" | iconv -f UTF-8 -t CP949
+	else
+		printf '%s' "$1"
+	fi
+}
+
+# 디렉터리 하나를 lib 에 복사 (keep_user_data=1 이면 data/log 기존 파일 보존)
+# EUC-KR 바이트 중에는 우연히 올바른 UTF-8 인 것도 있으므로 이름마다가 아니라
+# 트리 전체로 판단한다: 모든 이름이 UTF-8 이면 변환, 아니면 이미 EUC-KR 로 본다.
+copy_tree() {
+	local from=$1 keep=$2
+	cd "$from"
+	# (UTF-8 -> UTF-8 은 glibc 가 검사 없이 복사하므로 UTF-16 으로 바꿔 보며 검사)
+	if find . | iconv -f UTF-8 -t UTF-16 > /dev/null 2>&1; then CONVERT=1; else CONVERT=0; fi
+	find . -type d -print0 | while IFS= read -r -d '' d; do
+		mkdir -p "$DEST/lib/$(euckr_name "$d")"
+	done
+	find . -type f -print0 | while IFS= read -r -d '' f; do
+		n=$(euckr_name "$f")
+		if [ "$keep" = 1 ]; then
+			case "$f" in
+				./data/*|./log/*) [ -e "$DEST/lib/$n" ] && continue ;;
+			esac
+		fi
+		cp -p "$f" "$DEST/lib/$n"
+	done
+}
+
+copy_tree "$LIB" 1
+copy_tree "$SRC/libpatch" 0
+
+# simul_efun 에 hanlp.c (원래 HanLP 드라이버에 있던 함수들) 를 맨 앞에 넣는다
+SE="$DEST/lib/adm/master/simul_efun.c"
+if ! grep -q 'efun/hanlp.c' "$SE"; then
+	sed -i 's|^#include "/adm/master/efun/base_name.c"|#include "/adm/master/efun/hanlp.c"\n#include "/adm/master/efun/base_name.c"|' "$SE"
+fi
+grep -q 'efun/hanlp.c' "$SE" || { echo "simul_efun.c 에 hanlp.c 를 넣지 못했습니다"; exit 1; }
+
+# 드라이버가 쓰는 디렉터리
+mkdir -p "$DEST/lib/log/driver" "$DEST/lib/adm/tmp"
+
+# bin
+cp "$BUILD/driver/driver" "$DEST/bin/driver"
+[ -x "$BUILD/driver/addr_server" ] && cp "$BUILD/driver/addr_server" "$DEST/bin/addr_server"
+cp "$SRC/bin/config.jurassic" "$DEST/bin/config.jurassic"
+cp "$SRC/bin/startmud" "$DEST/bin/startmud"
+chmod +x "$DEST/bin/driver" "$DEST/bin/startmud"
+
+echo "설치 완료: $DEST"
+echo "실행: cd $DEST/bin && nohup ./startmud > /dev/null 2>&1 &"

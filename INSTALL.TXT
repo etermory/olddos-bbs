@@ -149,3 +149,57 @@ MariaDB 서비스 실행 및 확인
 ==============
 % service mysql restart
 % service mysql status
+
+머드 게임 연결 (쥬라기공원 2)
+==============
+대문 7 번 [머드 게임] -> 2 번은 같은 서버에서 따로 띄운 머드에 연결한다.
+BBS 는 bin/mudlink 로 127.0.0.1:4444 에만 접속시킨다. (포트는 hanulso.mnu 의 args)
+비상업 용도로만 운영한다. (MudOS 라이선스)
+
+src/jurassic 구성
+  driver/  MudOS v22.2b14 (github.com/maldorne/mudos) + 한글 수정
+           - packages/hangul.c : 한글 조사 efun (han_iga, han_obj, han_tool ...)
+           - add_action.c      : 마지막 단어를 명령으로 ("칼 가져")
+           - backend.c         : heart_beat 타이머 (glibc ualarm 문제)
+           - local_options     : PACKAGE_HANGUL, INTERACTIVE_CATCH_TELL 등
+  lib/     원본 머드 라이브러리 (저장소에 없음, 아래 2) 참고)
+  libpatch/ 원본 위에 덮어쓰는 파일
+           adm/master/efun/hanlp.c : 원래 HanLP 드라이버에 있던 함수들
+  bin/     config.jurassic, startmud
+  build.sh, deploy.sh
+
+1) 빌드 도구
+% yum install gcc bison
+  (64 비트로 빌드한다. 문제가 있으면 BITS=32 ./build.sh 로 32 비트 빌드:
+   이때는 glibc-devel.i686 libgcc.i686 도 필요)
+
+2) 원본 머드 라이브러리 준비
+  원본(jp2_v15.tgz, HanLP 쥬라기공원 2 복원판)은 권리 관계가 확인되지 않아
+  저장소에 넣지 않았다. 서버에서 리눅스로 풀어 src/jurassic/lib 로 둔다.
+% mkdir -p /tmp/jp && tar xzf jp2_v15.tgz -C /tmp/jp
+% cp -a /tmp/jp/HanLP/lib /home/olddos/olddos-bbs/src/jurassic/lib
+  원본을 MudOS 로 옮기며 고친 파일은 src/jurassic/libpatch 에 있고,
+  설치할 때 원본 위에 덮어쓴다.
+
+3) 빌드 / 설치
+% cd /home/olddos/olddos-bbs/src/jurassic
+% ./build.sh /tmp/jurassic-build
+% ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
+  다시 설치해도 lib/data (사용자 자료), lib/log 는 덮어쓰지 않는다.
+
+4) 실행 (드라이버가 죽으면 10 초 뒤 다시 띄움)
+% cd /home/olddos/jurassic/bin
+% nohup ./startmud > /dev/null 2>&1 &
+  부팅 때 자동 실행: /etc/rc.local 에
+  su - bbs -c 'cd /home/olddos/jurassic/bin && nohup ./startmud > /dev/null 2>&1 &'
+  로그: /home/olddos/jurassic/lib/log/driver/
+
+5) 확인
+% telnet 127.0.0.1 4444
+  외부에서 4444 번으로 바로 들어오지 못하도록 방화벽은 23 번만 열어 둔다.
+
+6) 운영자 캐릭터
+  lib/adm/wizard/ 의 '마군' 파일을 운영자 캐릭터 이름으로 복사하고,
+  lib/adm/config/groups 의 '마군:지마' 부분을 운영자 이름으로 바꾼다.
+  게임 끄기: kill $(cat startmud.pid) 후 운영자로 '0 다운'
+  (kill 로 드라이버를 끄면 사용자 자료가 저장되지 않음)
