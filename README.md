@@ -44,6 +44,8 @@
 - 회원 등급 (`hanulso.cfg` 의 `level`), 메뉴/게시판별 등급 제한
 - 비밀번호는 SHA-512 crypt 로 저장 (예전 MySQL `PASSWORD()` 해시는 로그인할 때 자동 전환)
 
+<img width="850" alt="쪽지 읽기 화면" src="docs/screenshots/memo.png" />
+
 **게시판 / 자료실**
 - 글쓰기 (`W`), 답글 (`RE`), 고치기 (`ED`), 지우기 (`DD`, 범위 지정 가능), 추천 (`OK`)
 - 목록 쪽 넘기기 (`Enter`/`N`/`B`), 연속 읽기 (`PR`)
