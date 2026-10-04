@@ -118,65 +118,6 @@ void delete_memo(const std::string &no, bool sent)
 	mysql_query(mysql, q);
 }
 
-// 쪽지 보내기. to 가 비어 있으면 받는 사람을 묻는다
-void write_memo(std::string to, std::string title)
-{
-	print_header("쪽지 쓰기", 0, 0, 0);
-
-	if ( to.empty() ) {
-		char buf[64];
-		printf(ESC_HAN);
-		printf("\r\n받는 사람 (아이디 또는 닉네임): ");
-		line_input(buf, 40);
-		std::string who = trim(buf);
-		if ( who.empty() ) return;
-		to = find_recipient(who);
-		if ( to.empty() ) {
-			printf("\r\n'%s' 회원을 찾을 수 없습니다.", who.c_str());
-			wait_enter();
-			return;
-		}
-	}
-	printf("\r\n받는 사람: %s (%s)", nick_of(to).c_str(), to.c_str());
-
-	char tbuf[128];
-	printf(ESC_HAN);
-	printf("\r\n제    목: ");
-	snprintf(tbuf, sizeof(tbuf), "%s", title.c_str());
-	_line_input(tbuf, tbuf, 60, 1);
-	std::string t = trim(tbuf);
-	if ( t.empty() ) {
-		printf("\r\n취소되었습니다.");
-		wait_enter();
-		return;
-	}
-
-	printf("\r\n\r\n내용을 입력하세요.");
-	std::vector<std::string> lines;
-	if ( !line_editor(lines, false) || lines.size() == 0 ) {
-		printf("\r\n취소되었습니다.");
-		wait_enter();
-		return;
-	}
-
-	std::string content;
-	for (unsigned int i=0; i<lines.size(); i++) {
-		content += lines[i];
-		content += "\n";
-	}
-
-	std::string q = "INSERT INTO memo (SENDER_USER_ID, RECIPIENT_USER_ID, CREATION_DATETIME, TITLE, CONTENT) VALUES ('"
-		+ database::escape(user_id.c_str()) + "', '" + database::escape(to.c_str()) + "', NOW(), '"
-		+ database::escape(t.c_str()) + "', '" + database::escape(content.c_str()) + "')";
-	if ( mysql_query(mysql, q.c_str()) != 0 ) {
-		printf("\r\n쪽지를 보내지 못했습니다. (%s)", mysql_error(mysql));
-	} else {
-		printf("\r\n%s 님에게 쪽지를 보냈습니다.", nick_of(to).c_str());
-	}
-	wait_enter();
-}
-
-// 쪽지 읽기. 지웠으면 true
 // 화면에 보이는 폭 (ESC 색 코드는 빼고, 완성형 한글은 2 칸)
 static int text_width(const std::string &s)
 {
@@ -198,6 +139,83 @@ static void box_line(const std::string &left, const std::string &right)
 	if ( space < 1 ) space = 1;
 	printf(" \033[=11F│\033[=15F %s%s%s \033[=11F│\033[=15F\r\n",
 			left.c_str(), std::string(space, ' ').c_str(), right.c_str());
+}
+
+// 상자 아래 안내 줄 (8 번째 줄)
+static void notice(const std::string &msg)
+{
+	printf("\033[8;1H%s\r   %s\033[=15F", std::string(79, ' ').c_str(), msg.c_str());
+}
+
+// 쪽지 보내기. to 가 비어 있으면 받는 사람을 묻는다
+void write_memo(std::string to, std::string title)
+{
+	print_header("쪽지 쓰기", 0, 0, 0);
+
+	// 읽기 화면과 같은 봉투 모양 상자에 바로 입력한다 (입력 칸은 19 번째 칸부터)
+	printf(" \033[=11F┌%s┐\033[=15F\r\n", repeat("─", 37).c_str());
+	box_line("\033[=14F◆ 받는 사람\033[=15F  "
+			+ (to.empty() ? std::string("") : nick_of(to) + " \033[=7F(" + display_text(to) + ")\033[=15F"), "");
+	box_line("\033[=14F◆ 제     목\033[=15F  " + title, "");
+	printf(" \033[=11F└%s┘\033[=15F\r\n", repeat("─", 37).c_str());
+
+	// 받는 사람
+	while ( to.empty() ) {
+		notice("\033[=7F받는 사람의 아이디나 닉네임을 입력하세요. (그냥 Enter 는 취소)");
+		char buf[64];
+		printf("\033[5;19H%s\033[5;19H", std::string(20, ' ').c_str());
+		printf(ESC_HAN);
+		_line_input(buf, (char*)"", 20, 1);
+		std::string who = trim(buf);
+		if ( who.empty() ) return;
+		to = find_recipient(who);
+		if ( to.empty() ) {
+			notice("\033[=12F'" + who + "' 회원을 찾을 수 없습니다. 다시 입력하세요.");
+			printf("\r\n");
+			press_enter();
+		}
+	}
+	printf("\033[5;1H");
+	box_line("\033[=14F◆ 받는 사람\033[=15F  " + nick_of(to) + " \033[=7F(" + display_text(to) + ")\033[=15F", "");
+
+	// 제목
+	notice("\033[=7F제목을 입력하세요. (그냥 Enter 는 취소)");
+	char tbuf[128];
+	snprintf(tbuf, sizeof(tbuf), "%s", title.c_str());
+	printf("\033[6;19H");
+	printf(ESC_HAN);
+	_line_input(tbuf, tbuf, 50, 1);
+	std::string t = trim(tbuf);
+	if ( t.empty() ) {
+		notice("\033[=12F쪽지 쓰기를 취소했습니다.");
+		wait_enter();
+		return;
+	}
+
+	// 내용 (줄 편집기)
+	notice("\033[=7F내용을 입력하세요.");
+	std::vector<std::string> lines;
+	if ( !line_editor(lines, false) || lines.size() == 0 ) {
+		printf("\r\n\r\n   \033[=12F쪽지 쓰기를 취소했습니다.\033[=15F");
+		wait_enter();
+		return;
+	}
+
+	std::string content;
+	for (unsigned int i=0; i<lines.size(); i++) {
+		content += lines[i];
+		content += "\n";
+	}
+
+	std::string q = "INSERT INTO memo (SENDER_USER_ID, RECIPIENT_USER_ID, CREATION_DATETIME, TITLE, CONTENT) VALUES ('"
+		+ database::escape(user_id.c_str()) + "', '" + database::escape(to.c_str()) + "', NOW(), '"
+		+ database::escape(t.c_str()) + "', '" + database::escape(content.c_str()) + "')";
+	if ( mysql_query(mysql, q.c_str()) != 0 ) {
+		printf("\r\n\r\n   \033[=12F쪽지를 보내지 못했습니다. (%s)\033[=15F", mysql_error(mysql));
+	} else {
+		printf("\r\n\r\n   \033[=14F%s\033[=15F 님에게 쪽지를 보냈습니다.", nick_of(to).c_str());
+	}
+	wait_enter();
 }
 
 // 쪽지 읽기. 지웠으면 true
@@ -235,7 +253,7 @@ bool read_memo(std::map<std::string, std::string> memo, bool sent)
 			if ( memo["CONFIRMATION_DATETIME"].empty() ) state = "\033[=12F아직 안 읽음\033[=15F";
 			else state = "\033[=10F읽음 " + memo["CONFIRMATION_DATETIME"].substr(5, 11) + "\033[=15F";
 		}
-		box_line("\033[=14F◆ 제    목\033[=15F  " + string_truncate(memo["TITLE"], 46, ""), state);
+		box_line("\033[=14F◆ 제     목\033[=15F  " + string_truncate(memo["TITLE"], 46, ""), state);
 		printf(" \033[=11F└%s┘\033[=15F\r\n", repeat("─", 37).c_str());
 
 		// 본문 (빈 줄로 채워 아래 줄 위치를 고정)
