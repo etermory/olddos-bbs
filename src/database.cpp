@@ -147,6 +147,10 @@ namespace database {
 			query << "SELECT * FROM " << table_name << " WHERE NO=" << parent_no; 
 			std::vector<std::map<std::string, std::string> > rows = database::fetch_rows((char*)query.str().c_str());
 
+			// 답글 작성 중 부모글이 삭제된 경우
+			if ( rows.size() == 0 ) {
+				return false;
+			}
 			std::map<std::string, std::string> row = rows.at(0);
 
 			int family2 = atoi(row[std::string("FAMILY")].c_str());
@@ -265,6 +269,9 @@ namespace database {
 			sprintf(tmp, "SELECT * FROM attachment WHERE FAMILY_TABLE='%s' AND FAMILY_ID='%d';", table_name, no);
 			std::vector<std::map<std::string, std::string> > attach_rows = fetch_rows(tmp);
 
+			if ( attach_no < 0 || attach_no >= (int)attach_rows.size() ) {
+				return false;
+			}
 			std::map<std::string, std::string> attachment = attach_rows.at(attach_no);
 			int id = atoi(attachment["NO"].c_str());
 			
@@ -386,6 +393,9 @@ namespace database {
 		sprintf(buf, "SELECT * FROM %s WHERE NO=%d", table_name, no);
 
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(buf);
+		if ( rows.size() == 0 ) {
+			return false;
+		}
 		std::map<std::string, std::string> row = rows.at(0);
 
 		std::string author = row[std::string("USER_ID")];
@@ -931,7 +941,8 @@ namespace database {
 
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(sql);
 		if ( rows.size() != 1 ) {
-			return -1;
+			// 없는 방은 공개방으로 취급하지 않음
+			return false;
 		}
 		std::map<std::string, std::string> row = rows.at(0);
 

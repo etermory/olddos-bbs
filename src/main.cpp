@@ -129,8 +129,10 @@ int main(int argc, char **argv)
 	sprintf(buf, "%s/tmp/%s.tty", getenv("HANULSO"), tty);
 
 	FILE *fp = fopen(buf, "w");
-	fprintf(fp, "%s", login_user_id);
-	fclose(fp);
+	if ( fp != NULL ) {
+		fprintf(fp, "%s", login_user_id);
+		fclose(fp);
+	}
 
 	// ------------------------------------
 	bool exist;
@@ -712,6 +714,11 @@ void show_board(pugi::xml_node node)
 							printf("\r\n[Enter] 를 누르세요.");
 							press_enter();
 
+						} else if ( no2 - no1 >= 1000 ) {
+							printf("\r\n한 번에 1000개 이상 삭제할 수 없습니다.");
+							printf("\r\n[Enter] 를 누르세요.");
+							press_enter();
+
 						} else {
 							bool ok = true;
 							int i;
@@ -841,6 +848,13 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
         // 게시글 정보를 얻어옴
         sprintf(sql, "SELECT * FROM %s WHERE NO=%d", table_name, no);
         rows = database::fetch_rows(sql);
+        // 읽는 도중 게시글이 삭제된 경우
+        if ( rows.size() == 0 ) {
+            printf("\r\n해당 게시글이 없습니다.");
+            printf("\r\n[Enter] 를 누르세요.");
+            press_enter();
+            return;
+        }
         std::map<std::string, std::string> row = rows.at(0);
 
         // 게시글 내용을 텍스트로 변환
@@ -1124,7 +1138,7 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
 
 			// 첨부 파일 다운로드
 			if ( !strcasecmp(args[0].c_str(), "dn") ) {
-				char buf[10];
+				char buf[32];
                 char buf2 [10];
                 int protocol = 3;
 
@@ -1137,7 +1151,7 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
                     bool cancel = false;
 
 					if ( args.size() > 1 ) {
-						sprintf(buf, "%s", args[1].c_str());
+						snprintf(buf, sizeof(buf), "%s", args[1].c_str());
 
 					} else {
 						printf(ESC_ENG);
@@ -1384,8 +1398,13 @@ void raw_mode(void)
 }
 
 /* 프로그램 종료 루틴 */
-int host_close (void)  
+int host_close (void)
 {
+	// 종료 처리 중 다시 불리면 (입력 EOF 등) 바로 종료
+	static int closing = 0;
+	if ( closing ) exit(1);
+	closing = 1;
+
 	database::set_lastlogin_datetime(login_user_id);
 
 	database::close();
@@ -1394,7 +1413,7 @@ int host_close (void)
 
 	// 현재 접속자 정보 파일 삭제
 	char buf[1024];
-    sprintf(buf,"tmp/%s.tty", tty);
+    sprintf(buf,"%s/tmp/%s.tty", getenv("HANULSO"), tty);
 	unlink(buf);
 
 	// 현재 접속자에 의해 임시로 생성(복사)된 파일이 있다면 삭제.. 
@@ -1607,7 +1626,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 			bool success;
 			std::vector<std::string> lines = exec_command("awk '{print $1}' /proc/uptime", &success);
-			long sec = atol(lines[0].c_str());
+			long sec = lines.size() > 0 ? atol(lines[0].c_str()) : 0;
 
 			printf("\r\n%-15s: %d일 %02d:%02d:%02d 경과", "가동시간", sec/86400, sec%86400/3600, (sec%3600)/60, sec%60);
 
@@ -1616,20 +1635,27 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 			std::string txt = trim(read_file("/proc/version"));
 			std::vector<std::string> tokens = split_string(txt, ' ');
-			printf("\r\n%-15s: %s %s %s", "커널", tokens[0].c_str(), tokens[1].c_str(), tokens[2].c_str());
+			if ( tokens.size() >= 3 ) {
+				printf("\r\n%-15s: %s %s %s", "커널", tokens[0].c_str(), tokens[1].c_str(), tokens[2].c_str());
+			}
 
 			lines = exec_command("mysql --version", &success);
-			tokens = split_string(lines[0], ',');
-			printf("\r\n%-15s: %s", "데이타베이스", tokens[0].c_str());
-			
+			if ( lines.size() > 0 ) {
+				tokens = split_string(lines[0], ',');
+				if ( tokens.size() > 0 ) {
+					printf("\r\n%-15s: %s", "데이타베이스", tokens[0].c_str());
+				}
+			}
+
 			lines = exec_command("df -h --total | tail -n 1", &success);
-			tokens = split_string(lines[0], ' ');
-			char tmp[10];
-			char tmp2[10];
-			char tmp3[10];
-			char tmp4[10];
-			char tmp5[10];
-			sscanf(lines[0].c_str(), "%s %s %s %s %s", tmp, tmp2, tmp3, tmp4, tmp5);
+			char tmp[32] = "";
+			char tmp2[32] = "";
+			char tmp3[32] = "";
+			char tmp4[32] = "";
+			char tmp5[32] = "";
+			if ( lines.size() > 0 ) {
+				sscanf(lines[0].c_str(), "%31s %31s %31s %31s %31s", tmp, tmp2, tmp3, tmp4, tmp5);
+			}
 			printf("\r\n%-15s: %s", "전체하드용량", tmp2);
 			printf("\r\n%-15s: %s", "남은하드용량", tmp4);
 			//txt = trim(read_file("/sys/block/sda/size"));

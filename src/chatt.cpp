@@ -99,7 +99,7 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 				std::ostringstream title;
 				title << string_truncate((char*)row[std::string("TITLE")].c_str(), 33, "...");
 
-				int user_count;
+				int user_count = 0;
 				std::string author;
 				state_chatt_room(port_no, author, user_count);
 
@@ -149,7 +149,7 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 					int port = database::chatt_room_port_number(table_name, room_no);
 					int max_user = database::chatt_room_max_user(table_name, room_no);
 
-					int user_count;
+					int user_count = 0;
 					std::string author;
 					state_chatt_room(port, author, user_count);
 
@@ -163,7 +163,8 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 
 						if ( !database::check_public_chatt_room(table_name, room_no) ) {
 							// 비밀번호 입력
-							char passwd[50];
+							// line_input_echo 는 str[len] 에 0 을 쓰므로 len+1
+							char passwd[51];
 							printf("\r\n비밀번호 : ");
 							line_input_echo(passwd, 50);
 
@@ -245,11 +246,15 @@ void state_chatt_room(int port, std::string &author, int &user_count)
 	char buf[1024];
 	sprintf(buf, "%s/chatt/%d.room", getenv("HANULSO"), port);
 
+	// .room 파일이 없거나 비어 있으면 0명
+	author = "";
+	user_count = 0;
+
 	std::string txt = read_file(buf);
 	if ( txt.length() > 0 ) {
 		std::vector<std::string> info = split_string(txt, ',');
-		author = info[0];
-		user_count = atoi(info[1].c_str());
+		if ( info.size() >= 1 ) author = info[0];
+		if ( info.size() >= 2 ) user_count = atoi(info[1].c_str());
 	}
 }
 

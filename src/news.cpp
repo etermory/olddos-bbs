@@ -241,6 +241,8 @@ bool show_category(newspaper np, bool *goto_top)
 			}
 		}
 	}
+
+	return true;
 }
 
 // 기사 읽음
@@ -339,6 +341,8 @@ bool read_news(category c, std::vector<news_data> &list)
 		child = child.next_sibling();
 		if ( child.empty() ) break;
 	}
+
+	return true;
 }
 
 void print_news_board_header(int total, char *title)
@@ -369,7 +373,9 @@ bool show_news_menu(category c, bool *goto_top)
 	usleep(1000);
 
 	std::vector<news_data> list;
-	read_news(c, list);
+	if ( !read_news(c, list) ) {
+		return false;
+	}
 	
 	int offset = 0;
 		
@@ -390,12 +396,14 @@ bool show_news_menu(category c, bool *goto_top)
 		printf("\r\n%s\r\n", repeat("─", 40).c_str());
 
 #if 1
-		if ( list.size() <= offset ) {
+		// 마지막 페이지를 넘어가면 이전 페이지로 (빈 목록이면 0 유지)
+		if ( offset > 0 && list.size() <= (unsigned int)offset ) {
 			offset -= show_max_line;
+			if ( offset < 0 ) offset = 0;
 		}
 
 		for(unsigned int i=offset; i<offset+show_max_line; i++) {
-			if ( i >= list.size()-1 ) break;
+			if ( i >= list.size() ) break;
 
 			news_data data = list[i];
 
@@ -459,6 +467,8 @@ bool show_news_menu(category c, bool *goto_top)
 			}
 		}
 	}
+
+	return true;
 }
 
 void show_news(std::string title, int no, std::vector<news_data> list, bool *is_dir)
@@ -467,6 +477,14 @@ void show_news(std::string title, int no, std::vector<news_data> list, bool *is_
 	char sql[1024];
 
 	*is_dir = false;
+
+	// 기사 번호 범위 검사
+	if ( no < 1 || (unsigned int)no > list.size() ) {
+		printf("\r\n해당 번호의 기사가 없습니다.");
+		printf("\r\n[Enter] 를 누르세요.");
+		press_enter();
+		return;
+	}
 
 	unsigned int offset = 0;
 
@@ -496,7 +514,7 @@ void show_news(std::string title, int no, std::vector<news_data> list, bool *is_
 		title = string_truncate(title, 60, "...");
 		printf(" 제  목: %-60s\r\n", title.c_str());
 
-		if ( lines.size() <= offset ) {
+		if ( offset > 0 && lines.size() <= offset ) {
 			offset -= show_max_line;
 			page_no -= 1;
 		}

@@ -45,7 +45,10 @@ pugi::xml_node find_node_by_id(pugi::xml_node node, std::string id)
 
 			pugi::xml_node node2 = child.first_child();
 			if ( !node2.empty() ) {
-				find_node_by_id (child, id);
+				pugi::xml_node found = find_node_by_id (child, id);
+				if ( !found.empty() ) {
+					return found;
+				}
 			}
 		}
 

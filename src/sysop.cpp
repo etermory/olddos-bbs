@@ -278,7 +278,7 @@ void main_menu(void)
 			} else if ( !strcmp(cmd, "3") ) {
 				delete_user();
 
-			} else if ( !strcmp(cmd, "3") ) {
+			} else if ( !strcmp(cmd, "4") ) {
 				delete_article();
 			}
 		}

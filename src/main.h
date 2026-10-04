@@ -169,6 +169,7 @@ pugi::xml_node find_node_by_id(pugi::xml_node node, std::string id);
 void raw_mode(void);
 int host_close();
 bool host_close_yesno(void);
+int host_close(void);
 void prompt(char *cmd, bool enable_write, bool enable_del);
 
 // 성격 검사

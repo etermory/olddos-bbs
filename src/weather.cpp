@@ -114,6 +114,10 @@ bool get_list(std::string url, std::vector<std::string> &list)
 	std::vector<std::string> lines = split_string(csv, '\n');
 	for(int i=1; i<lines.size(); i++) {
         std::vector<std::string> cols = split_string(lines[i], ',');
+        // 잘못된 줄은 건너뜀 ("code","value" 형식이어야 함)
+        if ( cols.size() < 2 || cols[0].size() < 2 || cols[1].size() < 2 ) {
+            continue;
+        }
         std::string code = cols[0].substr(1, cols[0].size()-2);
         std::string value = cols[1].substr(1, cols[1].size()-2);
         list.push_back(code);
@@ -183,7 +187,7 @@ std::string select_menu(std::string url)
 
 		/* 입력이 숫자 */
 		if( is_number(cmd) ) {
-            if(atoi(cmd) > list.size()/2) {
+            if(atoi(cmd) < 1 || (unsigned int)atoi(cmd) > list.size()/2) {
                 // pass
             } else {
                 int i = (atoi(cmd)-1) * 2;

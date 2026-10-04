@@ -9,7 +9,7 @@ void text_delete(std::vector<std::string> &list);
 /* 라인 편집기 */
 bool line_editor(std::vector<std::string> &lines, bool edit)
 {
-    char buf[2];
+    char buf[3];
 
 	std::vector<std::string> list;
 

@@ -4,7 +4,7 @@ int write_article(char *table_name)
 {	
 	char title[1024];
 	char buf[1024];
-	int ret;
+	int ret = -1;
 
 	// 타이틀 입력 (기본 한글 입력으로 전환)
 	printf(ESC_HAN);
@@ -120,8 +120,8 @@ int write_article(char *table_name)
 				break;
 
 			} else if ( !strcasecmp(buf, "3") ) {
-				char *lines;
-				int length;
+				char *lines = NULL;
+				int length = 0;
 
 				if ( file_editor(&lines, &length) ) {
 					if ( length > 0 ) {

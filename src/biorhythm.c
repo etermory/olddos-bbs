@@ -22,8 +22,8 @@ int Days(int year, int month, int day)
 	//윤년일때 366일 
 	for (i = 0; i<year; i++)
 	{
-		//윤년이면 
-		if (i % 4 == 0)
+		//윤년이면
+		if ((i % 4 == 0 && i % 100 != 0) || i % 400 == 0)
 		{
 			count += 366;
 		}
@@ -32,10 +32,11 @@ int Days(int year, int month, int day)
 			count += 365;
 		}
 	}
-	for (i = 0; i< month; i++)
+	//지난 달까지만 더함 (이번 달은 day 로 더함)
+	for (i = 0; i < month - 1 && i < 12; i++)
 	{
-		//해당 년도가 윤년일때 
-		if (year % 4 == 0)
+		//해당 년도가 윤년일때
+		if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)
 		{
 			//2월은 29일 
 			if (i == 1)
@@ -190,7 +191,13 @@ int main(int argc, char **argv)
 
 	time_t current;
 	struct tm *d;
-	
+
+	if (argc < 4)
+	{
+		printf("usage: %s YYYY MM DD\n", argv[0]);
+		return 1;
+	}
+
 	uyear = atoi(argv[1]);
 	umonth = atoi(argv[2]);
 	uday = atoi(argv[3]);

@@ -19,7 +19,7 @@ int isatty(int fd)
 int main(int argc, char **argv)
 {
 
-	char buf[1024], *tmp, *getty;
+	char buf[1024], *tmp, *getty = NULL;
 	FILE *fp;
 
 	umask(0111);
@@ -32,11 +32,19 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// 터미널을 찾지 못한 경우
+	if ( getty == NULL || strlen(getty) < 9 ) {
+		fprintf(stderr, "tty not found\n");
+		return 1;
+	}
+
 	tmp = &getty[9];
 
 	sprintf(buf, "tmp/%s.tty", tmp);
 	fp = fopen(buf, "w");
-	fclose(fp);
+	if ( fp != NULL ) {
+		fclose(fp);
+	}
 
 	ps = fork();
 	if (ps) {

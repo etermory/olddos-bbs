@@ -230,7 +230,8 @@ std::string date_now_string(bool week)
 	char buf[256];
 	sprintf(buf, "%04d-%02d-%02d", year, month, day);
 	if ( week ) {
-		sprintf(buf, "%s (%s)", buf, week_s.c_str());
+		size_t l = strlen(buf);
+		snprintf(buf + l, sizeof(buf) - l, " (%s)", week_s.c_str());
 	}
 
 	return std::string(buf);
@@ -422,7 +423,7 @@ std::string human_file_size(long size)
 	unsigned int div = 0;
 	size_t rem = 0;
 
-	while (size >= 1024 && div < (sizeof SIZES / sizeof *SIZES)) {
+	while (size >= 1024 && div < (sizeof SIZES / sizeof *SIZES) - 1) {
 		rem = (size % 1024);
 		div++;
 		size /= 1024;
@@ -485,13 +486,23 @@ void _line_input(char *str, char *init_str, int len, int echo)
 	unsigned int j;
     int i = strlen(init_str);
     char ch;
+    int c;
 
-	sprintf(str, "%s", init_str);
-	for(j=0; j<strlen(init_str); j++) {
+	// 초기 문자열이 버퍼보다 길면 잘라냄
+	if ( i > len ) i = len;
+	memcpy(str, init_str, i);
+	str[i] = 0;
+	for(j=0; j<(unsigned int)i; j++) {
 		putchar(init_str[j]);
 	}
 
-    while((ch=getchar()) != '\r' ) {
+    while((c=getchar()) != '\r' ) {
+		// 접속이 끊기면 (EOF) 무한 루프에 빠지지 않도록 종료
+		if ( c == EOF ) {
+			host_close();
+			exit(1);
+		}
+		ch = (char)c;
         if(ch == '\b') {
             if(i > 0) {
 				putchar(ch); putchar(' '); putchar(ch);
@@ -658,7 +669,9 @@ char *strip_ansi_codes(const char *line)
 	char *nstr = newline1;
 	int gotansi = 0;
 
-	while (*tstr) 
+	char *nend = newline1 + sizeof(newline1) - 1;
+
+	while (*tstr && nstr < nend)
 	{
 		/* Note that we use '\x9b' here, rather than 0x9b, because the 
 		 * former will have the correct value whether or not char is
@@ -842,6 +855,7 @@ void add_user_tmpfile(char *path)
 	sprintf(buf, "%s/tmp/%s.file", getenv("HANULSO"), tty);
 
 	FILE *fp = fopen(buf, "a");
+	if ( fp == NULL ) return;
 	fprintf(fp, "%s\r\n", path);
 	fclose(fp);
 }
@@ -1036,6 +1050,7 @@ char *cp949_to_utf8(char * input)
 std::string file_ext_name(std::string file)
 {
 	std::size_t found = file.find_last_of(".");
+	if ( found == std::string::npos ) return "";
 	return file.substr(found);
 }
 
@@ -1157,24 +1172,22 @@ std::string html2text(std::string html)
 	sprintf(html_file, "%s.html", tmp_file);
 
 	FILE *fp = fopen(html_file, "w");
-	fprintf(fp, html.c_str());
+	if ( fp == NULL ) return "";
+	fputs(html.c_str(), fp);
 	fclose(fp);
 
 	char plain_file[1024];
 	sprintf(plain_file, "%s.out", html_file);
 
 	char buf[1024];
-	sprintf(buf, "lynx -dump -nomargins -assume_charset=euc-kr -display_charset=euc-kr '%s'"
-		"> '%s'", html_file, plain_file);
+	snprintf(buf, sizeof(buf), "lynx -dump -nomargins -assume_charset=euc-kr -display_charset=euc-kr %s"
+		"> %s", shell_quote(html_file).c_str(), shell_quote(plain_file).c_str());
 	system(buf);
 
 	std::string text = read_file(plain_file);
 
-	sprintf(buf, "rm -f %s", html_file);
-	system(buf);
-
-	sprintf(buf, "rm -f %s", plain_file);
-	system(buf);
+	unlink(html_file);
+	unlink(plain_file);
 
 	return text;
 }

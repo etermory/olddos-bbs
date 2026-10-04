@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -49,9 +50,13 @@ bool is_han(char c)
 void line_input(char *str, int len)
 {
     cursor_pos = 0;
-    char ch;
+    int ch;
 
     while((ch=getchar()) != '\r' ) {
+		// ÀÔ·Â Á¾·á(EOF) ½Ã ¹«ÇÑ ·çÇÁ ¹æÁö
+		if(ch == EOF) {
+			chatt_close();
+		}
         if(ch == '\b') {
             if(cursor_pos > 0) {
 #if 0
@@ -86,7 +91,7 @@ void line_input(char *str, int len)
 
 void press_enter(void) 
 {
-	char buff[1];
+	char buff[2];
 	line_input(buff, 1);
 }
 
@@ -132,40 +137,67 @@ void print_message(char *msg)
 	fflush(stdout);
 }
 
-int recv_msg(int socket, char *msg)
+// len ¹ÙÀÌÆ®¸¦ ¸ðµÎ ÀÐ´Â´Ù. EOF/¿¡·¯¸é -1
+int read_full(int socket, char *buf, int len)
+{
+	int got = 0;
+	while (got < len) {
+		int n = read(socket, buf+got, len-got);
+		if (n < 0) {
+			if (errno == EINTR) continue;
+			return -1;
+		}
+		// »ó´ë¹æ ¿¬°á Á¾·á
+		if (n == 0) return -1;
+		got += n;
+	}
+	return got;
+}
+
+// len ¹ÙÀÌÆ®¸¦ ¸ðµÎ ¾´´Ù. ¿¡·¯¸é -1
+int write_full(int socket, const char *buf, int len)
+{
+	int done = 0;
+	while (done < len) {
+		int n = write(socket, buf+done, len-done);
+		if (n < 0) {
+			if (errno == EINTR) continue;
+			return -1;
+		}
+		if (n == 0) return -1;
+		done += n;
+	}
+	return done;
+}
+
+// ¸Þ¼¼Áö ¼ö½Å. ¿¬°á Á¾·á/¿¡·¯/Àß¸øµÈ ±æÀÌ¸é -1
+int recv_msg(int socket, char *msg, int bufsize)
 {
 	int size;
-	read(socket, &size, sizeof(int));
-	
-#if 0	
-	int n = read(socket, msg, size);
-	msg[n] = '\0';
-#else
+	msg[0] = '\0';
 
-	int len=0;
-	int remain=size;
-	while (1) {
-		int n = read(socket, msg+len, remain);
-		len += n;
-		remain -= n;
-		if ( len >= size ) break;
-	}
+	if (read_full(socket, (char*)&size, sizeof(int)) < 0) return -1;
+
+	// »ó´ë°¡ º¸³½ ±æÀÌ¸¦ ±×´ë·Î ¹ÏÁö ¾Ê´Â´Ù
+	if (size < 0 || size >= bufsize) return -1;
+
+	if (size > 0 && read_full(socket, msg, size) < 0) return -1;
 	msg[size] = '\0';
-#endif
 
 	return size;
 }
 
-void send_msg(int socket, char *msg)
+int send_msg(int socket, const char *msg)
 {
 	int size = strlen(msg);
-	write(socket, &size, sizeof(int));
-	write(socket, msg, size);
+	if (write_full(socket, (const char*)&size, sizeof(int)) < 0) return -1;
+	if (write_full(socket, msg, size) < 0) return -1;
+	return 0;
 }
 
 void *chatt_message(void *arg)
 {
-	char msg[1024];
+	char msg[CHATDATA];
 
 	while (1) {
 		FD_ZERO(&read_fds);
@@ -178,7 +210,12 @@ void *chatt_message(void *arg)
 		}
 
 		if (FD_ISSET(sock_fd, &read_fds)) {
-			recv_msg(sock_fd, msg);
+			// ¼­¹ö ¿¬°áÀÌ ²÷¾îÁ³°Å³ª Àß¸øµÈ ¸Þ¼¼Áö
+			if (recv_msg(sock_fd, msg, sizeof(msg)) < 0) {
+				sleep(2);
+
+				chatt_close();
+			}
 
 			// ¼­¹ö·ÎºÎÅÍ /quit ¹®ÀÚ¿­À» ¹ÞÀ¸¸é ¹æÀÌ Á¾·á µÈ °ÍÀÓ.
 			if ( !strcasecmp(msg, "/quit") ) {
@@ -226,6 +263,8 @@ int main(int argc,char *argv[])
     signal(SIGHUP, (__sighandler_t)chatt_close);
     signal(SIGSEGV, (__sighandler_t)chatt_close);
     signal(SIGBUS, (__sighandler_t)chatt_close);
+	// ²÷¾îÁø ¼ÒÄÏ¿¡ write ½Ã ÇÁ·Î¼¼½º°¡ Á×Áö ¾Êµµ·Ï
+    signal(SIGPIPE, SIG_IGN);
     
 	raw_mode();
 	umask(0111);
@@ -244,8 +283,8 @@ int main(int argc,char *argv[])
 		return -1;
 	}
 
-	sprintf(userid, "%s", argv[3]);
-	sprintf(nickname, "%s", argv[4]);
+	snprintf(userid, sizeof(userid), "%s", argv[3]);
+	snprintf(nickname, sizeof(nickname), "%s", argv[4]);
 
 	// Á¢¼Ó »ç¿ëÀÚID º¸³¿
 	send_msg(sock_fd, userid);
@@ -263,21 +302,27 @@ int main(int argc,char *argv[])
 		printf("[%d;1H´ëÈ­ >> [K",scroll_endy+2);
 
 		char user[9072];
-		sprintf(user,"%s(%s)", nickname, userid);
+		snprintf(user, sizeof(user), "%s(%s)", nickname, userid);
 
-		line_input(input, 75-strlen(user));
+		int maxlen = 75 - (int)strlen(user);
+		if (maxlen < 1) maxlen = 1;
+		line_input(input, maxlen);
 		if (strlen(input) <= 0 ) continue;
 
-		// ¸¶Áö¸· 1¹ÙÀÌÆ®°¡°¡ ÇÑ±ÛÀÌ°í, ¸¶Áö¸· ÀÌÀü ¹ÙÀÌÆ®°¡ ¿µ¹®ÀÌ¸é.. 
+		// ¸¶Áö¸· 1¹ÙÀÌÆ®°¡°¡ ÇÑ±ÛÀÌ°í, ¸¶Áö¸· ÀÌÀü ¹ÙÀÌÆ®°¡ ¿µ¹®ÀÌ¸é..
 		// ¸¶Áö¸· ÇÑ±Û ±úÁü¹æÁö¸¦ À§ÇØ ¸¶Áö¸·À» Áö¿ò
-		if (is_han(input[strlen(input)-1]) && !is_han(input[strlen(input)-2])) {
-			input[strlen(input)-1] = '\0';
+		int ilen = strlen(input);
+		if (is_han(input[ilen-1]) && (ilen < 2 || !is_han(input[ilen-2]))) {
+			input[ilen-1] = '\0';
 		}
+		if (strlen(input) <= 0 ) continue;
 
-		char msg[9072];
-		sprintf(msg,"\r\n\033[7m%s\033[0m %s\r\n", user, input);
-		
+		// ¼­¹ö/»ó´ë Å¬¶óÀÌ¾ðÆ® ¼ö½Å ¹öÆÛ(CHATDATA)¸¦ ³ÑÁö ¾Êµµ·Ï Á¦ÇÑ
+		char msg[CHATDATA];
+		snprintf(msg, sizeof(msg), "\r\n\033[7m%s\033[0m %s\r\n", user, input);
+
 		std::vector<std::string> args = split_string(input, ' ');
+		if (args.size() == 0) continue;
 		
 		if (!strcasecmp(args[0].c_str(), "/quit")) {
 			send_msg(sock_fd, (char*)args[0].c_str());

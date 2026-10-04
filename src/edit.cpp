@@ -24,6 +24,12 @@ bool edit_article(char *table_name, int no)
 
 		sprintf(buf, "SELECT * FROM %s WHERE NO=%d", table_name, no);
 		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows(buf);
+		if ( rows.size() == 0 ) {
+			printf("\r\n게시글이 존재하지 않습니다.");
+			printf("\r\n[Enter] 를 누르세요.");
+			press_enter();
+			return false;
+		}
 		std::map<std::string, std::string> row = rows.at(0);
 
 		// 게시글 제목
@@ -63,6 +69,12 @@ bool edit_article(char *table_name, int no)
 
 			sprintf(buf, "SELECT * FROM %s WHERE NO=%d", table_name, no);
 			std::vector<std::map<std::string, std::string> > rows = database::fetch_rows(buf);
+			if ( rows.size() == 0 ) {
+				printf("\r\n게시글이 존재하지 않습니다.");
+				printf("\r\n[Enter] 를 누르세요.");
+				press_enter();
+				return false;
+			}
 			std::map<std::string, std::string> row = rows.at(0);
 
 			// 게시글 내용을 텍스트로 변환
@@ -163,8 +175,8 @@ bool edit_article(char *table_name, int no)
 
 			// zmodem 업로드 
 			} else if ( !strcasecmp(cmd, "3") ) {
-				char *lines;
-				int length;
+				char *lines = NULL;
+				int length = 0;
 
 				if ( file_editor(&lines, &length) ) {
 					if ( length > 0 ) {

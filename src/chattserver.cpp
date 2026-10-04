@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -35,8 +37,8 @@ struct client {
 
 std::vector<client> clients;
 
-void send_msg(int socket, char *msg);
-int recv_msg(int socket, char *msg);
+int send_msg(int socket, const char *msg);
+int recv_msg(int socket, char *msg, int bufsize);
 void write_user_count(void);
 void write_room_info(void);
 
@@ -69,9 +71,21 @@ std::string rtrim(std::string s)
 }
 
 //양쪽 끝의 개행 문자 제거
-std::string trim(std::string s) 
+std::string trim(std::string s)
 {
 	return ltrim(rtrim(s));
+}
+
+// 제어문자(ESC 등) 제거 - ANSI 코드 삽입 방지
+std::string strip_control(const std::string &s)
+{
+	std::string r;
+	for (unsigned int i=0; i<s.size(); i++) {
+		unsigned char ch = (unsigned char)s[i];
+		if (ch < 0x20 || ch == 0x7f) continue;
+		r += s[i];
+	}
+	return r;
 }
 
 client push_client(int socket, char *userid, char* nickname, char* ip, int port)
@@ -113,7 +127,7 @@ void constr_func(client c2, client c)
 	char buf1[MAX_LINE];
 	
 	memset(buf1, 0, sizeof(buf1));
-	sprintf(buf1, "\r\n\033[7m%s(%s) 님이 입장 하셨습니다.\033[0m\r\n", c.nickname, c.userid);
+	snprintf(buf1, sizeof(buf1), "\r\n\033[7m%s(%s) 님이 입장 하셨습니다.\033[0m\r\n", c.nickname, c.userid);
 
 	send_msg(c2.socket, buf1);
 }
@@ -125,7 +139,7 @@ void quit_func(client c)
 	memset(buf1, 0, sizeof(buf1));
 	printf("%s is leaved at %s\r\n", c.userid, c.ip);
 
-	sprintf(buf1, "\r\n\033[7m%s(%s) 님이 퇴장 하셨습니다.\033[0m\r\n", c.nickname, c.userid);
+	snprintf(buf1, sizeof(buf1), "\r\n\033[7m%s(%s) 님이 퇴장 하셨습니다.\033[0m\r\n", c.nickname, c.userid);
 
 	if ( c.author == true ) {
 		unsigned int cnt = 0;
@@ -134,8 +148,11 @@ void quit_func(client c)
 			if (c.socket != c2.socket) {
 				// 방장이 퇴장하면 다음 사용자에게 위임한다.
 				clients[i].author = true;
-				sprintf(buf1, "%s\033[7m%s(%s) 님이 방장을 위임받았습니다.\033[0m\r\n", 
+				// 같은 버퍼를 원본/대상으로 쓰지 않도록 별도 버퍼 사용
+				char buf2[MAX_LINE];
+				snprintf(buf2, sizeof(buf2), "%s\033[7m%s(%s) 님이 방장을 위임받았습니다.\033[0m\r\n",
 					buf1, c2.nickname, c2.userid);
+				strcpy(buf1, buf2);
 				break;
 			}
 		}
@@ -156,15 +173,15 @@ void list_func(client c)
 	char buf1[MAX_LINE];
 
 	memset(buf1, 0, sizeof(buf1));
-	sprintf(buf1, "\r\n\033[7m대화방 접속인원은 %d명 입니다.\033[0m\r\n", (int)clients.size());
+	snprintf(buf1, sizeof(buf1), "\r\n\033[7m대화방 접속인원은 %d명 입니다.\033[0m\r\n", (int)clients.size());
 	send_msg(c.socket, buf1);
 
 	for(unsigned int i=0; i<clients.size(); i++) {
 		client c2 = clients[i];
 		if ( c2.author == true ) {
-			sprintf(buf1, "\r\n[%s(%s) from %s:%d] : 방장\r\n", c2.nickname, c2.userid, c2.ip, c2.port);
+			snprintf(buf1, sizeof(buf1), "\r\n[%s(%s) from %s:%d] : 방장\r\n", c2.nickname, c2.userid, c2.ip, c2.port);
 		} else {
-			sprintf(buf1, "\r\n[%s(%s) from %s:%d]\r\n", c2.nickname, c2.userid, c2.ip, c2.port);
+			snprintf(buf1, sizeof(buf1), "\r\n[%s(%s) from %s:%d]\r\n", c2.nickname, c2.userid, c2.ip, c2.port);
 		}
 		send_msg(c.socket, buf1);
 	}
@@ -172,8 +189,9 @@ void list_func(client c)
 
 int say_func(client from, client to, char *msg)
 {
-	char buf[9072];
-	sprintf(buf,"\r\n\033[7m!%s(%s)\033[0m : %s\r\n", from.nickname, from.userid, msg);
+	// 클라이언트 수신 버퍼(1024)를 넘지 않도록 MAX_LINE 으로 제한
+	char buf[MAX_LINE];
+	snprintf(buf, sizeof(buf), "\r\n\033[7m!%s(%s)\033[0m : %s\r\n", from.nickname, from.userid, msg);
 
 	// 귓속말 받을 회원에게 메세지 전달
 	send_msg(to.socket, buf);
@@ -183,35 +201,62 @@ int say_func(client from, client to, char *msg)
 	return 0;
 }
 
-int recv_msg(int socket, char *msg)
+// len 바이트를 모두 읽는다. EOF/에러(타임아웃 포함)면 -1
+int read_full(int socket, char *buf, int len)
+{
+	int got = 0;
+	while (got < len) {
+		int n = read(socket, buf+got, len-got);
+		if (n < 0) {
+			if (errno == EINTR) continue;
+			return -1;
+		}
+		// 상대방 연결 종료
+		if (n == 0) return -1;
+		got += n;
+	}
+	return got;
+}
+
+// len 바이트를 모두 쓴다. 에러면 -1
+int write_full(int socket, const char *buf, int len)
+{
+	int done = 0;
+	while (done < len) {
+		int n = write(socket, buf+done, len-done);
+		if (n < 0) {
+			if (errno == EINTR) continue;
+			return -1;
+		}
+		if (n == 0) return -1;
+		done += n;
+	}
+	return done;
+}
+
+// 메세지 수신. 연결 종료/에러/잘못된 길이면 -1
+int recv_msg(int socket, char *msg, int bufsize)
 {
 	int size;
-	read(socket, &size, sizeof(int));
-	
-#if 0	
-	int n = read(socket, msg, size);
-	msg[n] = '\0';
-#else
+	msg[0] = '\0';
 
-	int len=0;
-	int remain=size;
-	while (1) {
-		int n = read(socket, msg+len, remain);
-		len += n;
-		remain -= n;
-		if ( len >= size ) break;
-	}
+	if (read_full(socket, (char*)&size, sizeof(int)) < 0) return -1;
+
+	// 상대가 보낸 길이를 그대로 믿지 않는다
+	if (size < 0 || size >= bufsize) return -1;
+
+	if (size > 0 && read_full(socket, msg, size) < 0) return -1;
 	msg[size] = '\0';
-#endif
 
 	return size;
 }
 
-void send_msg(int socket, char *msg)
+int send_msg(int socket, const char *msg)
 {
 	int size = strlen(msg);
-	write(socket, &size, sizeof(int));
-	write(socket, msg, size);
+	if (write_full(socket, (const char*)&size, sizeof(int)) < 0) return -1;
+	if (write_full(socket, msg, size) < 0) return -1;
+	return 0;
 }
 
 int server_close (void)  
@@ -240,6 +285,7 @@ void write_user_count(void)
 	char buf[1024];
 	sprintf(buf, "%s/chatt/%d.room", getenv("HANULSO"), server_port);
 	FILE *fp = fopen(buf, "w");
+	if (fp == NULL) return;
 	fprintf(fp, "%d", (int)clients.size());
 	fclose(fp);
 }
@@ -259,16 +305,100 @@ void write_room_info()
 	}
 
 	FILE *fp = fopen(buf, "w");
+	if (fp == NULL) return;
 	// 방장,접속인원수
 	fprintf(fp, "%s,%d", author.c_str(), (int)clients.size());
 	fclose(fp);
 }
-	
+
+// 접속자 퇴장 처리 (/bye 또는 연결 끊김)
+void remove_client(client c)
+{
+	quit_func(c);
+	pop_client(c);
+
+	// 대화방 접속 인원수 파일 업데이트
+	write_room_info();
+
+	// 대화방에 아무도 없으면 방 종료
+	if ( clients.size() == 0 ) {
+		server_close();
+	}
+}
+
+// 새 접속자 처리
+void accept_client(void)
+{
+	struct sockaddr_in client_addr;
+	socklen_t client_len = sizeof(client_addr);
+
+	int client_fd = accept(server_fd,(struct sockaddr *)&client_addr, &client_len);
+	if (client_fd < 0) return;
+
+	// select() 로 감시할 수 없는 fd 는 받지 않는다
+	if (client_fd >= FD_SETSIZE) {
+		close(client_fd);
+		return;
+	}
+
+	// userid 를 보내지 않는 클라이언트가 대화방 전체를 멈추지 않도록 수신 타임아웃(5초)
+	struct timeval tv;
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+	char userid[256];
+	char nickname[256];
+	char ip[256];
+	int port;
+
+	memset(userid, 0, sizeof(userid));
+	memset(nickname, 0, sizeof(nickname));
+	memset(ip, 0, sizeof(ip));
+
+	// 접속 사용자ID, 닉네임 받음
+	if (recv_msg(client_fd, userid, sizeof(userid)) < 0 ||
+		recv_msg(client_fd, nickname, sizeof(nickname)) < 0) {
+		close(client_fd);
+		return;
+	}
+	strcpy(userid, strip_control(userid).c_str());
+	strcpy(nickname, strip_control(nickname).c_str());
+
+	// 허용 인원 초과
+	if (max_user > 0 && (int)clients.size() >= max_user) {
+		send_msg(client_fd, "\r\n\033[7m대화방 허용 인원이 꽉 찼습니다.\033[0m\r\n");
+		close(client_fd);
+		return;
+	}
+
+	// 접속 사용자 IP 주소
+	inet_ntop(AF_INET, &client_addr.sin_addr, ip, sizeof(ip));
+	// 접속 사용자 포트 번호
+	port = ntohs(client_addr.sin_port);
+
+	// 클라이언트 추가
+	client c = push_client(client_fd, userid, nickname, ip, port);
+	printf("%s is connected from %s\r\n", c.userid, c.ip);
+
+	// 대화방 접속 인원수 파일 업데이트
+	write_room_info();
+
+	// 접속자에게 환영 메세지 보내기
+	send_msg(client_fd, greeting);
+
+	// 다른 접속자들에게 접속 사실을 알림
+	for (unsigned int i=0; i<clients.size(); i++) {
+		client c2 = clients[i];
+		if (c2.socket != c.socket) {
+			constr_func(c2, c);
+		}
+	}
+}
+
 int main(int argc,char *argv[])
 {
-	int client_fd;
-	struct sockaddr_in server_addr, client_addr;
-	socklen_t client_len;
+	struct sockaddr_in server_addr;
 
 	int max_fd = 0;
 	fd_set read_fds;
@@ -291,10 +421,13 @@ int main(int argc,char *argv[])
     signal(SIGHUP, (__sighandler_t)server_close);
     signal(SIGSEGV, (__sighandler_t)server_close);
     signal(SIGBUS, (__sighandler_t)server_close);
-	
+	// 끊어진 소켓에 write 시 프로세스가 죽지 않도록
+    signal(SIGPIPE, SIG_IGN);
+
 	server_fd=socket(AF_INET,SOCK_STREAM,0);
 	memset(&server_addr,0,sizeof(server_addr));
-	server_addr.sin_addr.s_addr=htonl(INADDR_ANY);
+	// chattclient 는 127.0.0.1 로만 접속한다
+	server_addr.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
 	server_addr.sin_family=AF_INET;
 	server_addr.sin_port=htons(server_port);
 
@@ -346,48 +479,11 @@ int main(int argc,char *argv[])
 		// 클라이언트 접속 감지
 		if (FD_ISSET(server_fd, &read_fds))
 		{
-			client_len = sizeof(client_addr);
-
-			if ((client_fd = accept(server_fd,(struct sockaddr *)&client_addr, &client_len)) > 0) 
-			{
-				char userid[256];
-				char nickname[256];
-				char ip[256];
-				int port;
-
-				memset(userid, 0, sizeof(userid));
-				memset(nickname, 0, sizeof(nickname));
-
-				// 접속 사용자ID 받음
-				recv_msg(client_fd, userid);
-				// 접속 사용자 닉네임 받음
-				recv_msg(client_fd, nickname);
-				// 접속 사용자 IP 주소
-				inet_ntop(AF_INET, &client_addr.sin_addr, ip, sizeof(ip));
-				// 접속 사용자 포트 번호
-				port = ntohs(client_addr.sin_port);
-
-				// 클라이언트 추가
-				client c = push_client(client_fd, userid, nickname, ip, port);
-				printf("%s is connected from %s\r\n", c.userid, c.ip);
-
-				// 대화방 접속 인원수 파일 업데이트
-				write_room_info();
-				
-				// 접속자에게 환영 메세지 보내기
-				send_msg(client_fd, greeting);
-
-				// 다른 접속자들에게 접속 사실을 알림
-				for (unsigned int i=0; i<clients.size(); i++) {
-					client c2 = clients[i];
-					if (c2.socket != c.socket) {
-						constr_func(c2, c);
-					}
-				}
-			}
+			accept_client();
 		}
 
-		for (unsigned int i=0; i<clients.size(); i++) {
+		// 루프 중 pop_client 로 원소가 지워지므로 int 인덱스를 쓰고 삭제 후 i-- 한다
+		for (int i=0; i<(int)clients.size(); i++) {
 			client c = clients[i];
 
 			if (FD_ISSET(c.socket, &read_fds)) {
@@ -395,23 +491,25 @@ int main(int argc,char *argv[])
 				memset(line, 0, sizeof(line));
 
 				//int n = read(c.socket, msg, sizeof(msg));
-				int n = recv_msg(c.socket, line);
+				int n = recv_msg(c.socket, line, sizeof(line));
+
+				// 연결 끊김 또는 잘못된 메세지
+				if (n < 0) {
+					remove_client(c);
+					i--;
+					continue;
+				}
+
 				if (n > 0) {
 					std::vector<std::string> args = split_string(trim(line), ' ');
 
+					// 빈 줄
+					if (args.size() == 0) continue;
+
 					// 접속자 로그아웃
 					if (!strcasecmp(args[0].c_str(), "/bye")) {
-						quit_func(c);
-						pop_client(c);
-
-						// 대화방 접속 인원수 파일 업데이트
-						write_room_info();
-
-						// 대화방에 아무도 없으면 방 종료
-						if ( clients.size() == 0 ) {
-							server_close();
-						}
-
+						remove_client(c);
+						i--;
 						continue;
 					}
 					
@@ -425,7 +523,7 @@ int main(int argc,char *argv[])
 							for(unsigned int j=0; j<clients.size(); j++) {
 								client c2 = clients[j];
 								char msg[MAX_LINE];
-								sprintf(msg, "\r\n\033[7m%s(%s) 님으로부터 대화방이 종료 되었습니다.\033[0m\r\n",
+								snprintf(msg, sizeof(msg), "\r\n\033[7m%s(%s) 님으로부터 대화방이 종료 되었습니다.\033[0m\r\n",
 										c.nickname, c.userid);
 								send_msg(c2.socket, msg);
 							}
@@ -452,6 +550,8 @@ int main(int argc,char *argv[])
 						/* 
 						 /say olddos 안녕 모두~
 						*/
+						if (args.size() < 2) continue;
+
 						char say[1024];
 						memset(say, 0, sizeof(say));
 
@@ -460,7 +560,7 @@ int main(int argc,char *argv[])
 						for(unsigned int j=0; j<strlen(line); j++) {
 							if ( line[j] == ' ' ) space_count++;
 							if ( space_count == 2 ) {
-								sprintf(say, "%s", trim(line+j).c_str());
+								snprintf(say, sizeof(say), "%s", strip_control(trim(line+j)).c_str());
 								break;
 							}
 						}
@@ -475,10 +575,21 @@ int main(int argc,char *argv[])
 						continue;
 					}
 
+					// 클라이언트가 만든 "닉네임(ID)" 머리말은 버리고 서버가 다시 만든다.
+					// (닉네임 위장 및 ANSI 코드 삽입 방지)
+					std::string prefix = std::string("\r\n\033[7m") + c.nickname + "(" + c.userid + ")\033[0m ";
+					std::string body = line;
+					if (body.compare(0, prefix.size(), prefix) == 0) {
+						body = body.substr(prefix.size());
+					}
+					char out[MAX_LINE];
+					snprintf(out, sizeof(out), "\r\n\033[7m%s(%s)\033[0m %s\r\n",
+							c.nickname, c.userid, strip_control(body).c_str());
+
 					// 모든 접속자에게 메세지 전달
 					for(unsigned int j=0; j<clients.size(); j++) {
 						client c2 = clients[j];
-						send_msg(c2.socket, line);
+						send_msg(c2.socket, out);
 					}
 				}
 			}

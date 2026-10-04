@@ -7,7 +7,7 @@ void bbcode_printf(const char *fmt,...)
 
 	va_list ap;
 	va_start(ap, fmt);
-	vsprintf(buff,fmt, ap);
+	vsnprintf(buff, sizeof(buff), fmt, ap);
 	va_end(ap);
 
 	printf("%s", replace_bbcode(buff).c_str());
