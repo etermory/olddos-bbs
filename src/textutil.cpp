@@ -76,13 +76,13 @@ std::string replace_bbcode(std::string text)
 		// 전체 테이블에서 오늘 날짜와 동일한 글 갯수를 읽어서 더함
 		int total_count = 0;
 		for(unsigned int i=0; i<table_names.size(); i++) {
-			sprintf(buf, "SELECT COUNT(*) FROM %s;", table_names[i].c_str());
+			sprintf(buf, "SELECT COUNT(*) FROM %s WHERE DATE(DATE_TIME)=CURDATE();", table_names[i].c_str());
 			std::string count = database::fetch(buf, &ok);
 			if ( ok ) {
 				total_count += atoi(count.c_str());
 			}
 		}
-		
+
 		std::ostringstream tmp;
 		tmp << total_count;
 		text = replace_all(text, "[todaynumarticles]", tmp.str());

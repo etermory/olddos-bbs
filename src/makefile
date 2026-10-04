@@ -35,17 +35,17 @@ main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 ctime: ctime.o 
 	$(CC) -o ../$@ ctime.o 
 
-guest: guest.o database.o utility.o textutil.o settings.o menu.o
+guest: guest.o database.o utility.o textutil.o settings.o menu.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o guest.o database.o utility.o textutil.o settings.o menu.o \
 			$(LIBMYSQL) -lz -lpthread -lrt
 	$(STRIP) ../bin/$@
 
-pass: pass.o database.o utility.o textutil.o settings.o menu.o
+pass: pass.o database.o utility.o textutil.o settings.o menu.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o pass.o database.o utility.o textutil.o settings.o menu.o \
 			$(LIBMYSQL) -lz -lpthread -lrt
 	$(STRIP) ../bin/$@
 
-sysop: sysop.o database.o utility.o textutil.o settings.o menu.o re.o
+sysop: sysop.o database.o utility.o textutil.o settings.o menu.o re.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o sysop.o database.o utility.o textutil.o settings.o menu.o \
 			$(LIBMYSQL) -lz -lpthread -lrt
 	$(STRIP) ../bin/$@
@@ -63,7 +63,7 @@ mbti_gs: mbti_gs.o
 	$(CC) -o ../bin/$@ mbti_gs.o -lm
 	$(STRIP) ../bin/$@
 
-memo: memo.o
+memo: memo.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
 	$(CXX) -o ../bin/$@ pugixml.o memo.o database.o utility.o textutil.o settings.o menu.o re.o \
 			$(LIBMYSQL) -lz -lpthread -lrt
 	$(STRIP) ../bin/$@
