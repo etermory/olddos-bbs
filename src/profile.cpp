@@ -92,6 +92,8 @@ bool edit_profile(char *user_id)
 				if ( !is_date_valid(day, month, year) ) {
 					printf("\r\n잘못 입력 되었습니다.");
 				} else {
+					// 입력 문자열 대신 정규화된 날짜를 저장
+					snprintf(birthday, sizeof(birthday), "%04d-%02d-%02d", year, month, day);
 					database::set_user_birthday(user_id, birthday);
 					printf("\r\n수정되었습니다.");
 					break;
@@ -131,7 +133,7 @@ bool edit_profile(char *user_id)
 			printf(ESC_ENG);
 			printf("\r\n[1]남자 / [2]여자 를 선택해주세요.");
 			while (1) {
-				char sex[5];
+				char sex[6];
 
 				printf("\r\n: ");
 				line_input(sex, 5);
@@ -149,4 +151,6 @@ bool edit_profile(char *user_id)
 			}
 		}
 	}
+
+	return true;
 }

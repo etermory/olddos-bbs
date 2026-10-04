@@ -397,9 +397,11 @@ void show_board(pugi::xml_node node)
 			offset -= show_max_line;
 			if ( offset < 0 ) offset = 0;
 			page_no -= 1;
+			if ( page_no < 1 ) page_no = 1;
 		}
 
 		char sql[1024];
+		snprintf(sql, sizeof(sql), "SELECT * FROM %s WHERE 1=0", table_name);
 
 #if 0
 		// 날짜로 소트
@@ -408,18 +410,19 @@ void show_board(pugi::xml_node node)
 
 		// 제목/내용으로 검색
 		if ( strlen(search_lt) > 0 ) {
-			sprintf(sql, "SELECT * FROM %s "
+			std::string lt = database::escape(search_lt);
+			snprintf(sql, sizeof(sql), "SELECT * FROM %s "
 					"WHERE TITLE LIKE '%%%s%%' "
 					"OR CONTENT LIKE '%%%s%%' "
-					"ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d", 
-					table_name, search_lt, search_lt, offset, show_max_line);
+					"ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d",
+					table_name, lt.c_str(), lt.c_str(), offset, show_max_line);
 
 		// 아이디로 검색
 		} else if ( strlen(search_li) > 0 ) {
-			sprintf(sql, "SELECT * FROM %s "
+			snprintf(sql, sizeof(sql), "SELECT * FROM %s "
 					"WHERE USER_ID LIKE '%%%s%%' "
-					"ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d", 
-					table_name, search_li, offset, show_max_line);
+					"ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d",
+					table_name, database::escape(search_li).c_str(), offset, show_max_line);
 
 		// 닉네임으로 검색
 		} else if ( strlen(search_ln) > 0 ) {
@@ -428,10 +431,10 @@ void show_board(pugi::xml_node node)
             const char *user_id;
             if ( exist ) {
                 user_id = user["USER_ID"].c_str();
-                sprintf(sql, "SELECT * FROM %s "
+                snprintf(sql, sizeof(sql), "SELECT * FROM %s "
                         "WHERE USER_ID LIKE '%%%s%%' "
-                        "ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d", 
-                        table_name, user_id, offset, show_max_line);
+                        "ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d",
+                        table_name, database::escape(user_id).c_str(), offset, show_max_line);
             }
 
 		} else {

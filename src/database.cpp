@@ -22,6 +22,17 @@ namespace database {
 		return true;
 	}
 
+	// SQL 문자열 이스케이프
+	std::string escape(const char *str)
+	{
+		size_t len = strlen(str);
+		char *buf = (char*)malloc(len*2+1);
+		mysql_real_escape_string(mysql, buf, str, len);
+		std::string ret = buf;
+		free(buf);
+		return ret;
+	}
+
 	// 첨부 파일 테이블 생성
 	bool create_attachment(void)
 	{
@@ -96,7 +107,7 @@ namespace database {
 		query.str("");
 		query << "INSERT INTO ";
 		query << table_name << " (USER_ID, DATE_TIME, TITLE, CONTENT) VALUES ( ";
-		query << "'" << user_id << "', ";
+		query << "'" << escape(user_id) << "', ";
 		query << "'" << date_time << "', ";
 		query << "'" << title2 << "', ";
 		query << "'" << content2 << "'";
@@ -221,7 +232,7 @@ namespace database {
 		query << " (FAMILY_TABLE, FAMILY_ID, USER_ID, DATE_TIME, FILENAME, ORIGINAL_FILENAME) VALUES ( ";
 		query << "'" << family_table_name << "', ";
 		query << "'" << family_no << "', ";
-		query << "'" << user_id << "', ";
+		query << "'" << escape(user_id) << "', ";
 		query << "'" << date_time << "', ";
 		query << "'" << tmp_filename << "', ";
 		query << "'" << filename2 << "'";
@@ -413,10 +424,11 @@ namespace database {
 	{
 		char query[9072];
 
-		sprintf(query, "SELECT COUNT(*) FROM %s "
+		std::string text2 = escape(text);
+		snprintf(query, sizeof(query), "SELECT COUNT(*) FROM %s "
 				"WHERE TITLE LIKE '%%%s%%' "
 				"OR CONTENT LIKE '%%%s%%';",
-				table_name, text, text);
+				table_name, text2.c_str(), text2.c_str());
 		if ( mysql_query(mysql, query) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -440,8 +452,8 @@ namespace database {
 	{
 		char query[9072];
 
-		sprintf(query, "SELECT COUNT(*) FROM %s "
-				"WHERE USER_ID LIKE '%%%s%%';", table_name, user_id);
+		snprintf(query, sizeof(query), "SELECT COUNT(*) FROM %s "
+				"WHERE USER_ID LIKE '%%%s%%';", table_name, escape(user_id).c_str());
 		if ( mysql_query(mysql, query) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -521,6 +533,9 @@ namespace database {
 		MYSQL_FIELD *sql_field;
 
 		sql_res = mysql_store_result(mysql);
+		if ( sql_res == NULL ) {
+			return rows;
+		}
 		int num_fields = mysql_num_fields(sql_res);
 
 		// 컬럼 이름 얻어옴
@@ -596,7 +611,7 @@ namespace database {
 	bool exist_nick_name(char *name) 
 	{
 		char buf[1024];
-		sprintf(buf, "SELECT * FROM member WHERE NICK_NAME='%s';", name);
+		snprintf(buf, sizeof(buf), "SELECT * FROM member WHERE NICK_NAME='%s';", escape(name).c_str());
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(buf);
 		if ( rows.size() > 0 ) {
 			return true;
@@ -607,7 +622,7 @@ namespace database {
 	bool exist_email_address(char *email) 
 	{
 		char buf[1024];
-		sprintf(buf, "SELECT * FROM member WHERE EMAIL='%s';", email);
+		snprintf(buf, sizeof(buf), "SELECT * FROM member WHERE EMAIL='%s';", escape(email).c_str());
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(buf);
 		if ( rows.size() > 0 ) {
 			return true;
@@ -618,19 +633,22 @@ namespace database {
 	bool check_same_password(char *user_id, char *passwd) 
 	{
 		char buf[1024];
-		sprintf(buf, "SELECT PASSWORD FROM member WHERE USER_ID='%s';", user_id);
+		snprintf(buf, sizeof(buf), "SELECT PASSWORD FROM member WHERE USER_ID='%s';", escape(user_id).c_str());
 		bool ok;
 		std::string password = fetch(buf, &ok);
+		if ( !ok || password.empty() ) {
+			return false;
+		}
 
-		
-		sprintf(buf, "SELECT PASSWORD('%s')", passwd);
-		if ( !strcmp(fetch((char*)buf, &ok).c_str(), password.c_str()) ) {
+		snprintf(buf, sizeof(buf), "SELECT PASSWORD('%s')", escape(passwd).c_str());
+		std::string hashed = fetch((char*)buf, &ok);
+		if ( ok && !strcmp(hashed.c_str(), password.c_str()) ) {
 			return true;
 		}
 
 		return false;
 	}
-	
+
 #if 0
 	bool check_admin(char *user_id)
 	{
@@ -648,8 +666,8 @@ namespace database {
 	bool set_lastlogin_datetime(char *user_id)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET LASTLOGIN_DATETIME='%s' WHERE USER_ID='%s';", 
-			datetime_now_string(false).c_str(), user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET LASTLOGIN_DATETIME='%s' WHERE USER_ID='%s';",
+			datetime_now_string(false).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -662,7 +680,7 @@ namespace database {
 	bool set_user_level(char *user_id, int level)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET LEVEL='%d' WHERE USER_ID='%s';", level, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET LEVEL='%d' WHERE USER_ID='%s';", level, escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -675,7 +693,8 @@ namespace database {
 	bool set_user_nick_name(char *user_id, char *nick_name)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET NICK_NAME='%s' WHERE USER_ID='%s';", nick_name, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET NICK_NAME='%s' WHERE USER_ID='%s';",
+				escape(nick_name).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -688,7 +707,8 @@ namespace database {
 	bool set_user_password(char *user_id, char *password)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET PASSWORD=PASSWORD('%s') WHERE USER_ID='%s';", password, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET PASSWORD=PASSWORD('%s') WHERE USER_ID='%s';",
+				escape(password).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -701,7 +721,8 @@ namespace database {
 	bool set_user_birthday(char *user_id, char *birthday)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET BIRTHDAY='%s' WHERE USER_ID='%s';", birthday, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET BIRTHDAY='%s' WHERE USER_ID='%s';",
+				escape(birthday).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -714,7 +735,8 @@ namespace database {
 	bool set_user_sex(char *user_id, char *sex)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET SEX='%s' WHERE USER_ID='%s';", sex, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET SEX='%s' WHERE USER_ID='%s';",
+				escape(sex).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -727,7 +749,8 @@ namespace database {
 	bool set_user_email(char *user_id, char *email)
 	{
 		char buf[1024];
-		sprintf(buf, "UPDATE member SET EMAIL='%s' WHERE USER_ID='%s';", email, user_id);
+		snprintf(buf, sizeof(buf), "UPDATE member SET EMAIL='%s' WHERE USER_ID='%s';",
+				escape(email).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -740,7 +763,7 @@ namespace database {
 	bool delete_user(char *user_id)
 	{
 		char buf[1024];
-		sprintf(buf, "DELETE FROM member WHERE USER_ID='%s';", user_id);
+		snprintf(buf, sizeof(buf), "DELETE FROM member WHERE USER_ID='%s';", escape(user_id).c_str());
 
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
@@ -782,11 +805,11 @@ namespace database {
 	std::map<std::string, std::string> user_info(char *user_id, bool *exist)
 	{
 		char buf[1024];
-		sprintf(buf, "SELECT * FROM member WHERE USER_ID='%s';", user_id);
+		snprintf(buf, sizeof(buf), "SELECT * FROM member WHERE USER_ID='%s';", escape(user_id).c_str());
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(buf);
 		if ( rows.size() == 1 )  {
 			*exist = true;
-			return fetch_rows(buf).at(0);
+			return rows.at(0);
 		}
 		else {
 			*exist = false;
@@ -798,11 +821,11 @@ namespace database {
 	std::map<std::string, std::string> user_info_by_nick_name(char *nick_name, bool *exist)
 	{
 		char buf[1024];
-		sprintf(buf, "SELECT * FROM member WHERE NICK_NAME='%s';", nick_name);
+		snprintf(buf, sizeof(buf), "SELECT * FROM member WHERE NICK_NAME='%s';", escape(nick_name).c_str());
 		std::vector<std::map<std::string, std::string> > rows = fetch_rows(buf);
 		if ( rows.size() >= 1 )  {
 			*exist = true;
-			return fetch_rows(buf).at(rows.size()-1);
+			return rows.at(rows.size()-1);
 		}
 		else {
 			*exist = false;
@@ -868,9 +891,9 @@ namespace database {
 		query << "'" << port_number << "', ";
 		if ( strlen(password) > 0 ) {
 			// 단방향 패스워드 알고리즘 사용
-			query << "PASSWORD('" << password << "'), ";
+			query << "PASSWORD('" << escape(password) << "'), ";
 		} else {
-			query << "'" << password << "', ";
+			query << "'', ";
 		}
 		query << "'" << max_user << "', ";
 		query << "'" << title2 << "'";
@@ -970,7 +993,7 @@ namespace database {
 		std::string password = fetch(buf, &ok);
 
 		
-		sprintf(buf, "SELECT PASSWORD('%s')", passwd);
+		snprintf(buf, sizeof(buf), "SELECT PASSWORD('%s')", escape(passwd).c_str());
 		if ( !strcmp(fetch((char*)buf, &ok).c_str(), password.c_str()) ) {
 			return true;
 		}

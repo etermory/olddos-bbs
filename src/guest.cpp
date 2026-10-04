@@ -104,10 +104,10 @@ int main(int argc, char **argv)
 						printf("\r\n 이미 가입된 아이디 입니다.");
 					} else {
 						int error=0;
-						int i;
+						unsigned int i;
 						for(i=0; i<strlen(user_id); i++) {
-							if (is_han(user_id[i])) {
-								printf("\r\n 영문만 지원합니다.");
+							if (!isalnum((unsigned char)user_id[i]) && user_id[i] != '_') {
+								printf("\r\n 영문, 숫자, _ 만 사용할 수 있습니다.");
 								error=1;
 								break;
 							}
@@ -176,6 +176,8 @@ int main(int argc, char **argv)
 				if ( !is_date_valid(day, month, year) ) {
 					printf("\r\n 잘못 입력 되었습니다.");
 				} else {
+					// 입력 문자열 대신 정규화된 날짜를 저장
+					snprintf(birthday, sizeof(birthday), "%04d-%02d-%02d", year, month, day);
 					check[3] = 1;
 					break;
 				}
@@ -235,13 +237,13 @@ int main(int argc, char **argv)
 	query << "		USER_ID, NICK_NAME, BIRTHDAY, PASSWORD, EMAIL, SEX, LEVEL, IS_OPEN,";
 	query << "		REGISTRATION_DATETIME, LASTLOGIN_DATETIME ";
 	query << ") VALUES (";
-	query << "'" << user_id << "', ";
-	query << "'" << nick_name << "', ";
-	query << "'" << birthday << "', ";
+	query << "'" << database::escape(user_id) << "', ";
+	query << "'" << database::escape(nick_name) << "', ";
+	query << "'" << database::escape(birthday) << "', ";
 	// 단방향 패스워드 알고리즘 사용
-	query << "PASSWORD('" << user_passwd << "'), ";
-	query << "'" << email_address << "', ";
-	query << "'" << sex << "', ";
+	query << "PASSWORD('" << database::escape(user_passwd) << "'), ";
+	query << "'" << database::escape(email_address) << "', ";
+	query << "'" << database::escape(sex) << "', ";
 	query << "'" << level << "', ";
 	query << "'" << 0 << "', ";
 	query << "'" << datetime_now_string(false) << "', ";
