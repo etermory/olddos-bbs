@@ -276,6 +276,7 @@ void show_menu(pugi::xml_node node)
 #else
                             char buf[1024];
                             sprintf(buf, "%s/bin/weather \"%s\"", getenv("HANULSO"), host_name);
+                            fflush(stdout);
                             system(buf);
 #endif
 							proceed = true;
@@ -1466,6 +1467,7 @@ bool jump_go(std::string go)
 #else
 				char buf[1024];
                 sprintf(buf, "%s/bin/weather \"%s\"", getenv("HANULSO"), host_name);
+				fflush(stdout);
 				system(buf);
 #endif
 				proceed = true;
@@ -1568,6 +1570,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 			if ( login_user_is_admin ) {
 				char buf[1024];
 				sprintf(buf, "%s/bin/sysop \"%s\"", getenv("HANULSO"), tty);
+				fflush(stdout);
 				system(buf);
 
 			} else {
@@ -1580,6 +1583,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 		} else if ( !strcasecmp(args[0].c_str(), "xx") ) {
 			char buf[1024];
 			sprintf(buf, "%s/bin/memo \"%s\"", getenv("HANULSO"), tty);
+			fflush(stdout);
 			system(buf);
 
 		// 접속 회원 목록
@@ -1865,8 +1869,9 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 		}
 
 		char buf[1024];
-		snprintf(buf, sizeof(buf), "%s/bin/%s %s", getenv("HANULSO"), prog.c_str(),
+		snprintf(buf, sizeof(buf), "%s/bin/%s %s", getenv("HANULSO"), prog.c_str(), 
 				shell_quote(host_name).c_str());
+		fflush(stdout);
 		system(buf);
 	}
 
@@ -1878,6 +1883,8 @@ void run_mbti_gs()
 {
 	char buf[1024];
 	sprintf(buf, "%s/bin/mbti_gs", getenv("HANULSO"));
+	// 먼저 출력한 내용이 버퍼에 남아 있다가 외부 프로그램 출력 뒤에 나가지 않도록
+	fflush(stdout);
 	system(buf);
 }
 
@@ -1892,6 +1899,8 @@ void print_biorhythm(char *user_id)
 
 	char buf[1024];
 	sprintf(buf, "%s/bin/biorhythm %d %d %d", getenv("HANULSO"), year, month, day);
+	// 먼저 출력한 내용(화면 지우기 등)이 버퍼에 남아 있다가 그래프 뒤에 나가지 않도록
+	fflush(stdout);
 	system(buf);
 	ioctl(0, TCSETAF, &curr_term);
 }
