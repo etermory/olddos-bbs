@@ -1007,10 +1007,12 @@ bool make_editor_tmpfile(char *dir, char *file, size_t size)
 	return true;
 }
 
-// 화면 편집기 실행 명령. -o: 작업 디렉터리 밖은 읽고 쓸 수 없게 (빼면 서버의 다른 파일이 보인다)
+// 화면 편집기 실행 명령.
+//   -o : 작업 디렉터리 밖은 읽고 쓸 수 없게 (빼면 서버의 다른 파일이 보인다)
+//   -r76 : 76 칸에서 자동 줄바꿈 (게시판 글 보기 폭에 맞춤)
 std::string screen_editor_command(const char *dir, const char *file)
 {
-	return std::string(getenv("HANULSO")) + "/bin/pico -o " + shell_quote(dir) + " " + shell_quote(file);
+	return std::string(getenv("HANULSO")) + "/bin/pico -r76 -o " + shell_quote(dir) + " " + shell_quote(file);
 }
 
 void add_user_tmpfile(char *path)
