@@ -4,9 +4,33 @@ std::string random_string(const int len)
 {
 	char alphanum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+";
 	std::stringstream ss;
-	srand(time(NULL));
+
+	// 예측할 수 없도록 /dev/urandom 사용
+	unsigned char rnd[256];
+	int n = 0;
+	int fd = open("/dev/urandom", O_RDONLY);
+	if ( fd >= 0 ) {
+		n = read(fd, rnd, sizeof(rnd));
+		close(fd);
+	}
+
+	int k = 0;
 	for (int i = 0; i < len; ++i) {
-		ss << alphanum[rand() % (sizeof(alphanum) - 1)];
+		unsigned int r;
+		// 나머지 편향을 없애기 위해 범위를 넘는 값은 버림
+		const unsigned int count = sizeof(alphanum) - 1;
+		const unsigned int limit = 256 - (256 % count);
+		do {
+			if ( k < n ) {
+				r = rnd[k++];
+			} else {
+				// /dev/urandom 을 못 읽은 경우의 예비 수단
+				static bool seeded = false;
+				if ( !seeded ) { srand(time(NULL) ^ (getpid() << 16)); seeded = true; }
+				r = rand() % limit;
+			}
+		} while ( r >= limit );
+		ss << alphanum[r % count];
 	}
 	return ss.str();
 }
@@ -72,8 +96,7 @@ std::vector<std::string> exec_command(char *command, bool *success)
 	FILE *fp = popen(command, "r");
 	if (fp == NULL) {
 		*success = false;
-		//printf("Failed to run command\n" );
-		//exit(1);
+		return lines;
 	}
 
 	/* Read the output a line at a time - output it. */
@@ -81,10 +104,10 @@ std::vector<std::string> exec_command(char *command, bool *success)
 		lines.push_back(std::string(line));
 	}
 
-	/* close */
-	pclose(fp);
+	/* close: 종료 코드가 0 일 때만 성공 */
+	int status = pclose(fp);
 
-	*success = true;
+	*success = ( status != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0 );
 	return lines;
 }
 

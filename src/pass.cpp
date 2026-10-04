@@ -99,25 +99,17 @@ int main(int argc, char **argv)
         return_login();
     }
 
-	printf(ESC_ENG);
-	printf("\r\n\n 2. 등록된 이메일 주소는 다음과 같습니다.");
-    printf("\r\n    이메일 주소 뒷 부분이 짤렸다면 짤린부분을 입력해주세요.");
-    printf("\r\n    아니라면 [Enter]를 누르세요.");
+	// 등록된 이메일 주소로만 발송한다. (사용자가 주소를 덧붙이면 다른 사람이 메일을 가로챌 수 있음)
     char email_address[1024];
-    char tmp[512];
-	while (1) {
-		printf("\r\n >> %s", user["EMAIL"].c_str());
-		line_input(tmp, 40);
-		if ( !strcasecmp(tmp, "/x") ) return_login();
+    snprintf(email_address, sizeof(email_address), "%s", user["EMAIL"].c_str());
 
-        sprintf(email_address, "%s%s", user["EMAIL"].c_str(), tmp);
-
-        if ( !is_email_valid(email_address) ) {
-            printf("\r\n 잘못 입력 되었습니다.");
-		} else {
-            break;
-		}
-	}
+    if ( !is_email_valid(email_address) ) {
+        printf("\r\n\r\n 등록된 이메일 주소가 올바르지 않습니다.");
+        printf("\r\n 도스박물관 [하늘소] 에게 쪽지나 댓글을 주시면 변경해드립니다.");
+        printf("\r\n [Enter] 를 누르세요.");
+        press_enter();
+        return_login();
+    }
 
     /*
 	printf("\r\n 2. 생년월일을 입력하세요. (년-월-일) (ex) 1970-9-12");
@@ -148,10 +140,11 @@ int main(int argc, char **argv)
 	printf("\r\n %s", email_address);
 	printf("\r\n 비밀번호를 초기화 하시겠습니까? (y/n) ");
 		
-	char buf[2];
-	line_input(buf, 1);
+	char answer[2];
+	line_input(answer, 1);
 
-	if ( !strcasecmp(buf, "y") ) {
+	if ( !strcasecmp(answer, "y") ) {
+        char buf[9072];
         char path[9072];
         sprintf(path, "%s/tmp", getenv("HANULSO"));
         sprintf(path, "%s", tempnam(path, "pass"));
@@ -159,6 +152,12 @@ int main(int argc, char **argv)
         std::string new_pass = random_string(10);
 
         FILE *fp = fopen(path, "w");
+        if ( fp == NULL ) {
+            printf("\r\n\r\n 임시 파일을 만들 수 없습니다.");
+            printf("\r\n [Enter] 를 누르세요.");
+            press_enter();
+            return_login();
+        }
         fprintf(fp, "'%s'님 안녕하세요.\r\n", user["NICK_NAME"].c_str());
         fprintf(fp, "변경된 도스박물관 BBS의 비밀번호는 %s 입니다.\r\n", new_pass.c_str());
         fprintf(fp, "반드시 접속후 'PE' 커맨드로 비밀번호를 변경해주세요.\r\n");
@@ -171,20 +170,30 @@ int main(int argc, char **argv)
         char path2[9072];
         sprintf(path2, "%s", tempnam(path, "pass-utf8"));
 
-        sprintf(cmd, "iconv -f EUC-KR -t UTF8 %s > %s", path, path2);
+        snprintf(cmd, sizeof(cmd), "iconv -f EUC-KR -t UTF8 %s > %s",
+            shell_quote(path).c_str(), shell_quote(path2).c_str());
         exec_command(cmd, &success);
 
-        sprintf(cmd, "%s/bin/mailsend -to \"%s\" -from \"%s\""
-            " -sub \"[%s] 비밀번호 변경 알림\""
+        // SMTP 비밀번호는 ps 에 보이지 않도록 환경변수로 전달 (mailsend 가 SMTP_USER_PASS 를 읽음)
+        setenv("SMTP_USER_PASS", mailserver_passwd, 1);
+
+        std::string subject = std::string("[") + host_name + "] 비밀번호 변경 알림";
+        std::string log_path = std::string(getenv("HANULSO")) + "/tmp/mailsend.log";
+
+        snprintf(cmd, sizeof(cmd), "%s/bin/mailsend -to %s -from %s"
+            " -sub %s"
             " -starttls -port %s -auth -smtp %s -user %s"
-            " -pass \"%s\" -M \"`cat %s`\" -log \"/tmp/mailsend.log\"",
-            getenv("HANULSO"), email_address, 
-            mailserver_user, host_name, 
-            mailserver_port, mailserver_host, mailserver_user, mailserver_passwd, path2);
+            " -M \"`cat %s`\" -log %s",
+            getenv("HANULSO"), shell_quote(email_address).c_str(),
+            shell_quote(mailserver_user).c_str(), shell_quote(subject).c_str(),
+            shell_quote(mailserver_port).c_str(), shell_quote(mailserver_host).c_str(),
+            shell_quote(mailserver_user).c_str(), shell_quote(path2).c_str(),
+            shell_quote(log_path).c_str());
 
         printf("\r\n\r\n 이메일을 발송중입니다..."); fflush(stdout);
 
         std::vector<std::string> lines = exec_command(cmd, &success);
+        unsetenv("SMTP_USER_PASS");
 
         if ( success ) {
             database::set_user_password(user_id, (char*)new_pass.c_str());
@@ -195,10 +204,8 @@ int main(int argc, char **argv)
             printf("\r\n 이메일 발송을 실패하였습니다.\r\n");
         }
 
-        sprintf(buf, "rm -f %s", path);
-        system(buf);
-        sprintf(buf, "rm -f %s", path2);
-        system(buf);
+        unlink(path);
+        unlink(path2);
 
         printf("\r\n [Enter] 를 누르세요.");
         press_enter();
