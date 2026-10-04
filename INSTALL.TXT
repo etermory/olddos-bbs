@@ -1,24 +1,24 @@
-°èÁ¤ Ãß°¡
+ê³„ì • ì¶”ê°€
 ==============
 % sudo adduser bbs
 % sudo passwd bbs
 
-EUC-KR ÇÑ±Û Ãâ·Â ¼³Á¤
+EUC-KR í•œê¸€ ì¶œë ¥ ì„¤ì •
 ==============
 % vim ~/.bashrc
 export LANG=ko_KR.eucKR
 
-SELinux ²ô±â
+SELinux ë„ê¸°
 ==============
 % vim /etc/sysconfig/selinux
 SELINUX=disabled
 % reboot or setenforce=0
 
-ÅÚ³İ ¼­¹ö ¼³Ä¡
+í…”ë„· ì„œë²„ ì„¤ì¹˜
 ==============
 % yum install xinetd telnet-server
 
-ÅÚ³İ BBS µ¥¸ó ¿¬µ¿
+í…”ë„· BBS ë°ëª¬ ì—°ë™
 ==============
 % vim /etc/xinetd.d/telnet
 service telnet
@@ -35,28 +35,35 @@ service telnet
 
 % /etc/init.d/xinetd restart
 
-ÅÚ³İ ¼³Á¤
+í…”ë„· ì„¤ì •
 ==============
 % vim /etc/xinetd.conf
-# ¶È °°Àº IPÁÖ¼Ò·Î ·ÎÄÃ ¼­ºñ½º¿¡ Á¢¼ÓÇÒ ¼ö ÀÖ´Â ÃÖ´ë Á¢¼Ó ¼ö (¹«Á¦ÇÑÀº UNLIMITED·Î ¼ÂÆÃ)
+# ë˜‘ ê°™ì€ IPì£¼ì†Œë¡œ ë¡œì»¬ ì„œë¹„ìŠ¤ì— ì ‘ì†í•  ìˆ˜ ìˆëŠ” ìµœëŒ€ ì ‘ì† ìˆ˜ (ë¬´ì œí•œì€ UNLIMITEDë¡œ ì…‹íŒ…)
 per_source      = 10
-# µ¿½Ã¿¡ ¼­ºñ½º ÇÒ ¼ö ÀÖ´Â ¼·ÀÇ ÃÖ´ë °³¼ö (¹«Á¦ÇÑÀº UNLIMITED·Î ¼ÂÆÃ)
+# ë™ì‹œì— ì„œë¹„ìŠ¤ í•  ìˆ˜ ìˆëŠ” ì„­ì˜ ìµœëŒ€ ê°œìˆ˜ (ë¬´ì œí•œì€ UNLIMITEDë¡œ ì…‹íŒ…)
 instances       = 60
 
 % vim /etc/sysconfig/iptables
-¾Æ·¡ Ãß°¡
+ì•„ë˜ ì¶”ê°€
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 23 -j ACCEPT
 % service iptables restart
 
-g++ ¼³Ä¡
+g++ ì„¤ì¹˜
 ==============
 % yum install -y gcc-c++
 
-ZMODEM ÇÁ·ÎÅäÄİ ÇÁ·Î±×·¥ ¼³Ä¡
+ZMODEM í”„ë¡œí† ì½œ í”„ë¡œê·¸ë¨ ì„¤ì¹˜
 ==============
 % yum install lrzsz
 
-½ºÅ©¸° ¿¡µğÅÍ nano ÃÖ½Å ¹öÀü ¼³Ä¡
+Kermit í”„ë¡œí† ì½œ ì„¤ì¹˜
+==============
+% wget https://www.kermitproject.org/ftp/kermit/archives/gku201.tar.gz
+% mkdir gkermit; cd gkermit
+% tar xvfz gku201.tar.gz
+% make
+
+ìŠ¤í¬ë¦° ì—ë””í„° nano ìµœì‹  ë²„ì „ ì„¤ì¹˜
 ==============
 $ wget http://ftp.gnu.org/gnu/nano/nano-2.9.6.tar.gz
 $ tar xvfz nano-2.9.6.tar.gz
@@ -70,27 +77,27 @@ GNU nano, version 2.9.6
 Email: nano@nano-editor.org	Web: https://nano-editor.org/
 Compiled options: --disable-libmagic --enable-utf8
 
-lsb_release ¼³Ä¡ (¹èÆ÷ÆÇ È®ÀÎ Ä¿¸Çµå)
+lsb_release ì„¤ì¹˜ (ë°°í¬íŒ í™•ì¸ ì»¤ë§¨ë“œ)
 ==============
 % yum install redhat-lsb-core
 
-dos2unix ¼³Ä¡
+dos2unix ì„¤ì¹˜
 ==============
 % yum install dos2unix unix2dos
 
-iconv ¼³Ä¡
+iconv ì„¤ì¹˜
 ==============
 % already installed
 
-libz ¼³Ä¡
+libz ì„¤ì¹˜
 ==============
 % yum install zlib-devel
 
-openssl ¼³Ä¡
+openssl ì„¤ì¹˜
 ==============
 % yum install openssl-devel
 
-MariaDB ¼³Ä¡
+MariaDB ì„¤ì¹˜
 ==============
 % vim /etc/yum.repos.d/MariaDB.repo
 [mariadb]
@@ -101,20 +108,20 @@ gpgcheck=1
 % yum install MariaDB-server MariaDB-client
 % service mysql restart
 
-root ÆĞ½º¿öµå ¼³Á¤
+root íŒ¨ìŠ¤ì›Œë“œ ì„¤ì •
 ==============
 % mysql -u root -p
 No password required
 > use mysql;
-> UPDATE mysql.user SET Password=PASSWORD('PASSWORDÀÔ·Â') WHERE User='root' AND Host='localhost';
+> UPDATE mysql.user SET Password=PASSWORD('PASSWORDì…ë ¥') WHERE User='root' AND Host='localhost';
 > flush privileges; 
 > quit;
 
-Connector ¼³Ä¡
+Connector ì„¤ì¹˜
 ==============
 % yum install mysql-devel
 
-MariaDB ¼­ºñ½º ½ÇÇà ¹× È®ÀÎ
+MariaDB ì„œë¹„ìŠ¤ ì‹¤í–‰ ë° í™•ì¸
 ==============
 % service mysql restart
 % service mysql status
