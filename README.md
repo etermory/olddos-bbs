@@ -64,6 +64,8 @@
 - 대화방 개설, 비밀방, 인원 제한
 - 귓속말 (`/SAY`), 접속자 조회 (`/LIST`), 퇴장 (`/BYE`), 대화방 닫기 (`/QUIT`)
 
+<img width="850" alt="대화방 화면" src="docs/screenshots/chat.png" />
+
 **생활정보** (`go life`)
 - 날씨와 미세먼지: 전국 시/군/구 231 곳, 3 시간 간격 예보 (Open-Meteo)
 - 뉴스: 71 개 언론사 342 개 RSS
