@@ -75,6 +75,7 @@
 
 <img width="850" alt="생활정보 화면" src="docs/screenshots/life_info.png" />
 <img width="850" alt="날씨 정보 화면" src="docs/screenshots/weather.png" />
+<img width="850" alt="뉴스 언론사 목록 화면" src="docs/screenshots/news.png" />
 
 **머드 게임** (`go game`)
 - 용사의 전설: 옛 BBS 도어 게임 방식의 1 인용 텍스트 RPG
