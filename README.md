@@ -62,7 +62,7 @@
 - 12 레벨에 붉은 용을 쓰러뜨리면 영웅 칭호를 얻고 처음부터 다시 시작합니다
 - 장면마다 아스키 그림, 체력 막대가 있는 2 단 전투 화면, 함께 보는 용사 순위와 마을 소식 (MySQL `game_hero`, `game_news` 테이블)
 
-<img width="850" alt="용사의 전설 마을 화면" src="docs/screenshots/hero.png" />
+<img width="850" alt="용사의 전설 타이틀 화면" src="docs/screenshots/hero.png" />
 
 ### 2. 쥬라기공원 2 — `go jurassic`
 
