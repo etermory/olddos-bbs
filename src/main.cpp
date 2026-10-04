@@ -164,6 +164,18 @@ int main(int argc, char **argv)
 	}
 	printf("\r\n [노    드] : pts/%s", tty);
 
+	// 새 쪽지 알림
+	database::create_memo();
+	{
+		std::string q = "SELECT COUNT(*) AS CNT FROM memo WHERE RECIPIENT_USER_ID='"
+			+ database::escape(login_user_id) + "' AND RECIPIENT_DELETED=0 AND CONFIRMATION_DATETIME IS NULL";
+		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+		int cnt = r.size() > 0 ? atoi(r[0]["CNT"].c_str()) : 0;
+		if ( cnt > 0 ) {
+			printf("\r\n\r\n \033[=14F읽지 않은 쪽지가 %d 통 있습니다. (MEMO)\033[=15F", cnt);
+		}
+	}
+
 	
 	// 바이오리듬 출력
 	printf("\r\n\r\n");
@@ -1590,12 +1602,12 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 				press_enter();
 			}
 
-		// 관리자 프로그램
-		} else if ( !strcasecmp(args[0].c_str(), "xx") ) {
-			char buf[1024];
-			sprintf(buf, "%s/bin/memo \"%s\"", getenv("HANULSO"), tty);
+		// 쪽지
+		} else if ( !strcasecmp(args[0].c_str(), "memo") ) {
+			std::string cmd = std::string(getenv("HANULSO")) + "/bin/memo "
+				+ shell_quote(tty) + " " + shell_quote(login_user_id);
 			fflush(stdout);
-			system(buf);
+			system(cmd.c_str());
 
 		// 접속 회원 목록
 		} else if ( !strcasecmp(args[0].c_str(), "us") ) {

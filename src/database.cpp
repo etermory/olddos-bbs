@@ -939,16 +939,34 @@ namespace database {
 	{
 		char buf[9072];
 		sprintf(buf, "CREATE TABLE IF NOT EXISTS memo ( "
+				"NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
 				"SENDER_USER_ID TEXT NOT NULL, "
 				"RECIPIENT_USER_ID TEXT NOT NULL, "
 				"CREATION_DATETIME DATETIME NOT NULL, "
 				"CONFIRMATION_DATETIME DATETIME, "
 				"TITLE TEXT NOT NULL, "
-				"CONTENT MEDIUMTEXT NOT NULL);");
+				"CONTENT MEDIUMTEXT NOT NULL, "
+				"SENDER_DELETED INT NOT NULL DEFAULT 0, "
+				"RECIPIENT_DELETED INT NOT NULL DEFAULT 0, "
+				"KEY IDX_MEMO_RECIPIENT (RECIPIENT_USER_ID(20)), "
+				"KEY IDX_MEMO_SENDER (SENDER_USER_ID(20)));");
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
 			return false;
+		}
+
+		// old memo table without NO / deleted flags
+		const char *cols[][2] = {
+			{ "NO", "ALTER TABLE memo ADD COLUMN NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST" },
+			{ "SENDER_DELETED", "ALTER TABLE memo ADD COLUMN SENDER_DELETED INT NOT NULL DEFAULT 0" },
+			{ "RECIPIENT_DELETED", "ALTER TABLE memo ADD COLUMN RECIPIENT_DELETED INT NOT NULL DEFAULT 0" },
+		};
+		for (unsigned int i=0; i<sizeof(cols)/sizeof(cols[0]); i++) {
+			sprintf(buf, "SHOW COLUMNS FROM memo LIKE '%s'", cols[i][0]);
+			if ( fetch_rows(buf).size() == 0 ) {
+				mysql_query(mysql, cols[i][1]);
+			}
 		}
 
 		return true;

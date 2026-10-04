@@ -82,8 +82,8 @@ mbti_gs: mbti_gs.o
 	$(CC) -o ../bin/$@ mbti_gs.o -lm
 	$(STRIP) ../bin/$@
 
-memo: memo.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
-	$(CXX) -o ../bin/$@ pugixml.o memo.o database.o utility.o textutil.o settings.o menu.o re.o \
+memo: memo.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o lineeditor.o
+	$(CXX) -o ../bin/$@ pugixml.o memo.o database.o utility.o textutil.o settings.o menu.o re.o lineeditor.o \
 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
