@@ -174,6 +174,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del);
 
 // 성격 검사
 void run_mbti_gs();
+bool run_menu_program(pugi::xml_node node, const std::string &type);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);
 void print_biorhythm(char *user_id);
@@ -266,6 +267,7 @@ std::string string_chop(std::string str, unsigned int length, std::string chop);
 bool check_used_port(int port);
 std::string add_slashes(std::string str);
 std::string shell_quote(const std::string &str);
+bool download_url(const std::string &url, const std::string &path);
 int check_password_strongness(std::string str);
 
 char *utf8_to_cp949(char * input);

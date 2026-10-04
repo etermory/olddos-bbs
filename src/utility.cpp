@@ -1086,6 +1086,32 @@ bool check_used_port(int port)
 	return false;
 }
 
+// URL 을 path 로 받아 온다.
+// CentOS 6 의 wget 은 SNI 를 지원하지 않아 https 사이트가 많이 실패하므로 curl 을 먼저 쓴다.
+// 오래된 인증서 묶음 때문에 인증서 검증은 하지 않는다 (뉴스/날씨 등 읽기 전용 자료).
+// 일부 사이트는 단순한 User-Agent 를 막으므로 compatible 형식을 쓴다.
+bool download_url(const std::string &url, const std::string &path)
+{
+	const char *ua = "Mozilla/5.0 (compatible; OldDosBBS/1.0)";
+	char buf[4096];
+
+	snprintf(buf, sizeof(buf), "curl -s -L -k --max-time 20 -A %s -o %s %s",
+			shell_quote(ua).c_str(), shell_quote(path).c_str(), shell_quote(url).c_str());
+	int a = system(buf);
+	if ( WEXITSTATUS(a) == 0 && file_size(path) > 0 ) {
+		return true;
+	}
+
+	snprintf(buf, sizeof(buf), "wget -q -T 20 -t 1 --no-check-certificate -U %s -O %s %s",
+			shell_quote(ua).c_str(), shell_quote(path).c_str(), shell_quote(url).c_str());
+	a = system(buf);
+	if ( WEXITSTATUS(a) == 0 && file_size(path) > 0 ) {
+		return true;
+	}
+
+	return false;
+}
+
 // 셸 명령 인자를 작은따옴표로 감싼다 (' 는 '\'' 로 바꿈)
 std::string shell_quote(const std::string &str)
 {

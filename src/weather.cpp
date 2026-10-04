@@ -428,6 +428,72 @@ std::string date_after(int days)
 	return buf;
 }
 
+// URL 의 내용을 받아 온다
+bool fetch_csv(const char *url, std::string &csv)
+{
+    char tmpdir[1024];
+	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
+	std::string path = std::string(tempnam(tmpdir, "weather")) + ".csv";
+
+	bool ok = download_url(url, path);
+	csv = read_file(path.c_str());
+	unlink(path.c_str());
+
+	return ok && !csv.empty();
+}
+
+// 미세먼지 등급 (환경부 기준)
+const char *dust_grade(double v, bool pm25)
+{
+	if ( v < 0 ) return "-";
+	if ( pm25 ) {
+		if ( v <= 15 ) return "좋음";
+		if ( v <= 35 ) return "보통";
+		if ( v <= 75 ) return "나쁨";
+		return "매우나쁨";
+	}
+	if ( v <= 30 ) return "좋음";
+	if ( v <= 80 ) return "보통";
+	if ( v <= 150 ) return "나쁨";
+	return "매우나쁨";
+}
+
+// Open-Meteo 대기질 예보에서 지금 시각의 미세먼지(PM10), 초미세먼지(PM2.5)
+bool get_air(const region &r, double *pm10, double *pm25)
+{
+	char url[1024];
+	snprintf(url, sizeof(url), "http://air-quality-api.open-meteo.com/v1/air-quality"
+			"?latitude=%.2f&longitude=%.2f&hourly=pm10,pm2_5"
+			"&timezone=Asia%%2FSeoul&forecast_days=1&format=csv",
+			r.lat, r.lon);
+
+	*pm10 = -1;
+	*pm25 = -1;
+
+	std::string csv;
+	if ( !fetch_csv(url, csv) ) {
+		return false;
+	}
+
+	char now[32];
+	time_t t = time(NULL);
+	strftime(now, sizeof(now), "%Y-%m-%dT%H", localtime(&t));
+
+	std::vector<std::string> lines = split_string(csv, '\n');
+	for (unsigned int i=0; i<lines.size(); i++) {
+		std::string line = trim(lines[i]);
+		if ( line.compare(0, 13, now) != 0 ) continue;
+
+		std::vector<std::string> cols = split_string(line, ',');
+		if ( cols.size() >= 3 ) {
+			if ( !cols[1].empty() ) *pm10 = atof(cols[1].c_str());
+			if ( !cols[2].empty() ) *pm25 = atof(cols[2].c_str());
+			return true;
+		}
+	}
+	return false;
+}
+
 // Open-Meteo 에서 예보를 받아 온다 (CSV 형식)
 bool get_forecast(const region &r, std::vector<forecast> &hourly,
 		std::map<std::string, std::pair<double, double> > &daily)
@@ -440,20 +506,8 @@ bool get_forecast(const region &r, std::vector<forecast> &hourly,
 			"&timezone=Asia%%2FSeoul&forecast_days=3&wind_speed_unit=ms&format=csv",
 			r.lat, r.lon);
 
-    char tmpdir[1024];
-    char tmpname[1024];
-	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
-	snprintf(tmpname, sizeof(tmpname), "%s.csv", tempnam(tmpdir, "weather"));
-
-	char cmd[2048];
-	snprintf(cmd, sizeof(cmd), "wget -q -T 10 -t 2 -O %s %s",
-			shell_quote(tmpname).c_str(), shell_quote(url).c_str());
-	int a = system(cmd);
-
-	std::string csv = read_file(tmpname);
-	unlink(tmpname);
-
-	if ( WEXITSTATUS(a) != 0 || csv.empty() ) {
+	std::string csv;
+	if ( !fetch_csv(url, csv) ) {
 		return false;
 	}
 
@@ -506,14 +560,25 @@ void show_info(const region &r)
 		return;
 	}
 
+	// 미세먼지
+	double pm10, pm25;
+	get_air(r, &pm10, &pm25);
+
 	// -----------------------------------------------------------
     printf("\033[4;1H\033[K");
+	if ( pm10 >= 0 || pm25 >= 0 ) {
+		printf(" 지금 미세먼지 %d㎍/㎥ (%s)   초미세먼지 %d㎍/㎥ (%s)",
+				round_int(pm10), dust_grade(pm10, false), round_int(pm25), dust_grade(pm25, true));
+	} else {
+		printf(" 미세먼지 정보를 받아오지 못했습니다.");
+	}
+    printf("\033[5;1H");
     printf("%5s %8s %13s %15s %10s %10s %10s\r\n",
             "시간", "날짜", "온도(고/저)", "날씨", "강수확률", "풍향", "풍속(m/s)");
-    printf("\033[5;1H");
+    printf("\033[6;1H");
     printf("%s", repeat("─", 40).c_str());
 
-	// 지금 시각 이후, 3 시간 간격으로 16 개 (이틀치)
+	// 지금 시각 이후, 3 시간 간격으로 14 개 (이틀치)
 	char now[32];
 	time_t t = time(NULL);
 	strftime(now, sizeof(now), "%Y-%m-%dT%H", localtime(&t));
@@ -522,9 +587,9 @@ void show_info(const region &r)
 	std::string tomorrow = date_after(1);
 	std::string after = date_after(2);
 
-    printf("\033[6;1H");
+    printf("\033[7;1H");
 	int shown = 0;
-	for (unsigned int i=0; i<hourly.size() && shown < 16; i++) {
+	for (unsigned int i=0; i<hourly.size() && shown < 14; i++) {
 		const forecast &f = hourly[i];
 		if ( f.time.size() < 13 ) continue;
 		if ( f.time.compare(0, 13, now) < 0 ) continue;

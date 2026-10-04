@@ -278,6 +278,10 @@ void show_menu(pugi::xml_node node)
 							proceed = true;
 							break;
 
+						} else if ( run_menu_program(node2, type) ) {
+							proceed = true;
+							break;
+
 						} else if ( !strcasecmp( type.c_str(), "news" ) ) {
 							bool goto_top;
 							show_newspaper_board(node2, &goto_top);
@@ -1462,6 +1466,9 @@ bool jump_go(std::string go)
 #endif
 				proceed = true;
 
+			} else if ( run_menu_program(node, type) ) {
+				proceed = true;
+
 			} else if ( !strcasecmp( type.c_str(), "news" ) ) {
 				bool goto_top;
 				show_newspaper_board(node, &goto_top);
@@ -1808,8 +1815,62 @@ void print_board_header(char *table_name, char *title, int page_count, int page_
 
 }
 
+// 외부 프로그램 메뉴
+//   type="program" prog="exchange" : $HANULSO/bin/exchange 를 실행 (호스트 이름을 인자로 넘김)
+//   type="biorhythm"              : 바이오리듬
+//   type="mbti"                   : 성격 검사
+// 처리한 메뉴면 true
+bool run_menu_program(pugi::xml_node node, const std::string &type)
+{
+	if ( strcasecmp(type.c_str(), "program") && strcasecmp(type.c_str(), "biorhythm") &&
+			strcasecmp(type.c_str(), "mbti") ) {
+		return false;
+	}
+
+	int access_level = atoi(node.attribute("access_level").value());
+	if ( login_user_level < access_level ) {
+		printf("\r\n%s 이상 진입 가능합니다.", get_level_name(access_level).c_str());
+		printf("\r\n[Enter] 를 누르세요.");
+		press_enter();
+		return true;
+	}
+
+	if ( !strcasecmp(type.c_str(), "biorhythm") ) {
+		printf(ESC_CLEAR);
+		print_biorhythm(login_user_id);
+		printf("\r\n [Enter] 를 누르세요.");
+		press_enter();
+
+	} else if ( !strcasecmp(type.c_str(), "mbti") ) {
+		run_mbti_gs();
+		printf("\r\n[Enter] 를 누르세요.");
+		press_enter();
+
+	} else {
+		// 프로그램 이름은 bin 아래의 파일 이름만 허용
+		std::string prog = node.attribute("prog").value();
+		bool valid = !prog.empty();
+		for (unsigned int i=0; i<prog.size(); i++) {
+			if ( !isalnum((unsigned char)prog[i]) && prog[i] != '_' ) valid = false;
+		}
+		if ( !valid ) {
+			printf("\r\n메뉴의 프로그램 이름이 잘못되었습니다.");
+			printf("\r\n[Enter] 를 누르세요.");
+			press_enter();
+			return true;
+		}
+
+		char buf[1024];
+		snprintf(buf, sizeof(buf), "%s/bin/%s %s", getenv("HANULSO"), prog.c_str(),
+				shell_quote(host_name).c_str());
+		system(buf);
+	}
+
+	return true;
+}
+
 // 성격 검사 프로그램
-void run_mbti_gs() 
+void run_mbti_gs()
 {
 	char buf[1024];
 	sprintf(buf, "%s/bin/mbti_gs", getenv("HANULSO"));
