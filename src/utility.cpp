@@ -997,6 +997,8 @@ bool make_editor_tmpfile(char *dir, char *file, size_t size)
 {
 	snprintf(dir, size, "%s/tmp/editXXXXXX", getenv("HANULSO"));
 	if ( mkdtemp(dir) == NULL ) return false;
+	// BBS 는 umask(0111) 로 돌아서 mkdtemp 의 0700 이 0600 이 된다 (디렉터리에 들어갈 수 없음)
+	chmod(dir, 0700);
 	snprintf(file, size, "%s/text.txt", dir);
 	FILE *fp = fopen(file, "w");
 	if ( fp == NULL ) return false;
