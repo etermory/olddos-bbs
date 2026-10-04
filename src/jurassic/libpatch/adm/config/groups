@@ -1,0 +1,5 @@
+(root)          하늘소:운영자
+(admin)         (root)
+(adminaccess)	(admin)
+(conveners)	(admin)
+(standard)	[Std]
