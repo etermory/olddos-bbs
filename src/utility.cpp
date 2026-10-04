@@ -480,6 +480,43 @@ bool is_han(char c)
 	}
 }
 
+// 완성형 한글이 두 바이트 짝을 이루지 못한 바이트를 뺀다.
+// (예전에 백스페이스가 한글 반쪽만 지워 저장된 글을 출력할 때 줄이 밀리지 않도록)
+std::string fix_hangul(const std::string &s)
+{
+	std::string r;
+	unsigned int k = 0;
+	while ( k < s.size() ) {
+		if ( is_han(s[k]) ) {
+			if ( k + 1 < s.size() && is_han(s[k+1]) ) {
+				r += s[k];
+				r += s[k+1];
+				k += 2;
+			} else {
+				k += 1;
+			}
+		} else {
+			r += s[k];
+			k += 1;
+		}
+	}
+	return r;
+}
+
+// 입력 버퍼(stdio)나 소켓에 바로 이어서 들어온 글자가 있는지
+static bool input_pending(int msec)
+{
+	if ( stdin->_IO_read_ptr < stdin->_IO_read_end ) return true;
+
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(0, &fds);
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = msec * 1000;
+	return select(1, &fds, NULL, NULL, &tv) > 0;
+}
+
 // ------------------------------------------------------------------------
 void _line_input(char *str, char *init_str, int len, int echo)
 {
@@ -487,6 +524,9 @@ void _line_input(char *str, char *init_str, int len, int echo)
     int i = strlen(init_str);
     char ch;
     int c;
+	// 한글 두 번째 바이트를 기다리는 중인지, 그 바이트를 버려야 하는지
+	bool wait_trail = false;
+	bool skip_trail = false;
 
 	// 초기 문자열이 버퍼보다 길면 잘라냄
 	if ( i > len ) i = len;
@@ -504,16 +544,70 @@ void _line_input(char *str, char *init_str, int len, int echo)
 		}
 		ch = (char)c;
         if(ch == '\b') {
+			wait_trail = false;
+			skip_trail = false;
             if(i > 0) {
-				putchar(ch); putchar(' '); putchar(ch);
-				if(i > 0) i--;
+				// 마지막 글자가 한글(2 바이트)이면 한 번에 지운다
+				int last = 1;
+				int k = 0;
+				while ( k < i ) {
+					if ( is_han(str[k]) && k + 1 < i ) {
+						last = 2;
+						k += 2;
+					} else {
+						last = 1;
+						k += 1;
+					}
+				}
+
+				i -= last;
+				if ( echo != 0 ) {
+					for (int n=0; n<last; n++) {
+						putchar('\b'); putchar(' '); putchar('\b');
+					}
+				}
+
+				// 한글 한 글자에 백스페이스를 바이트 수만큼(2 번) 보내는 터미널이면
+				// 바로 이어서 들어온 두 번째 백스페이스는 버린다
+				if ( last == 2 && input_pending(10) ) {
+					int c2 = getchar();
+					if ( c2 != '\b' && c2 != EOF ) {
+						ungetc(c2, stdin);
+					}
+				}
             }
         } else {
 			// 표시 가능하지 않은 문제가 입력되고 한글이 아니면 pass
 			if (ch <= 0x1F && !is_han(ch)) {
 				// pass
 			}
-			else if (is_han(ch) || isascii(ch)) {
+			else if (is_han(ch)) {
+				if ( !wait_trail ) {
+					// 한글 첫 바이트: 두 바이트가 다 들어갈 자리가 없으면 글자를 받지 않는다
+					wait_trail = true;
+					skip_trail = (i + 2 > len);
+					if ( !skip_trail ) {
+						str[i++] = ch;
+					}
+				} else {
+					wait_trail = false;
+					if ( !skip_trail ) {
+						str[i++] = ch;
+						if     (echo==0) ;
+						else if(echo==2) { putchar(' '); putchar(' '); }
+						else if(echo==3) { putchar('*'); putchar('*'); }
+						else             { putchar(str[i-2]); putchar(ch); }
+					}
+					skip_trail = false;
+				}
+			}
+			else if (isascii(ch)) {
+				// 한글 두 번째 바이트가 오지 않았으면 첫 바이트는 버린다
+				if ( wait_trail ) {
+					if ( !skip_trail ) i--;
+					wait_trail = false;
+					skip_trail = false;
+				}
 				if(i < len) {
 					str[i++] = ch;
 					if     (echo==0) ;
@@ -524,6 +618,9 @@ void _line_input(char *str, char *init_str, int len, int echo)
 			}
 		}
     }
+
+	// 한글 두 번째 바이트 없이 끝났으면 첫 바이트는 버린다
+	if ( wait_trail && !skip_trail ) i--;
 
     str[i] = 0;
 }
@@ -970,8 +1067,11 @@ std::string string_truncate (std::string str, int length, std::string suffix )
     return str;
 }
 #else
-std::string string_truncate (std::string str, int width, std::string suffix ) 
+std::string string_truncate (std::string str, int width, std::string suffix )
 {
+	// 짝이 맞지 않는 한글 바이트가 있으면 화면 칸이 어긋나므로 먼저 정리
+	str = fix_hangul(str);
+
     if(width < strlen(str.c_str())) {
         width = width - strlen(suffix.c_str());
 

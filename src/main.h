@@ -270,6 +270,7 @@ bool check_used_port(int port);
 std::string add_slashes(std::string str);
 std::string shell_quote(const std::string &str);
 bool download_url(const std::string &url, const std::string &path);
+std::string fix_hangul(const std::string &s);
 int check_password_strongness(std::string str);
 
 char *utf8_to_cp949(char * input);
