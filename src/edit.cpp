@@ -133,7 +133,9 @@ bool edit_article(char *table_name, int no)
 				sprintf(buf, "vi -Z -u \"%s\" \"%s\"", rcfile, tmpfile);
 #else
 				//sprintf(buf, "nano \"%s\"", tmpfile);
-				sprintf(buf, "%s/bin/pico \"%s\"", getenv("HANULSO"), tmpfile);
+				// -R: 제한 모드. 다른 파일 읽기/쓰기, 셸 명령 실행(^R ^X), 일시정지(^Z) 를 막는다.
+				//     빼면 편집기에서 리눅스 셸로 빠져나갈 수 있다.
+				sprintf(buf, "%s/bin/pico -R \"%s\"", getenv("HANULSO"), tmpfile);
 #endif
 
 				ioctl(0, TCSETAF, &sys_term);

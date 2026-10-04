@@ -47,6 +47,7 @@ int main(int argc, char **argv)
 		fclose(fp);
 	}
 
+	pid_t ps_parent = getpid();	// fork 뒤 자식에서 부모가 살아 있는지 확인용 (부모는 execl 로 main 이 되어도 pid 가 같다)
 	ps = fork();
 	if (ps) {
 		execl("bin/main", "main", tmp, (char*)0);
@@ -57,6 +58,9 @@ int main(int argc, char **argv)
 			struct stat statbuf;
 
 			sleep(10);
+
+			// BBS(부모) 가 끝났으면 감시도 끝낸다
+			if ( getppid() != ps_parent ) exit(0);
 
 			fstat(0, &statbuf);
 			time(&current);
