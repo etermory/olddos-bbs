@@ -990,6 +990,27 @@ std::string trim(std::string s)
 
 // ------------------------------------------------------------------------------------------
 // 현재 접속자에 의해 생성된 임시 파일들 목록 추가
+// 화면 편집기(pico) 용 임시 파일. 편집할 때마다 따로 만든 디렉터리 안에 둔다.
+// pico 는 -o 로 이 디렉터리 밖의 파일을 읽거나(^R, 파일 목록) 쓰지(^O) 못한다.
+// 파일은 add_user_tmpfile 로 등록되어 접속을 끝낼 때 디렉터리와 함께 지워진다.
+bool make_editor_tmpfile(char *dir, char *file, size_t size)
+{
+	snprintf(dir, size, "%s/tmp/editXXXXXX", getenv("HANULSO"));
+	if ( mkdtemp(dir) == NULL ) return false;
+	snprintf(file, size, "%s/text.txt", dir);
+	FILE *fp = fopen(file, "w");
+	if ( fp == NULL ) return false;
+	fclose(fp);
+	add_user_tmpfile(file);
+	return true;
+}
+
+// 화면 편집기 실행 명령. -o: 작업 디렉터리 밖은 읽고 쓸 수 없게 (빼면 서버의 다른 파일이 보인다)
+std::string screen_editor_command(const char *dir, const char *file)
+{
+	return std::string(getenv("HANULSO")) + "/bin/pico -o " + shell_quote(dir) + " " + shell_quote(file);
+}
+
 void add_user_tmpfile(char *path)
 {
 	char buf[1024];

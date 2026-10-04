@@ -283,6 +283,8 @@ char *utf8_to_cp949(char * input);
 char *cp949_to_utf8(char * input);
 
 void add_user_tmpfile(char *path);
+bool make_editor_tmpfile(char *dir, char *file, size_t size);
+std::string screen_editor_command(const char *dir, const char *file);
 std::vector<std::string> user_tmpfiles(void);
 void del_user_tmpfiles(void);
 

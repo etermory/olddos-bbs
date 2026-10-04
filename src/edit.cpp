@@ -112,8 +112,12 @@ bool edit_article(char *table_name, int no)
 
 				// ---------------------------------------------------
 				// 우선 게시글의 텍스트를 임시 파일로 저장한다.
-				sprintf(tmpfile, "%s/tmp", getenv("HANULSO"));
-				sprintf(tmpfile, "%s", tempnam(tmpfile, "file"));
+				char edit_dir[9072];
+				if ( !make_editor_tmpfile(edit_dir, tmpfile, sizeof(tmpfile)) ) {
+					printf("\r\n임시 파일을 만들지 못했습니다.\r\n");
+					press_enter();
+					break;
+				}
 
 				FILE *fp = fopen(tmpfile, "w");
 				for(int i=0; i<lines.size(); i++) {
@@ -123,7 +127,6 @@ bool edit_article(char *table_name, int no)
 
 				std::string txt1 = read_file(tmpfile);
 
-				add_user_tmpfile(tmpfile);
 				// -----------------------------------------------------
 
 				//sprintf(buf, "stty rows 80 cols 80; vi \"%s\"", tmpfile);
@@ -133,9 +136,7 @@ bool edit_article(char *table_name, int no)
 				sprintf(buf, "vi -Z -u \"%s\" \"%s\"", rcfile, tmpfile);
 #else
 				//sprintf(buf, "nano \"%s\"", tmpfile);
-				// -R: 제한 모드. 다른 파일 읽기/쓰기, 셸 명령 실행(^R ^X), 일시정지(^Z) 를 막는다.
-				//     빼면 편집기에서 리눅스 셸로 빠져나갈 수 있다.
-				sprintf(buf, "%s/bin/pico -R \"%s\"", getenv("HANULSO"), tmpfile);
+				snprintf(buf, sizeof(buf), "%s", screen_editor_command(edit_dir, tmpfile).c_str());
 #endif
 
 				ioctl(0, TCSETAF, &sys_term);
