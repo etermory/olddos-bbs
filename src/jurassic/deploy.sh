@@ -15,7 +15,23 @@ set -e
 
 # 파일 이름을 바이트 그대로 다룬다. UTF-8 로캘에서는 bash read 가 EUC-KR 이름을
 # 깨진 UTF-8 로 보고 줄바꿈까지 삼켜 두 경로가 붙어 버린다.
+TERM_LANG="${LC_ALL:-${LANG:-}}"
 export LC_ALL=C
+
+# 안내 문구: 터미널이 EUC-KR 이면 EUC-KR 로 바꿔 출력 (스크립트는 UTF-8)
+say() {
+	case "$TERM_LANG" in
+		*[Ee][Uu][Cc]*|*949*) printf '%s\n' "$*" | iconv -f UTF-8 -t CP949 2>/dev/null || printf '%s\n' "$*" ;;
+		*) printf '%s\n' "$*" ;;
+	esac
+}
+
+# 실행 중인 파일도 바꿀 수 있도록 임시 이름으로 복사한 뒤 이름을 바꾼다
+# (실행 중인 driver 위에 바로 cp 하면 'Text file busy')
+install_file() {
+	cp "$1" "$2.new.$$"
+	mv -f "$2.new.$$" "$2"
+}
 
 SRC=$(cd "$(dirname "$0")" && pwd)
 DEST=${1:?usage: $0 <설치 디렉터리> [빌드 디렉터리] [원본 lib 디렉터리]}
@@ -23,7 +39,7 @@ BUILD=${2:-/tmp/jurassic-build}
 LIB=${3:-$SRC/lib}
 
 if [ ! -x "$BUILD/driver/driver" ]; then
-	echo "드라이버가 없습니다: $BUILD/driver/driver (먼저 ./build.sh $BUILD)"
+	say "드라이버가 없습니다: $BUILD/driver/driver (먼저 ./build.sh $BUILD)"
 	exit 1
 fi
 if [ ! -f "$LIB/adm/master/simul_efun.c" ]; then
@@ -33,9 +49,9 @@ if [ ! -f "$LIB/adm/master/simul_efun.c" ]; then
 		trap 'rm -rf "$TMPLIB"' EXIT
 		tar xzf "$SRC/jp2_v15.tgz" -C "$TMPLIB"
 		LIB="$TMPLIB/HanLP/lib"
-		echo "원본 라이브러리: $SRC/jp2_v15.tgz"
+		say "원본 라이브러리: $SRC/jp2_v15.tgz"
 	else
-		echo "원본 머드 라이브러리가 없습니다: $LIB ($SRC/jp2_v15.tgz 도 없음)"
+		say "원본 머드 라이브러리가 없습니다: $LIB ($SRC/jp2_v15.tgz 도 없음)"
 		exit 1
 	fi
 fi
@@ -82,17 +98,17 @@ SE="$DEST/lib/adm/master/simul_efun.c"
 if ! grep -q 'efun/hanlp.c' "$SE"; then
 	sed -i 's|^#include "/adm/master/efun/base_name.c"|#include "/adm/master/efun/hanlp.c"\n#include "/adm/master/efun/base_name.c"|' "$SE"
 fi
-grep -q 'efun/hanlp.c' "$SE" || { echo "simul_efun.c 에 hanlp.c 를 넣지 못했습니다"; exit 1; }
+grep -q 'efun/hanlp.c' "$SE" || { say "simul_efun.c 에 hanlp.c 를 넣지 못했습니다"; exit 1; }
 
 # 드라이버가 쓰는 디렉터리
 mkdir -p "$DEST/lib/log/driver" "$DEST/lib/adm/tmp"
 
 # bin
-cp "$BUILD/driver/driver" "$DEST/bin/driver"
-[ -x "$BUILD/driver/addr_server" ] && cp "$BUILD/driver/addr_server" "$DEST/bin/addr_server"
-cp "$SRC/bin/config.jurassic" "$DEST/bin/config.jurassic"
-cp "$SRC/bin/startmud" "$DEST/bin/startmud"
+install_file "$BUILD/driver/driver" "$DEST/bin/driver"
+[ -x "$BUILD/driver/addr_server" ] && install_file "$BUILD/driver/addr_server" "$DEST/bin/addr_server"
+install_file "$SRC/bin/config.jurassic" "$DEST/bin/config.jurassic"
+install_file "$SRC/bin/startmud" "$DEST/bin/startmud"
 chmod +x "$DEST/bin/driver" "$DEST/bin/startmud"
 
-echo "설치 완료: $DEST"
-echo "실행: cd $DEST/bin && nohup ./startmud > /dev/null 2>&1 &"
+say "설치 완료: $DEST"
+say "실행: cd $DEST/bin && nohup ./startmud > /dev/null 2>&1 &"

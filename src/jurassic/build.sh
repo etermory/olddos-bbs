@@ -12,6 +12,14 @@
 #    Debian 은 gcc-multilib libc6-dev-i386 libcrypt-dev:i386 가 더 필요)
 set -e
 
+# 안내 문구: 터미널이 EUC-KR 이면 EUC-KR 로 바꿔 출력 (스크립트는 UTF-8)
+say() {
+	case "${LC_ALL:-${LANG:-}}" in
+		*[Ee][Uu][Cc]*|*949*) printf '%s\n' "$*" | iconv -f UTF-8 -t CP949 2>/dev/null || printf '%s\n' "$*" ;;
+		*) printf '%s\n' "$*" ;;
+	esac
+}
+
 SRC=$(cd "$(dirname "$0")" && pwd)
 OUT=${1:-/tmp/jurassic-build}
 
@@ -49,7 +57,7 @@ sed -i -E 's/(^| )-ly($| )/\1\2/g; s/(^| )-lnsl($| )/\1\2/g' system_libs
 # (local_options 는 SYSMALLOC 을 쓴다)
 make files
 if [ ! -s malloc.c ]; then
-	echo "* malloc.c 가 없어 sysmalloc.c 로 만듭니다"
+	say "* malloc.c 가 없어 sysmalloc.c 로 만듭니다"
 	rm -f malloc.c
 	cp sysmalloc.c malloc.c
 fi
@@ -57,4 +65,4 @@ fi
 
 make
 echo
-echo "빌드 완료: $OUT/driver/driver"
+say "빌드 완료: $OUT/driver/driver"
