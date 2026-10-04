@@ -172,7 +172,43 @@ yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel
 - `build.sh` 로 엔진을 빌드하고 (기본 64 비트, `BITS=32` 로 32 비트), `deploy.sh` 로 라이브러리와 함께 설치하며, `bin/startmud` 가 머드를 계속 띄워 둡니다
 - 머드는 `127.0.0.1:4444` 에서 접속을 받습니다. BBS 는 `bin/mudlink` (`src/mudlink.cpp`) 로 사용자를 연결합니다. 이 프로그램은 로컬 머드 포트에만 접속하고, 줄 입력과 한글 백스페이스, 비밀번호 숨김을 처리하며, `끝` 이나 `/x` 로 BBS 에 돌아옵니다.
 
-빌드, 설치, 업데이트, 운영자 설정은 INSTALL.TXT 의 **머드 게임 연결** 을 참고하세요.
+#### 업데이트와 운영 (`src/jurassic/update.sh`, `bin/killmud`)
+
+소스를 고쳤거나 저장소가 바뀌었으면 `update.sh` 하나로 받기부터 다시 띄우기까지 끝냅니다.
+
+```bash
+/home/olddos/olddos-bbs/src/jurassic/update.sh
+```
+
+| 순서 | 하는 일 |
+|---|---|
+| 1 | `git pull` 로 소스 받기 |
+| 2 | `build.sh` 로 엔진 빌드. 머드를 끄기 전에 하므로 **빌드가 실패하면 머드는 켜진 그대로** 둡니다 |
+| 3 | 머드 끄기. pid 파일이 틀리거나 `startmud` 가 여러 개 떠 있어도 이 설치본의 것을 모두 찾아 끕니다 |
+| 4 | `deploy.sh` 로 설치 (사용자 자료 `lib/data` 와 로그는 그대로) |
+| 5 | `startmud` 로 시작 |
+| 6 | `127.0.0.1:4444` 에 접속되는지 확인 |
+
+| 옵션 | 뜻 |
+|---|---|
+| `NOPULL=1 ./update.sh` | `git pull` 건너뜀 |
+| `NOBUILD=1 ./update.sh` | 빌드 건너뜀 (게임 내용 `libpatch` 만 바뀌었을 때. 빌드 디렉터리가 남아 있어야 함) |
+| `./update.sh [설치 디렉터리] [빌드 디렉터리]` | 기본값 `/home/olddos/jurassic`, `/tmp/jurassic-build` |
+
+- 빌드 기록은 `/tmp/jurassic-build.log` 에 남습니다.
+- BBS 쪽 연결 프로그램(`src/mudlink.cpp`)이 바뀌었으면 따로 `cd src && make mudlink` 를 합니다.
+
+머드만 끄거나 다시 띄울 때는 설치 디렉터리의 `bin/killmud` 를 씁니다.
+
+| 명령 | 하는 일 |
+|---|---|
+| `bin/killmud` | `startmud` 와 드라이버를 모두 끔 |
+| `bin/killmud -r` | 드라이버만 끔. `startmud` 가 10 초 뒤 다시 띄움 (재시작) |
+| `cd bin && nohup ./startmud > /dev/null 2>&1 &` | 꺼 둔 머드 켜기 (이미 떠 있으면 시작하지 않음) |
+
+드라이버는 kill(SIGTERM) 을 받으면 접속자 자료를 저장하고 끝납니다. 게임 안에서는 운영자(하늘소)로 `0 다운` 해도 됩니다.
+
+처음 설치와 운영자 설정은 INSTALL.TXT 의 **머드 게임 연결** 을 참고하세요.
 
 <img width="850" alt="쥬라기공원 2 접속 화면" src="docs/screenshots/jurassic.png" />
 
