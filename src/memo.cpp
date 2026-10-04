@@ -177,6 +177,30 @@ void write_memo(std::string to, std::string title)
 }
 
 // 쪽지 읽기. 지웠으면 true
+// 화면에 보이는 폭 (ESC 색 코드는 빼고, 완성형 한글은 2 칸)
+static int text_width(const std::string &s)
+{
+	int w = 0;
+	for (unsigned int i=0; i<s.size(); i++) {
+		if ( s[i] == '\033' ) {
+			while ( i < s.size() && !isalpha((unsigned char)s[i]) ) i++;
+			continue;
+		}
+		w++;
+	}
+	return w;
+}
+
+// 쪽지 상자 한 줄: │ 왼쪽 ....... 오른쪽 │  (안쪽 74 칸)
+static void box_line(const std::string &left, const std::string &right)
+{
+	int space = 72 - text_width(left) - text_width(right);
+	if ( space < 1 ) space = 1;
+	printf(" \033[=11F│\033[=15F %s%s%s \033[=11F│\033[=15F\r\n",
+			left.c_str(), std::string(space, ' ').c_str(), right.c_str());
+}
+
+// 쪽지 읽기. 지웠으면 true
 bool read_memo(std::map<std::string, std::string> memo, bool sent)
 {
 	// 받은 쪽지를 처음 읽으면 읽은 시각을 적는다
@@ -186,31 +210,52 @@ bool read_memo(std::map<std::string, std::string> memo, bool sent)
 		mysql_query(mysql, q);
 	}
 
-	std::vector<std::string> lines = split_string_with_width(memo["CONTENT"], '\n', 78);
+	std::vector<std::string> lines = split_string_with_width(memo["CONTENT"], '\n', 74);
+	// 끝의 빈 줄은 빼고
+	while ( lines.size() > 0 && trim(lines.back()).empty() ) lines.pop_back();
 	unsigned int offset = 0;
+	unsigned int page_count = (lines.size() + show_max_line - 1) / show_max_line;
+	if ( page_count < 1 ) page_count = 1;
+
+	std::string who_id = sent ? memo["RECIPIENT_USER_ID"] : memo["SENDER_USER_ID"];
+	std::string who = string_truncate(nick_of(who_id), 20, "");
+	std::string date = memo["CREATION_DATETIME"].substr(0, 16);
 
 	while (1) {
 		print_header(sent ? "보낸 쪽지" : "받은 쪽지", 0, 0, 0);
-		if ( sent ) {
-			printf(" 받는 사람: %s (%s)\r\n", nick_of(memo["RECIPIENT_USER_ID"]).c_str(), memo["RECIPIENT_USER_ID"].c_str());
-			printf(" 보낸 날짜: %s   읽은 날짜: %s\r\n", memo["CREATION_DATETIME"].c_str(),
-					memo["CONFIRMATION_DATETIME"].empty() ? "아직 안 읽음" : memo["CONFIRMATION_DATETIME"].c_str());
-		} else {
-			printf(" 보낸 사람: %s (%s)\r\n", nick_of(memo["SENDER_USER_ID"]).c_str(), memo["SENDER_USER_ID"].c_str());
-			printf(" 받은 날짜: %s\r\n", memo["CREATION_DATETIME"].c_str());
-		}
-		printf(" 제    목: %s\r\n", string_truncate(memo["TITLE"], 68, "").c_str());
-		printf("%s\r\n", repeat("─", 40).c_str());
 
-		for (unsigned int i=offset; i<lines.size() && i<offset+show_max_line; i++) {
-			printf("%s\r\n", lines[i].c_str());
+		// 봉투 모양 머리 상자
+		printf(" \033[=11F┌%s┐\033[=15F\r\n", repeat("─", 37).c_str());
+		box_line(std::string(sent ? "\033[=14F◆ 받는 사람\033[=15F  " : "\033[=14F◆ 보낸 사람\033[=15F  ")
+				+ who + " \033[=7F(" + display_text(who_id) + ")\033[=15F",
+				"\033[=7F" + date + "\033[=15F");
+
+		std::string state;
+		if ( sent ) {
+			if ( memo["CONFIRMATION_DATETIME"].empty() ) state = "\033[=12F아직 안 읽음\033[=15F";
+			else state = "\033[=10F읽음 " + memo["CONFIRMATION_DATETIME"].substr(5, 11) + "\033[=15F";
 		}
-		printf("%s\r\n", repeat("━", 40).c_str());
+		box_line("\033[=14F◆ 제    목\033[=15F  " + string_truncate(memo["TITLE"], 46, ""), state);
+		printf(" \033[=11F└%s┘\033[=15F\r\n", repeat("─", 37).c_str());
+
+		// 본문 (빈 줄로 채워 아래 줄 위치를 고정)
+		for (unsigned int i=offset; i<offset+show_max_line; i++) {
+			if ( i < lines.size() ) printf("   %s\r\n", lines[i].c_str());
+			else printf("\r\n");
+		}
+
+		// 아래 줄: 쪽 번호
+		if ( page_count > 1 ) {
+			printf("%s %2d/%2d 쪽 %s\r\n", repeat("━", 33).c_str(),
+					offset / show_max_line + 1, page_count, repeat("━", 2).c_str());
+		} else {
+			printf("%s\r\n", repeat("━", 40).c_str());
+		}
 
 		char cmd[64];
 		printf(ESC_ENG);
-		if ( sent ) printf("목록(P) 다음(N) 이전(B) 지우기(DD)\r\n선택 >> ");
-		else printf("목록(P) 다음(N) 이전(B) 답장(RE) 지우기(DD)\r\n선택 >> ");
+		if ( sent ) printf("목록(P) 다음(N) 이전(B) 지우기(DD)  선택 >> ");
+		else printf("목록(P) 다음(N) 이전(B) 답장(RE) 지우기(DD)  선택 >> ");
 		line_input(cmd, 30);
 		std::string c = trim(cmd);
 
@@ -252,11 +297,10 @@ void show_memos(void)
 
 		print_header(sent ? "보낸 쪽지함" : "받은 쪽지함", total, page_count, offset / show_max_line + 1);
 
-		printf("%5s %s %s %s %s\r\n",
+		printf("%5s %s %s  %s\r\n",
 				"번호",
 				centered(sent ? "받는 사람" : "보낸 사람", 12).c_str(),
 				centered("날짜", 11).c_str(),
-				centered(sent ? "읽음" : "", 4).c_str(),
 				"제목");
 		printf("%s\r\n", repeat("─", 40).c_str());
 
@@ -268,11 +312,11 @@ void show_memos(void)
 			bool unread = m["CONFIRMATION_DATETIME"].empty();
 			std::string who = nick_of(sent ? m["RECIPIENT_USER_ID"] : m["SENDER_USER_ID"]);
 			std::string date = m["CREATION_DATETIME"].size() >= 16 ? m["CREATION_DATETIME"].substr(5, 11) : m["CREATION_DATETIME"];
-			const char *mark = sent ? (unread ? "    " : "읽음") : (unread ? "\033[=14F새\033[=15F  " : "    ");
-			printf("%5d %s %s %s %s\r\n", i + 1,
+			// 안 읽은 쪽지는 노란색 (보낸 쪽지함에서는 상대가 아직 안 읽은 쪽지)
+			printf("%s%5d %s %s  %s\033[=15F\r\n", unread ? "\033[=14F" : "", i + 1,
 					centered(string_truncate(who, 10, ""), 12).c_str(),
-					date.c_str(), mark,
-					string_truncate(m["TITLE"], 40, "").c_str());
+					date.c_str(),
+					string_truncate(m["TITLE"], 46, "").c_str());
 		}
 		printf("%s\r\n", repeat("━", 40).c_str());
 
