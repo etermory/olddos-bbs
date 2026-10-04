@@ -52,6 +52,8 @@
 - 첨부 파일 올리기/받기 (`UP`, `DN`): Zmodem, Ymodem, Xmodem, Kermit
 - 프로그램/게임/특별/음원 자료실
 
+<img width="850" alt="프로그램 자료실 화면" src="docs/screenshots/pds_prog.png" />
+
 **대화방**
 - 대화방 개설, 비밀방, 인원 제한
 - 귓속말 (`/SAY`), 접속자 조회 (`/LIST`), 퇴장 (`/BYE`), 대화방 닫기 (`/QUIT`)
