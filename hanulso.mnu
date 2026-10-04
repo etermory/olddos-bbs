@@ -72,8 +72,10 @@
 			<item type="mbti" go="mbti" door="6" access_level="1">
 				<name>성격 검사 MBTI (mbti)</name>
 			</item>
+		</item>
 
-			<item type="program" prog="hero" go="hero" door="7" access_level="1">
+		<item type="menu" text="txt/game_info.txt" go="game" door="7">
+			<item type="program" prog="hero" go="hero" door="1" access_level="1">
 				<name>용사의 전설 (hero)</name>
 			</item>
 		</item>
