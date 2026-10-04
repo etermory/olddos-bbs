@@ -6,7 +6,6 @@
 #   NOBUILD=1 ./update.sh  빌드를 건너뜀 (게임 내용만 바뀌었을 때, 빌드 디렉터리가 남아 있어야 함)
 #
 # 빌드는 머드를 끄기 전에 한다. 빌드가 실패하면 머드는 켜진 그대로 둔다.
-# olddos 계정으로 실행한다 (root 로 머드를 돌리지 않는다).
 
 # git pull 이 이 파일을 바꿔도 꼬이지 않도록 전체를 읽은 뒤 main 을 실행한다
 main() {
@@ -16,11 +15,6 @@ main() {
 	DEST=${1:-/home/olddos/jurassic}
 	BUILD=${2:-/tmp/jurassic-build}
 	PORT=4444
-
-	if [ "$(id -u)" = 0 ]; then
-		say "root 로 실행하지 마세요. olddos 계정으로: su - olddos -c '$SRC/update.sh'"
-		exit 1
-	fi
 
 	# 1) 받기
 	if [ -z "$NOPULL" ]; then
