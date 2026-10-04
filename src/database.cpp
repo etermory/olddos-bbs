@@ -62,10 +62,11 @@ namespace database {
 
 		unsigned char rnd[16];
 		int n = 0;
-		int fd = open("/dev/urandom", O_RDONLY);
+		// database::open/close 와 이름이 겹치므로 전역 함수로 부른다
+		int fd = ::open("/dev/urandom", O_RDONLY);
 		if ( fd >= 0 ) {
-			n = read(fd, rnd, sizeof(rnd));
-			close(fd);
+			n = ::read(fd, rnd, sizeof(rnd));
+			::close(fd);
 		}
 		if ( n != (int)sizeof(rnd) ) {
 			srand(time(NULL) ^ (getpid() << 16));
