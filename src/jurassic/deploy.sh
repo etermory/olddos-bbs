@@ -4,9 +4,8 @@
 #   예) ./build.sh /tmp/jurassic-build
 #       ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
 #
-# 원본 머드 라이브러리(lib)는 권리 관계가 확인되지 않아 저장소에 넣지 않는다.
-# jp2_v15.tgz 를 리눅스에서 풀어 HanLP/lib 를 src/jurassic/lib 로 두거나,
-# 세 번째 인자로 그 위치를 준다.
+# 원본 머드 라이브러리는 같은 폴더의 jp2_v15.tgz (HanLP 쥬라기공원 2 복원판).
+# 세 번째 인자나 src/jurassic/lib 가 없으면 이 압축 파일을 풀어서 쓴다.
 #
 # - 원본 lib 위에 libpatch/ (원본 MudOS 로 옮기며 고친 파일) 를 덮어쓴다.
 # - 파일 이름은 EUC-KR 로 설치한다. 원본이 UTF-8 이름(윈도우에서 복사)이면 바꾸고,
@@ -28,9 +27,17 @@ if [ ! -x "$BUILD/driver/driver" ]; then
 	exit 1
 fi
 if [ ! -f "$LIB/adm/master/simul_efun.c" ]; then
-	echo "원본 머드 라이브러리가 없습니다: $LIB"
-	echo "jp2_v15.tgz 를 풀어 HanLP/lib 를 $SRC/lib 로 복사하세요."
-	exit 1
+	if [ -f "$SRC/jp2_v15.tgz" ]; then
+		# 저장소의 원본 압축 파일을 풀어서 쓴다 (리눅스에서 풀면 파일 이름이 EUC-KR 그대로)
+		TMPLIB=$(mktemp -d /tmp/jurassic-lib.XXXXXX)
+		trap 'rm -rf "$TMPLIB"' EXIT
+		tar xzf "$SRC/jp2_v15.tgz" -C "$TMPLIB"
+		LIB="$TMPLIB/HanLP/lib"
+		echo "원본 라이브러리: $SRC/jp2_v15.tgz"
+	else
+		echo "원본 머드 라이브러리가 없습니다: $LIB ($SRC/jp2_v15.tgz 도 없음)"
+		exit 1
+	fi
 fi
 
 mkdir -p "$DEST/bin" "$DEST/lib"

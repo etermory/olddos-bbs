@@ -162,9 +162,10 @@ src/jurassic 구성
            - add_action.c      : 마지막 단어를 명령으로 ("칼 가져")
            - backend.c         : heart_beat 타이머 (glibc ualarm 문제)
            - local_options     : PACKAGE_HANGUL, INTERACTIVE_CATCH_TELL 등
-  lib/     원본 머드 라이브러리 (저장소에 없음, 아래 2) 참고)
+  jp2_v15.tgz  원본 머드 라이브러리 (HanLP 쥬라기공원 2 복원판, 파일 내용 EUC-KR)
   libpatch/ 원본 위에 덮어쓰는 파일
            adm/master/efun/hanlp.c : 원래 HanLP 드라이버에 있던 함수들
+           adm/wizard/하늘소, adm/config/groups : 운영자
   bin/     config.jurassic, startmud
   build.sh, deploy.sh
 
@@ -173,19 +174,18 @@ src/jurassic 구성
   (64 비트로 빌드한다. 문제가 있으면 BITS=32 ./build.sh 로 32 비트 빌드:
    이때는 glibc-devel.i686 libgcc.i686 도 필요)
 
-2) 원본 머드 라이브러리 준비
-  원본(jp2_v15.tgz, HanLP 쥬라기공원 2 복원판)은 권리 관계가 확인되지 않아
-  저장소에 넣지 않았다. 서버에서 리눅스로 풀어 src/jurassic/lib 로 둔다.
-% mkdir -p /tmp/jp && tar xzf jp2_v15.tgz -C /tmp/jp
-% cp -a /tmp/jp/HanLP/lib /home/olddos/olddos-bbs/src/jurassic/lib
-  원본을 MudOS 로 옮기며 고친 파일은 src/jurassic/libpatch 에 있고,
-  설치할 때 원본 위에 덮어쓴다.
-
-3) 빌드 / 설치
+2) 빌드 / 설치 (저장소의 소스만으로 된다)
 % cd /home/olddos/olddos-bbs/src/jurassic
 % ./build.sh /tmp/jurassic-build
 % ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
-  다시 설치해도 lib/data (사용자 자료), lib/log 는 덮어쓰지 않는다.
+  - build.sh  : driver/ 를 빌드 -> /tmp/jurassic-build/driver/driver
+  - deploy.sh : jp2_v15.tgz 를 풀어 원본 라이브러리를 설치하고 libpatch 를 덮어쓴 뒤
+                드라이버, 설정(bin/config.jurassic), startmud 를 /home/olddos/jurassic 에 둔다.
+  - 다시 설치해도 lib/data (사용자 자료), lib/log 는 덮어쓰지 않는다.
+  - 소스를 고친 뒤에는 git pull 하고 위 두 줄을 다시 실행, 머드를 다시 띄운다 (7 번).
+
+3) BBS 쪽 연결 프로그램 (bin/mudlink)
+% cd /home/olddos/olddos-bbs/src && make mudlink
 
 4) 실행 (드라이버가 죽으면 10 초 뒤 다시 띄움)
 % cd /home/olddos/jurassic/bin
