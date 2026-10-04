@@ -48,10 +48,27 @@ bool is_han(char c)
 	}
 }
 
+// 입력 버퍼(stdio)나 소켓에 바로 이어서 들어온 글자가 있는지
+static bool input_pending(int msec)
+{
+	if ( stdin->_IO_read_ptr < stdin->_IO_read_end ) return true;
+
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(0, &fds);
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = msec * 1000;
+	return select(1, &fds, NULL, NULL, &tv) > 0;
+}
+
 void line_input(char *str, int len)
 {
     cursor_pos = 0;
     int ch;
+	// 한글 두 번째 바이트를 기다리는 중인지, 그 바이트를 버려야 하는지
+	bool wait_trail = false;
+	bool skip_trail = false;
 
     while((ch=getchar()) != '\r' ) {
 		// 입력 종료(EOF) 시 무한 루프 방지
@@ -59,33 +76,76 @@ void line_input(char *str, int len)
 			chatt_close();
 		}
         if(ch == '\b') {
+			wait_trail = false;
+			skip_trail = false;
             if(cursor_pos > 0) {
-#if 0
-				if (is_han(str[cursor_pos-1])) {
-					putchar(ch); putchar(' '); putchar(ch);
-					if(cursor_pos > 0) cursor_pos--;
-					putchar(ch); putchar(' '); putchar(ch);
-					if(cursor_pos > 0) cursor_pos--;
-				} else {
-					putchar(ch); putchar(' '); putchar(ch);
-					if(cursor_pos > 0) cursor_pos--;
+				// 마지막 글자가 한글(2 바이트)이면 한 번에 지운다
+				int last = 1;
+				int k = 0;
+				while ( k < cursor_pos ) {
+					if ( is_han(str[k]) && k + 1 < cursor_pos ) {
+						last = 2;
+						k += 2;
+					} else {
+						last = 1;
+						k += 1;
+					}
 				}
-#else
-				putchar(ch); putchar(' '); putchar(ch);
-				if(cursor_pos > 0) cursor_pos--;
-#endif
+
+				cursor_pos -= last;
+				for (int n=0; n<last; n++) {
+					putchar('\b'); putchar(' '); putchar('\b');
+				}
+
+				// 한글 한 글자에 백스페이스를 바이트 수만큼(2 번) 보내는 터미널이면
+				// 바로 이어서 들어온 두 번째 백스페이스는 버린다
+				if ( last == 2 && input_pending(10) ) {
+					int c2 = getchar();
+					if ( c2 != '\b' && c2 != EOF ) {
+						ungetc(c2, stdin);
+					}
+				}
             }
         }
 		else if(ch == 27) {
-			char ch2 = getchar();
-			char ch3 = getchar();
+			getchar();
+			getchar();
 		}
         else if((ch == 0x1b) | (ch == 0x18) | (ch == 0x0f));
-        else if(cursor_pos < len) {
-			str[cursor_pos++] = ch;
-			putchar(ch);
+		else if(is_han((char)ch)) {
+			if ( !wait_trail ) {
+				// 한글 첫 바이트: 두 바이트가 다 들어갈 자리가 없으면 글자를 받지 않는다
+				wait_trail = true;
+				skip_trail = (cursor_pos + 2 > len);
+				if ( !skip_trail ) {
+					str[cursor_pos++] = ch;
+				}
+			} else {
+				wait_trail = false;
+				if ( !skip_trail ) {
+					str[cursor_pos++] = ch;
+					putchar(str[cursor_pos-2]);
+					putchar(ch);
+				}
+				skip_trail = false;
+			}
+		}
+        else {
+			// 한글 두 번째 바이트가 오지 않았으면 첫 바이트는 버린다
+			if ( wait_trail ) {
+				if ( !skip_trail ) cursor_pos--;
+				wait_trail = false;
+				skip_trail = false;
+			}
+			if(cursor_pos < len) {
+				str[cursor_pos++] = ch;
+				putchar(ch);
+			}
         }
     }
+
+	// 한글 두 번째 바이트 없이 끝났으면 첫 바이트는 버린다
+	if ( wait_trail && !skip_trail ) cursor_pos--;
 
     str[cursor_pos] = 0;
 }
