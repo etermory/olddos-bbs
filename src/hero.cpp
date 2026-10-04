@@ -285,34 +285,98 @@ struct item {
 static const item weapons[] = {
 	{ "맨주먹", 0, 0 },
 	{ "몽둥이", 5, 200 },
+	{ "죽창", 8, 600 },
 	{ "단검", 10, 1000 },
+	{ "환도", 15, 2000 },
 	{ "철검", 20, 3000 },
+	{ "철퇴", 28, 6000 },
 	{ "도끼", 35, 10000 },
+	{ "쌍절곤", 42, 18000 },
 	{ "장창", 50, 30000 },
+	{ "언월도", 62, 60000 },
 	{ "월도", 75, 100000 },
+	{ "쌍검", 88, 180000 },
 	{ "청강검", 100, 300000 },
+	{ "방천화극", 125, 600000 },
 	{ "현철검", 150, 1000000 },
+	{ "묵룡창", 190, 1800000 },
 	{ "칠성검", 225, 3000000 },
 	{ "벽력검", 300, 10000000 },
+	{ "진천도", 350, 18000000 },
 	{ "천룡검", 400, 30000000 },
 };
 
 static const item armors[] = {
 	{ "평상복", 0, 0 },
 	{ "가죽옷", 4, 200 },
+	{ "솜옷", 6, 600 },
 	{ "누비옷", 8, 1000 },
+	{ "가죽갑옷", 12, 2000 },
 	{ "사슬갑옷", 16, 3000 },
+	{ "쇄자갑", 22, 6000 },
 	{ "비늘갑옷", 28, 10000 },
+	{ "두정갑", 34, 18000 },
 	{ "판금갑옷", 40, 30000 },
+	{ "철엽갑", 50, 60000 },
 	{ "흑철갑", 60, 100000 },
+	{ "수은갑", 70, 180000 },
 	{ "은린갑", 80, 300000 },
+	{ "귀갑", 100, 600000 },
 	{ "금강갑", 120, 1000000 },
+	{ "화린갑", 150, 1800000 },
 	{ "용린갑", 180, 3000000 },
 	{ "천잠보의", 240, 10000000 },
+	{ "봉황갑", 280, 18000000 },
 	{ "신선갑", 320, 30000000 },
 };
 
 static const int item_count = sizeof(weapons) / sizeof(weapons[0]);
+
+// 몬스터 세기를 정할 때 쓰는 "그 레벨에 알맞은" 무기/갑옷/값 (레벨 1~12)
+static const int ref_weapon_power[] = { 0, 5, 10, 20, 35, 50, 75, 100, 150, 225, 300, 400 };
+static const int ref_armor_power[] = { 0, 4, 8, 16, 28, 40, 60, 80, 120, 180, 240, 320 };
+static const int ref_price[] = { 0, 200, 1000, 3000, 10000, 30000, 100000, 300000, 1000000, 3000000, 10000000, 30000000 };
+
+// 장신구 (공격, 방어, 최대 체력)
+struct accessory {
+	const char *name;
+	int atk, def, hp;
+	int price;
+};
+
+static const accessory accessories[] = {
+	{ "없음", 0, 0, 0, 0 },
+	{ "나무 반지", 0, 3, 0, 500 },
+	{ "구리 팔찌", 5, 0, 0, 1500 },
+	{ "호랑이 이빨", 12, 0, 0, 8000 },
+	{ "거북 부적", 0, 15, 0, 15000 },
+	{ "산삼 주머니", 0, 0, 40, 40000 },
+	{ "은 반지", 20, 10, 0, 120000 },
+	{ "비취 목걸이", 0, 0, 100, 400000 },
+	{ "금강 팔찌", 0, 60, 0, 1200000 },
+	{ "용의 눈 반지", 80, 0, 0, 4000000 },
+	{ "봉황의 깃털", 60, 60, 200, 15000000 },
+};
+
+static const int accessory_count = sizeof(accessories) / sizeof(accessories[0]);
+
+// 소모품 (값은 레벨을 곱함)
+enum { POTION_S, POTION_L, SMOKE, ELIXIR, CONSUMABLE_COUNT };
+
+struct consumable {
+	const char *name;
+	const char *desc;
+	int price;
+};
+
+static const consumable consumables[CONSUMABLE_COUNT] = {
+	{ "회복약(소)", "체력을 1/3 회복", 20 },
+	{ "회복약(대)", "체력을 모두 회복", 60 },
+	{ "연막탄", "전투에서 반드시 도망", 30 },
+	{ "힘의 영약", "그 전투 동안 공격 +50%", 80 },
+};
+
+#define MAX_CONSUMABLE	9
 
 // 다음 레벨에 필요한 경험치 (레벨 1~11)
 static const int exp_need[] = { 0, 100, 300, 700, 1500, 3000, 5500, 9000, 14000, 21000, 30000, 42000 };
@@ -364,6 +428,8 @@ struct hero {
 	int gold, bank, weapon, armor;
 	int fights, dead, master_done;
 	int kills, wins, deaths;
+	int acc;				// 장신구
+	int bag[CONSUMABLE_COUNT];	// 소모품 개수
 	std::string play_date;
 };
 
@@ -535,6 +601,9 @@ void create_tables(void)
 			"FIGHTS INT NOT NULL, DEAD INT NOT NULL, MASTER_DONE INT NOT NULL, "
 			"KILLS INT NOT NULL, WINS INT NOT NULL, DEATHS INT NOT NULL, "
 			"PLAY_DATE DATE NOT NULL )");
+	// 나중에 추가한 컬럼 (이미 있으면 오류가 나므로 무시)
+	mysql_query(mysql, "ALTER TABLE game_hero ADD COLUMN ACC INT NOT NULL DEFAULT 0");
+	mysql_query(mysql, "ALTER TABLE game_hero ADD COLUMN BAG VARCHAR(64) NOT NULL DEFAULT ''");
 	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS game_news ( "
 			"NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
 			"DATE_TIME DATETIME NOT NULL, "
@@ -555,18 +624,29 @@ void new_hero(void)
 	h.gold = 50; h.bank = 0;
 	h.weapon = 0; h.armor = 0;
 	h.fights = FIGHTS_PER_DAY; h.dead = 0; h.master_done = 0;
+	h.acc = 0;
+	for (int i=0; i<CONSUMABLE_COUNT; i++) h.bag[i] = 0;
+	h.bag[POTION_S] = 2;
 	h.play_date = today_string();
 }
 
 void save_hero(void)
 {
+	// 소지품은 "개수,개수,..." 로 저장
+	std::string bag;
+	for (int i=0; i<CONSUMABLE_COUNT; i++) {
+		char n[16];
+		snprintf(n, sizeof(n), "%s%d", i ? "," : "", h.bag[i]);
+		bag += n;
+	}
+
 	char q[2048];
 	snprintf(q, sizeof(q), "REPLACE INTO game_hero (USER_ID, NAME, LEVEL, EXP, HP, MAX_HP, STR, DEF, "
-			"GOLD, BANK, WEAPON, ARMOR, FIGHTS, DEAD, MASTER_DONE, KILLS, WINS, DEATHS, PLAY_DATE) "
-			"VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '%s')",
+			"GOLD, BANK, WEAPON, ARMOR, FIGHTS, DEAD, MASTER_DONE, KILLS, WINS, DEATHS, ACC, BAG, PLAY_DATE) "
+			"VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '%s', '%s')",
 			database::escape(user_id.c_str()).c_str(), database::escape(h.name.c_str()).c_str(),
 			h.level, h.exp, h.hp, h.max_hp, h.str, h.def, h.gold, h.bank, h.weapon, h.armor,
-			h.fights, h.dead, h.master_done, h.kills, h.wins, h.deaths,
+			h.fights, h.dead, h.master_done, h.kills, h.wins, h.deaths, h.acc, bag.c_str(),
 			database::escape(h.play_date.c_str()).c_str());
 	mysql_query(mysql, q);
 }
@@ -596,6 +676,15 @@ bool load_hero(void)
 	h.kills = atoi(r["KILLS"].c_str());
 	h.wins = atoi(r["WINS"].c_str());
 	h.deaths = atoi(r["DEATHS"].c_str());
+	h.acc = atoi(r["ACC"].c_str());
+	if ( h.acc < 0 || h.acc >= accessory_count ) h.acc = 0;
+	for (int i=0; i<CONSUMABLE_COUNT; i++) h.bag[i] = 0;
+	std::vector<std::string> bag = split_string(r["BAG"], ',');
+	for (unsigned int i=0; i<bag.size() && i<CONSUMABLE_COUNT; i++) {
+		h.bag[i] = atoi(bag[i].c_str());
+		if ( h.bag[i] < 0 ) h.bag[i] = 0;
+		if ( h.bag[i] > MAX_CONSUMABLE ) h.bag[i] = MAX_CONSUMABLE;
+	}
 	h.play_date = r["PLAY_DATE"];
 
 	if ( h.level < 1 ) h.level = 1;
@@ -623,12 +712,12 @@ void check_new_day(void)
 
 int attack_power(void)
 {
-	return h.str + weapons[h.weapon].power;
+	return h.str + weapons[h.weapon].power + accessories[h.acc].atk;
 }
 
 int defense_power(void)
 {
-	return h.def + armors[h.armor].power;
+	return h.def + armors[h.armor].power + accessories[h.acc].def;
 }
 
 // ------------------------------------------------------------------
@@ -645,7 +734,7 @@ static int ref_attack(int level)
 {
 	int s = 10;
 	for (int i=1; i<level; i++) s += 3 + i;
-	int w = (level - 1 < item_count) ? weapons[level - 1].power : weapons[item_count - 1].power;
+	int w = ref_weapon_power[(level - 1 < 11) ? level - 1 : 11];
 	return s + w;
 }
 
@@ -653,7 +742,7 @@ static int ref_defense(int level)
 {
 	int d = 2;
 	for (int i=1; i<level; i++) d += 2 + i / 2;
-	int a = (level - 1 < item_count) ? armors[level - 1].power : armors[item_count - 1].power;
+	int a = ref_armor_power[(level - 1 < 11) ? level - 1 : 11];
 	return d + a;
 }
 
@@ -710,7 +799,7 @@ foe make_monster(int level, int strength)
 	int need = exp_need[(level < 11) ? level : 11];
 	// 레벨마다 12 번쯤 싸우면 사부님께 도전할 수 있도록
 	f.exp = (int)(need / 12.0 * m) + 1;
-	int price = weapons[(level < item_count) ? level : item_count - 1].price;
+	int price = ref_price[(level < 11) ? level : 11];
 	f.gold = (int)(price / 12.0 * m) + level * 10;
 	return f;
 }
@@ -756,6 +845,7 @@ fight_result fight(foe &f, const char *title, bool can_run)
 {
 	std::vector<std::string> log;
 	log.push_back(std::string(f.color) + f.name + C_WHITE " 이(가) 나타났습니다!");
+	bool elixir = false;	// 힘의 영약을 먹었는지
 
 	while (1) {
 		draw_fight(f, title, log);
@@ -767,11 +857,47 @@ fight_result fight(foe &f, const char *title, bool can_run)
 		}
 
 		std::string cmd = ask(can_run ?
-				" " C_YELLOW "[A]" C_WHITE "공격  " C_YELLOW "[S]" C_WHITE "혼신의 일격  " C_YELLOW "[R]" C_WHITE "도망  >> " :
-				" " C_YELLOW "[A]" C_WHITE "공격  " C_YELLOW "[S]" C_WHITE "혼신의 일격  " C_YELLOW "[R]" C_WHITE "포기  >> ");
+				" " C_YELLOW "[A]" C_WHITE "공격 " C_YELLOW "[S]" C_WHITE "혼신의 일격 " C_YELLOW "[I]" C_WHITE "아이템 " C_YELLOW "[R]" C_WHITE "도망 >> " :
+				" " C_YELLOW "[A]" C_WHITE "공격 " C_YELLOW "[S]" C_WHITE "혼신의 일격 " C_YELLOW "[I]" C_WHITE "아이템 " C_YELLOW "[R]" C_WHITE "포기 >> ");
+		int atk = elixir ? attack_power() * 3 / 2 : attack_power();
 
 		char buf[256];
-		if ( !strcasecmp(cmd.c_str(), "r") ) {
+		if ( !strcasecmp(cmd.c_str(), "i") ) {
+			at(23, 1);
+			printf("\033[K ");
+			for (int i=0; i<CONSUMABLE_COUNT; i++) {
+				printf(C_YELLOW "%d" C_WHITE ".%s(%d) ", i + 1, consumables[i].name, h.bag[i]);
+			}
+			std::string a = ask(">> ");
+			int n = atoi(a.c_str()) - 1;
+			if ( n < 0 || n >= CONSUMABLE_COUNT ) continue;
+			if ( h.bag[n] <= 0 ) {
+				log.push_back(C_GRAY + std::string(consumables[n].name) + " 이(가) 없습니다." C_WHITE);
+				continue;
+			}
+			if ( n == SMOKE && !can_run ) {
+				log.push_back(C_GRAY "사부님과의 결투에서는 쓸 수 없습니다." C_WHITE);
+				continue;
+			}
+			h.bag[n]--;
+			if ( n == POTION_S || n == POTION_L ) {
+				int heal = (n == POTION_S) ? h.max_hp / 3 + 1 : h.max_hp;
+				if ( heal > h.max_hp - h.hp ) heal = h.max_hp - h.hp;
+				h.hp += heal;
+				snprintf(buf, sizeof(buf), "%s 을(를) 마셨습니다. 체력 " C_GREEN "+%d" C_WHITE, consumables[n].name, heal);
+				log.push_back(buf);
+			} else if ( n == SMOKE ) {
+				save_hero();
+				at(23, 1);
+				printf("\033[K " C_YELLOW "연막탄을 던지고 연기 속으로 사라졌습니다." C_WHITE);
+				wait_enter();
+				return RUN;
+			} else if ( n == ELIXIR ) {
+				elixir = true;
+				log.push_back(C_MAGENTA "힘의 영약을 마셨습니다. 온몸에 힘이 넘칩니다!" C_WHITE);
+			}
+			save_hero();
+		} else if ( !strcasecmp(cmd.c_str(), "r") ) {
 			if ( !can_run ) return RUN;
 			if ( rnd(1, 100) <= 55 ) {
 				at(23, 1);
@@ -785,14 +911,14 @@ fight_result fight(foe &f, const char *title, bool can_run)
 			if ( rnd(1, 100) <= 40 ) {
 				log.push_back(C_GRAY "혼신의 일격이 크게 빗나갔습니다!" C_WHITE);
 			} else {
-				int d = damage(attack_power(), f.def) * 5 / 2 + 1;
+				int d = damage(atk, f.def) * 5 / 2 + 1;
 				f.hp -= d;
 				snprintf(buf, sizeof(buf), C_YELLOW "혼신의 일격!" C_WHITE " %s 에게 " C_YELLOW "%d" C_WHITE " 의 피해!", f.name.c_str(), d);
 				log.push_back(buf);
 				if ( f.hp <= 0 ) continue;
 			}
 		} else if ( !strcasecmp(cmd.c_str(), "a") || cmd.empty() ) {
-			int d = damage(attack_power(), f.def);
+			int d = damage(atk, f.def);
 			// 가끔 회심의 일격
 			bool crit = rnd(1, 100) <= 8;
 			if ( crit ) d = d * 2 + 1;
@@ -930,6 +1056,16 @@ void go_forest(void)
 			h.exp += f.exp;
 			h.gold += f.gold;
 			h.kills++;
+
+			// 가끔 소모품을 떨어뜨린다
+			int drop = -1;
+			int dr = rnd(1, 100);
+			if ( dr <= 3 ) drop = ELIXIR;
+			else if ( dr <= 6 ) drop = POTION_L;
+			else if ( dr <= 9 ) drop = SMOKE;
+			else if ( dr <= 18 ) drop = POTION_S;
+			if ( drop >= 0 && h.bag[drop] < MAX_CONSUMABLE ) h.bag[drop]++;
+			else drop = -1;
 			save_hero();
 
 			print_header("승리");
@@ -943,6 +1079,9 @@ void go_forest(void)
 			printf("\r\n      체력    ");
 			hp_bar(h.hp, h.max_hp);
 			printf("\r\n");
+			if ( drop >= 0 ) {
+				printf("\r\n      " C_GREEN "%s 이(가) %s 을(를) 떨어뜨렸습니다!" C_WHITE "\r\n", f.name.c_str(), consumables[drop].name);
+			}
 			if ( h.level < MAX_LEVEL && h.exp >= exp_need[h.level] ) {
 				printf("\r\n      " C_MAGENTA "★ 사부님께 도전할 만큼 강해졌습니다! (마을에서 M)" C_WHITE "\r\n");
 			}
@@ -1226,6 +1365,131 @@ void go_bank(void)
 }
 
 // ------------------------------------------------------------------
+// 잡화점: 장신구와 소모품
+// ------------------------------------------------------------------
+static const char *art_store[] = {
+	"      _______________",
+	"     /{y}   잡  화  점  {X}\\",
+	"    |  {r}[]{X}  {g}[]{X}  {c}[]{X}  {y}[]{X} |",
+	"    |_________________|",
+	NULL
+};
+
+void go_store(void)
+{
+	while (1) {
+		print_header("잡화점");
+		print_art(art_store, C_BROWN);
+		printf("  소지금 " C_YELLOW "%s 냥" C_WHITE "   장신구 " C_CYAN "%s" C_WHITE "\r\n",
+				money(h.gold).c_str(), accessories[h.acc].name);
+		printf(C_GRAY " %s" C_WHITE "\r\n", repeat("─", 39).c_str());
+
+		// 장신구 (두 단)
+		int rows = (accessory_count - 1 + 1) / 2;
+		for (int r=0; r<rows; r++) {
+			for (int c=0; c<2; c++) {
+				int i = 1 + c * rows + r;
+				if ( i >= accessory_count ) break;
+				const accessory &a = accessories[i];
+				char eff[32] = "";
+				if ( a.atk ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "공%d ", a.atk);
+				if ( a.def ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "방%d ", a.def);
+				if ( a.hp ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "체%d ", a.hp);
+				printf("  %s%2d. %-12s %-10s%10s냥" C_WHITE " ",
+						i == h.acc ? C_CYAN : (a.price <= h.gold ? C_WHITE : C_GRAY),
+						i, a.name, eff, money(a.price).c_str());
+			}
+			printf("\r\n");
+		}
+
+		printf(C_GRAY " %s" C_WHITE "\r\n", repeat("─", 39).c_str());
+		for (int i=0; i<CONSUMABLE_COUNT; i++) {
+			printf("  " C_YELLOW "%c" C_WHITE ". %-10s %-22s %6s냥  (가진 것 %d)\r\n", 'A' + i,
+					consumables[i].name, consumables[i].desc, money(consumables[i].price * h.level).c_str(), h.bag[i]);
+		}
+
+		std::string cmd = ask("\r\n 장신구 번호 / 소모품 글자 (Q:나가기) >> ");
+		if ( !strcasecmp(cmd.c_str(), "q") || !strcasecmp(cmd.c_str(), "p") || cmd.empty() ) return;
+
+		// 소모품
+		if ( cmd.size() == 1 && toupper(cmd[0]) >= 'A' && toupper(cmd[0]) < 'A' + CONSUMABLE_COUNT ) {
+			int n = toupper(cmd[0]) - 'A';
+			int price = consumables[n].price * h.level;
+			if ( h.bag[n] >= MAX_CONSUMABLE ) {
+				printf("\r\n 더 가질 수 없습니다. (최대 %d 개)", MAX_CONSUMABLE);
+			} else if ( h.gold < price ) {
+				printf("\r\n " C_RED "돈이 모자랍니다." C_WHITE);
+			} else {
+				h.gold -= price;
+				h.bag[n]++;
+				save_hero();
+				printf("\r\n " C_YELLOW "%s" C_WHITE " 을(를) 샀습니다.", consumables[n].name);
+			}
+			wait_enter();
+			continue;
+		}
+
+		// 장신구 (가지고 있던 것은 값의 절반을 쳐줌)
+		int n = atoi(cmd.c_str());
+		if ( n < 1 || n >= accessory_count ) continue;
+		if ( n == h.acc ) {
+			printf("\r\n 이미 지니고 있습니다.");
+			wait_enter();
+			continue;
+		}
+		int refund = accessories[h.acc].price / 2;
+		if ( h.gold + refund < accessories[n].price ) {
+			printf("\r\n " C_RED "돈이 모자랍니다." C_WHITE);
+			wait_enter();
+			continue;
+		}
+		h.gold = h.gold + refund - accessories[n].price;
+		// 최대 체력은 장신구만큼 바꿔 둔다
+		h.max_hp += accessories[n].hp - accessories[h.acc].hp;
+		if ( h.hp > h.max_hp ) h.hp = h.max_hp;
+		h.acc = n;
+		save_hero();
+		printf("\r\n " C_YELLOW "%s" C_WHITE " 을(를) 샀습니다!", accessories[n].name);
+		wait_enter();
+	}
+}
+
+// 소지품 보기 / 회복약 쓰기
+void show_bag(void)
+{
+	while (1) {
+		print_header("소지품");
+		printf("\r\n  무기   " C_CYAN "%-12s" C_WHITE " 공격 +%d\r\n", weapons[h.weapon].name, weapons[h.weapon].power);
+		printf("  갑옷   " C_CYAN "%-12s" C_WHITE " 방어 +%d\r\n", armors[h.armor].name, armors[h.armor].power);
+		const accessory &a = accessories[h.acc];
+		printf("  장신구 " C_CYAN "%-12s" C_WHITE " 공격 +%d  방어 +%d  체력 +%d\r\n", a.name, a.atk, a.def, a.hp);
+		printf("\r\n  체력 ");
+		hp_bar(h.hp, h.max_hp);
+		printf("\r\n\r\n");
+		for (int i=0; i<CONSUMABLE_COUNT; i++) {
+			printf("  " C_YELLOW "%d" C_WHITE ". %-10s %d 개   " C_GRAY "%s" C_WHITE "\r\n", i + 1,
+					consumables[i].name, h.bag[i], consumables[i].desc);
+		}
+
+		std::string cmd = ask("\r\n 회복약 쓰기(1,2)  Q:나가기 >> ");
+		if ( !strcasecmp(cmd.c_str(), "q") || !strcasecmp(cmd.c_str(), "p") || cmd.empty() ) return;
+		int n = atoi(cmd.c_str()) - 1;
+		if ( n != POTION_S && n != POTION_L ) continue;
+		if ( h.dead ) {
+			printf("\r\n 쓰러진 몸은 하룻밤 쉬어야 합니다.");
+			wait_enter();
+			continue;
+		}
+		if ( h.bag[n] <= 0 || h.hp >= h.max_hp ) continue;
+		h.bag[n]--;
+		int heal = (n == POTION_S) ? h.max_hp / 3 + 1 : h.max_hp;
+		if ( heal > h.max_hp - h.hp ) heal = h.max_hp - h.hp;
+		h.hp += heal;
+		save_hero();
+	}
+}
+
+// ------------------------------------------------------------------
 // 순위 / 소식 / 상태
 // ------------------------------------------------------------------
 void show_rank(void)
@@ -1272,7 +1536,8 @@ void show_status(void)
 	if ( h.level < MAX_LEVEL ) printf("/%s", money(exp_need[h.level]).c_str());
 	printf("   소지금 " C_YELLOW "%s냥" C_WHITE "   남은 사냥 " C_GREEN "%d" C_WHITE "   영웅 " C_MAGENTA "%d" C_WHITE "번\r\n",
 			money(h.gold).c_str(), h.fights, h.wins);
-	printf("  " C_GRAY "%s / %s" C_WHITE "\r\n", weapons[h.weapon].name, armors[h.armor].name);
+	printf("  " C_GRAY "%s / %s / %s   회복약 %d+%d  연막탄 %d  영약 %d" C_WHITE "\r\n", weapons[h.weapon].name, armors[h.armor].name,
+			accessories[h.acc].name, h.bag[POTION_S], h.bag[POTION_L], h.bag[SMOKE], h.bag[ELIXIR]);
 }
 
 // ------------------------------------------------------------------
@@ -1288,7 +1553,8 @@ void town(void)
 		printf(C_GRAY " %s" C_WHITE "\r\n", repeat("─", 39).c_str());
 		printf("  " C_YELLOW "[F]" C_GREEN " ♣" C_WHITE " 숲으로 사냥    " C_YELLOW "[M]" C_MAGENTA " ★" C_WHITE " 사부님께 도전  " C_YELLOW "[H]" C_RED " ♥" C_WHITE " 약방\r\n");
 		printf("  " C_YELLOW "[W]" C_GRAY " ♠" C_WHITE " 대장간(무기)   " C_YELLOW "[A]" C_CYAN " ◆" C_WHITE " 갑옷 가게      " C_YELLOW "[B]" C_YELLOW " ●" C_WHITE " 전장(돈 맡기기)\r\n");
-		printf("  " C_YELLOW "[R]" C_YELLOW " ☆" C_WHITE " 용사 순위      " C_YELLOW "[N]" C_CYAN " ♪" C_WHITE " 마을 소식      " C_YELLOW "[Q]" C_GRAY " ◁" C_WHITE " 게임 끝내기\r\n");
+		printf("  " C_YELLOW "[G]" C_GREEN " ◎" C_WHITE " 잡화점         " C_YELLOW "[I]" C_CYAN " ▣" C_WHITE " 소지품         " C_YELLOW "[R]" C_YELLOW " ☆" C_WHITE " 용사 순위\r\n");
+		printf("  " C_YELLOW "[N]" C_CYAN " ♪" C_WHITE " 마을 소식      " C_YELLOW "[Q]" C_GRAY " ◁" C_WHITE " 게임 끝내기\r\n");
 
 		std::string cmd = ask(" 선택 >> ");
 		const char *c = cmd.c_str();
@@ -1300,6 +1566,8 @@ void town(void)
 		else if ( !strcasecmp(c, "w") ) go_shop(true);
 		else if ( !strcasecmp(c, "a") ) go_shop(false);
 		else if ( !strcasecmp(c, "b") ) go_bank();
+		else if ( !strcasecmp(c, "g") ) go_store();
+		else if ( !strcasecmp(c, "i") ) show_bag();
 		else if ( !strcasecmp(c, "r") ) show_rank();
 		else if ( !strcasecmp(c, "n") ) show_news();
 	}
@@ -1327,6 +1595,7 @@ void title_screen(bool first)
 	printf("  하루에 숲 사냥은 " C_GREEN "%d 번" C_WHITE ". 쓰러지면 지닌 돈을 잃고 다음 날 깨어납니다.\r\n", FIGHTS_PER_DAY);
 	printf("  돈은 " C_YELLOW "전장" C_WHITE "에 맡겨 두세요!\r\n");
 	printf("  전투에서 " C_YELLOW "[S] 혼신의 일격" C_WHITE "은 빗나가기 쉽지만 맞으면 2.5 배 피해를 줍니다.\r\n");
+	printf("  " C_YELLOW "잡화점" C_WHITE "에서 장신구와 회복약/연막탄/영약을 살 수 있습니다. (전투 중 [I])\r\n");
 	printf("\r\n  새 용사 " C_CYAN "%s" C_WHITE " 의 모험이 시작됩니다.\r\n", h.name.c_str());
 	wait_enter();
 }
