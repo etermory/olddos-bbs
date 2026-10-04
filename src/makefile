@@ -20,7 +20,7 @@ endif
 .c.o: ; $(CC) -c $(CFLAGS) -o $*.o $<
 .cpp.o: ; $(CXX) -c $(CFLAGS) -o $*.o $<
 
-all: ctime main guest pass sysop weather exchange lunar memo biorhythm chattclient chattserver mbti_gs  
+all: ctime main guest pass sysop weather exchange lunar hero memo biorhythm chattclient chattserver mbti_gs   
 
 main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 	base64.o pugixml.o upload.o download.o write.o edit.o hangul.o \
@@ -57,6 +57,11 @@ weather: weather.o utility.o pugixml.o
 
 exchange: exchange.o utility.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o exchange.o utility.o \
+			$(LIBMYSQL) -lz -lpthread -lrt
+	$(STRIP) ../bin/$@
+
+hero: hero.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
+	$(CXX) -o ../bin/$@ pugixml.o hero.o database.o utility.o textutil.o settings.o menu.o re.o \
 			$(LIBMYSQL) -lz -lpthread -lrt
 	$(STRIP) ../bin/$@
 

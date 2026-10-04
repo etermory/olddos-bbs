@@ -1826,7 +1826,7 @@ void print_board_header(char *table_name, char *title, int page_count, int page_
 }
 
 // 외부 프로그램 메뉴
-//   type="program" prog="exchange" : $HANULSO/bin/exchange 를 실행 (호스트 이름을 인자로 넘김)
+//   type="program" prog="exchange" : $HANULSO/bin/exchange 를 실행 (호스트 이름, 아이디, tty 를 인자로 넘김)
 //   type="biorhythm"              : 바이오리듬
 //   type="mbti"                   : 성격 검사
 // 처리한 메뉴면 true
@@ -1874,8 +1874,8 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 		}
 
 		char buf[1024];
-		snprintf(buf, sizeof(buf), "%s/bin/%s %s", getenv("HANULSO"), prog.c_str(), 
-				shell_quote(host_name).c_str());
+		snprintf(buf, sizeof(buf), "%s/bin/%s %s %s %s", getenv("HANULSO"), prog.c_str(), 
+				shell_quote(host_name).c_str(), shell_quote(login_user_id).c_str(), shell_quote(tty).c_str());
 		fflush(stdout);
 		system(buf);
 	}
