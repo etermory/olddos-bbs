@@ -1,7 +1,7 @@
 #!/bin/bash
 # 쥬라기공원 머드 실행 (드라이버가 죽으면 10 초 뒤 다시 띄운다)
 #   cd <설치 디렉터리>/bin && nohup ./startmud > /dev/null 2>&1 &
-# 멈추려면: kill $(cat startmud.pid) 후 운영자로 접속해 '0 다운' 또는 kill $(cat driver.pid)
+# 멈추려면: ./killmud   다시 띄우려면: ./killmud -r  (또는 운영자로 접속해 '0 다운')
 cd "$(dirname "$0")"
 BIN=$(pwd)
 LOG=../lib/log/driver

@@ -1,0 +1,77 @@
+#!/bin/bash
+# 쥬라기공원 머드 끄기
+#   ./killmud      startmud 와 드라이버를 모두 끈다 (머드 종료)
+#   ./killmud -r   드라이버만 끈다 -> startmud 가 10 초 뒤 다시 띄운다 (재시작)
+#
+# 드라이버는 kill(SIGTERM) 을 받으면 마스터의 crash() 에서 접속자 자료를 저장하고 끝난다.
+# 30 초 안에 끝나지 않을 때만 kill -9 (이때는 저장되지 않는다).
+cd "$(dirname "$0")"
+BIN=$(pwd)
+
+# 안내 문구: 터미널이 EUC-KR 이면 EUC-KR 로 바꿔 출력 (스크립트는 UTF-8)
+say() {
+	case "${LC_ALL:-${LANG:-}}" in
+		*[Ee][Uu][Cc]*|*949*) printf '%s\n' "$*" | iconv -f UTF-8 -t CP949 2>/dev/null || printf '%s\n' "$*" ;;
+		*) printf '%s\n' "$*" ;;
+	esac
+}
+
+# pid 파일의 프로세스가 살아 있고 이름이 맞으면 pid 를 출력
+alive() {
+	local pidfile=$1 name=$2 pid
+	[ -f "$pidfile" ] || return 1
+	pid=$(cat "$pidfile" 2>/dev/null)
+	[ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 1
+	tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q "$name" || return 1
+	echo "$pid"
+}
+
+# 프로세스가 끝날 때까지 최대 $2 초 기다린다
+wait_exit() {
+	local pid=$1 i=0
+	while [ $i -lt $2 ]; do
+		kill -0 "$pid" 2>/dev/null || return 0
+		sleep 1
+		i=$((i + 1))
+	done
+	return 1
+}
+
+RESTART=0
+[ "$1" = "-r" ] && RESTART=1
+
+LOOP=$(alive "$BIN/startmud.pid" startmud)
+DRV=$(alive "$BIN/driver.pid" "driver config.jurassic")
+
+if [ $RESTART -eq 1 ]; then
+	if [ -z "$LOOP" ]; then
+		say "startmud 가 실행 중이 아닙니다. 다시 띄우지 못하므로 그만둡니다."
+		say "실행: cd $BIN && nohup ./startmud > /dev/null 2>&1 &"
+		exit 1
+	fi
+	if [ -z "$DRV" ]; then
+		say "드라이버가 실행 중이 아닙니다. startmud 가 곧 띄웁니다."
+		exit 0
+	fi
+	kill "$DRV"
+	wait_exit "$DRV" 30 || kill -9 "$DRV"
+	say "드라이버를 껐습니다. startmud 가 10 초 뒤 다시 띄웁니다."
+	exit 0
+fi
+
+# 먼저 startmud 를 꺼야 드라이버를 다시 띄우지 않는다
+if [ -n "$LOOP" ]; then
+	kill "$LOOP"
+	wait_exit "$LOOP" 5 || kill -9 "$LOOP"
+fi
+if [ -n "$DRV" ]; then
+	kill "$DRV"
+	wait_exit "$DRV" 30 || kill -9 "$DRV"
+fi
+rm -f "$BIN/startmud.pid" "$BIN/driver.pid"
+
+if [ -z "$LOOP" ] && [ -z "$DRV" ]; then
+	say "머드가 실행 중이 아닙니다."
+else
+	say "머드를 껐습니다."
+fi
