@@ -524,6 +524,29 @@ bool read_tty_file(const std::string &path, std::string &user_id)
 	return true;
 }
 
+// 화면에 보이는 글자만 남긴다: 일반 ASCII 와 완성형(KS X 1001) 2 바이트 글자.
+// 제어 문자, 완성형 밖의 글자(터미널에 안 보이고 칸만 어긋남), 짝 없는 바이트는 뺀다.
+std::string display_text(const std::string &s)
+{
+	std::string r;
+	unsigned int k = 0;
+	while ( k < s.size() ) {
+		unsigned char c = s[k];
+		if ( c >= 0x80 ) {
+			unsigned char c2 = (k + 1 < s.size()) ? (unsigned char)s[k+1] : 0;
+			if ( c >= 0xA1 && c <= 0xFE && c2 >= 0xA1 && c2 <= 0xFE ) {
+				r += s[k];
+				r += s[k+1];
+			}
+			k += (c2 >= 0x41) ? 2 : 1;
+		} else {
+			if ( c >= 0x20 && c < 0x7F ) r += s[k];
+			k += 1;
+		}
+	}
+	return trim(r);
+}
+
 // 입력 버퍼(stdio)나 소켓에 바로 이어서 들어온 글자가 있는지
 static bool input_pending(int msec)
 {

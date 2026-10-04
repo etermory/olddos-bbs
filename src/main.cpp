@@ -490,9 +490,14 @@ void show_board(pugi::xml_node node)
 				const char *user_id = row[std::string("USER_ID")].c_str();
 				bool exist;
 				std::map<std::string, std::string> user = database::user_info((char*)user_id, &exist);
+				// 닉네임에 보이는 글자가 없으면 (비었거나 터미널에 안 보이는 글자) 아이디로,
+				// 아이디도 안 보이면 탈퇴회원으로 표시
+				std::string nick_s = exist ? display_text(user["NICK_NAME"]) : "";
+				if ( exist && nick_s.empty() ) nick_s = display_text(user_id);
+				if ( nick_s.empty() ) exist = false;
 				const char *nick_name;
 				if ( exist )
-					nick_name = user["NICK_NAME"].c_str();
+					nick_name = nick_s.c_str();
 				else
 					nick_name = "탈퇴회원";
 				//const char *date = row[std::string("DATE")].c_str();
@@ -901,9 +906,13 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
 		char recommend[1024];
 
         const char *user_id = row[std::string("USER_ID")].c_str();
+        // 닉네임에 보이는 글자가 없으면 아이디로, 아이디도 안 보이면 탈퇴회원으로 표시
+        std::string nick_s = exist ? display_text(user["NICK_NAME"]) : "";
+        if ( exist && nick_s.empty() ) nick_s = display_text(user_id);
+        if ( nick_s.empty() ) exist = false;
         const char *nick_name;
         if ( exist ) {
-            nick_name = user["NICK_NAME"].c_str();
+            nick_name = nick_s.c_str();
         } else {
             nick_name = "탈퇴회원";
             user_id = "*****";
@@ -1873,9 +1882,19 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 			return true;
 		}
 
+		// 메뉴의 args 는 네 번째 인자로 (예: 머드 포트). 글자/숫자/._- 만 허용
+		std::string args = node.attribute("args").value();
+		for (unsigned int i=0; i<args.size(); i++) {
+			if ( !isalnum((unsigned char)args[i]) && args[i] != '.' && args[i] != '_' && args[i] != '-' ) {
+				args = "";
+				break;
+			}
+		}
+
 		char buf[1024];
-		snprintf(buf, sizeof(buf), "%s/bin/%s %s %s %s", getenv("HANULSO"), prog.c_str(), 
-				shell_quote(host_name).c_str(), shell_quote(login_user_id).c_str(), shell_quote(tty).c_str());
+		snprintf(buf, sizeof(buf), "%s/bin/%s %s %s %s %s", getenv("HANULSO"), prog.c_str(),
+				shell_quote(host_name).c_str(), shell_quote(login_user_id).c_str(), shell_quote(tty).c_str(),
+				shell_quote(args).c_str());
 		fflush(stdout);
 		system(buf);
 	}

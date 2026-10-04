@@ -274,6 +274,7 @@ std::string add_slashes(std::string str);
 std::string shell_quote(const std::string &str);
 bool download_url(const std::string &url, const std::string &path);
 std::string fix_hangul(const std::string &s);
+std::string display_text(const std::string &s);
 bool read_tty_file(const std::string &path, std::string &user_id);
 int check_password_strongness(std::string str);
 
