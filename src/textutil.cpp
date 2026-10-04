@@ -40,8 +40,10 @@ static void compute_bbs_stats(bbs_stats &s)
 	// (접속자마다 DB 를 조회하면 접속자가 많을 때 부담이 커서 파일만 확인)
 	sprintf(buf, "%s/tmp/*.tty", getenv("HANULSO"));
 	std::vector<std::string> files = find_files(buf);
+	// (강제 종료로 남은 파일은 read_tty_file 이 pid 를 확인해 지운다)
 	for(unsigned int i=0; i<files.size(); i++) {
-		if ( file_size(files[i]) > 0 ) {
+		std::string user_id;
+		if ( read_tty_file(files[i], user_id) ) {
 			s.conns += 1;
 		}
 	}

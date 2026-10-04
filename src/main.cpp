@@ -128,9 +128,10 @@ int main(int argc, char **argv)
 	char buf[1024];
 	sprintf(buf, "%s/tmp/%s.tty", getenv("HANULSO"), tty);
 
+	// 아이디와 함께 pid 를 적어 두어, 강제 종료로 파일이 남아도 접속자 목록에서 걸러낸다
 	FILE *fp = fopen(buf, "w");
 	if ( fp != NULL ) {
-		fprintf(fp, "%s", login_user_id);
+		fprintf(fp, "%s %d", login_user_id, (int)getpid());
 		fclose(fp);
 	}
 
@@ -1414,20 +1415,21 @@ int host_close (void)
 	if ( closing ) exit(1);
 	closing = 1;
 
+	// 접속자 정보 파일과 임시 파일은 먼저 지운다.
+	// (아래 DB 작업이 실패해 [Enter] 를 기다리다 끊기면 여기까지 오지 못하므로)
+	char buf[1024];
+    sprintf(buf,"%s/tmp/%s.tty", getenv("HANULSO"), tty);
+	unlink(buf);
+
+	// 현재 접속자에 의해 임시로 생성(복사)된 파일이 있다면 삭제..
+	// 파일 다운로드시 임시 파일 복사중 통신 끊겨 쓰레기로 남아 있는 파일들..
+	del_user_tmpfiles();
+
 	database::set_lastlogin_datetime(login_user_id);
 
 	database::close();
 
     ioctl(0, TCSETAF, &sys_term);
-
-	// 현재 접속자 정보 파일 삭제
-	char buf[1024];
-    sprintf(buf,"%s/tmp/%s.tty", getenv("HANULSO"), tty);
-	unlink(buf);
-
-	// 현재 접속자에 의해 임시로 생성(복사)된 파일이 있다면 삭제.. 
-	// 파일 다운로드시 임시 파일 복사중 통신 끊겨 쓰레기로 남아 있는 파일들..
-	del_user_tmpfiles();
 
 	exit(1);
 }
@@ -1597,8 +1599,8 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 			printf("접속중인 회원 목록 입니다.");
 
 			for(int i=0; i<files.size(); i++) {
-				std::string user_id = trim(read_file(files[i].c_str()));
-				if (user_id.length() > 0) {
+				std::string user_id;
+				if ( read_tty_file(files[i], user_id) ) {
 					bool exist;
 					std::map<std::string, std::string> user = database::user_info((char*)user_id.c_str(), &exist);
 

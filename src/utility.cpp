@@ -503,6 +503,27 @@ std::string fix_hangul(const std::string &s)
 	return r;
 }
 
+// 접속자 파일(tmp/<tty>.tty: "아이디 pid") 을 읽는다.
+// 로그인 전(빈 파일)이면 false, 프로세스가 이미 죽었으면 (강제 종료 등으로 남은 파일) 지우고 false.
+bool read_tty_file(const std::string &path, std::string &user_id)
+{
+	std::string txt = trim(read_file(path.c_str()));
+	char id[256] = "";
+	int pid = 0;
+	if ( sscanf(txt.c_str(), "%255s %d", id, &pid) < 1 ) {
+		return false;
+	}
+
+	// pid 가 없는 예전 형식은 살아 있는 것으로 본다
+	if ( pid > 0 && kill(pid, 0) != 0 && errno == ESRCH ) {
+		unlink(path.c_str());
+		return false;
+	}
+
+	user_id = id;
+	return true;
+}
+
 // 입력 버퍼(stdio)나 소켓에 바로 이어서 들어온 글자가 있는지
 static bool input_pending(int msec)
 {
