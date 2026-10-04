@@ -394,6 +394,10 @@ bool connect_chatt_room(int port)
 			getenv("HANULSO"), port, shell_quote(login_user_id).c_str(), shell_quote(nick_name).c_str());
 	int a = system(cmd);
 
+	// 대화방 클라이언트가 비정상 종료돼도 스크롤 영역이 남지 않도록 해제
+	printf("\033[r");
+	fflush(stdout);
+
 	if ( WEXITSTATUS(a) != 0 ) {
 		return false;
 	}

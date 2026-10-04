@@ -287,7 +287,8 @@ int chatt_close (void)
 	close(sock_fd);
 	
 	// ½ºÅ©·Ñ ¿µ¿ª ÃÊ±âÈ­
-	printf("[%d;%dr", 0, 0);
+	printf("[r");
+	fflush(stdout);
 
 	exit(0);
 }
@@ -403,7 +404,8 @@ int main(int argc,char *argv[])
 	close(sock_fd);
 	
 	// ½ºÅ©·Ñ ¿µ¿ª ÃÊ±âÈ­
-	printf("[%d;%dr", 0, 0);
+	printf("[r");
+	fflush(stdout);
 
     exit(0);
 }
