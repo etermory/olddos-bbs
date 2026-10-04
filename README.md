@@ -1,7 +1,41 @@
+<div align="center">
+
+# 도스박물관 BBS
+
+**1990년대 PC통신 시절의 BBS를 텔넷으로 되살린 프로그램**
+
+![CentOS 6](https://img.shields.io/badge/CentOS-6-262577?logo=centos)
+![C++98](https://img.shields.io/badge/C%2B%2B-98-00599C?logo=cplusplus)
+![EUC-KR](https://img.shields.io/badge/%ED%95%9C%EA%B8%80-EUC--KR-0000AA)
+![Telnet](https://img.shields.io/badge/%EC%A0%91%EC%86%8D-Telnet-555555)
+![License LGPL](https://img.shields.io/badge/License-LGPL-blue)
+
+</div>
+
+```
+  +----------------------------+  +---------------------------------------+
+  |   D O S   M U S E U M      |  |                         SINCE 2016    |
+  +----------------------------+  +---------------------------------------+
+
+             )   )   )
+          .-------------.            Welcome back to the 90s.
+          |             |]
+          |             |            PC Tongsin BBS over Telnet
+          `-------------'
+        ~~~~~~~~~~~~~~~~~~~          Select (Help[H]) >> _
+```
 
 소개
 -
-1990년대 한국 PC통신 시절의 BBS(전자게시판)를 재현하는 프로그램입니다. 현재 CentOS 6.9 에서 개발하고 운영하고 있습니다. (https://bbsweb.oscc.kr/)
+파란 화면, 번호로 고르는 메뉴, `GO` 명령, 한 줄씩 쓰는 줄 편집기, Zmodem 으로 주고받던 자료실.
+하이텔, 천리안, 나우누리 시절 PC통신의 모습과 쓰임새를 그대로 재현한 텔넷 BBS 입니다.
+
+- **옛 통신 에뮬레이터로 접속**: 이야기 5.4 같은 옛 통신 프로그램에 맞춘 80 칸 화면, EUC-KR 한글, ANSI 색
+- **그때 그 기능**: 게시판과 자료실, 대화방, 쪽지, 회원 등급, 도어 게임과 머드 게임
+- **요즘 정보도 그 시절 화면으로**: 날씨와 미세먼지, 뉴스, 환율, 음력 달력, 운세
+- **직접 운영 중**: CentOS 6.9 에서 개발하고 운영하고 있습니다
+  - 웹: https://bbsweb.oscc.kr/
+  - 카페: http://cafe.naver.com/olddos
 
 주요 기능
 -
