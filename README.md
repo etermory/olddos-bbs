@@ -58,6 +58,7 @@
 - 프로그램/게임/특별/음원 자료실
 
 <img width="850" alt="프로그램 자료실 화면" src="docs/screenshots/pds_prog.png" />
+<img width="850" alt="게시판 목록 화면" src="docs/screenshots/board_list.png" />
 
 **대화방**
 - 대화방 개설, 비밀방, 인원 제한
