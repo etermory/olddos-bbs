@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>
 #include <termio.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -52,6 +53,9 @@ static bool last_cr = false;
 // 사용자가 마지막으로 \r 을 쳤는지 (\r\n 으로 오는 터미널)
 static bool user_cr = false;
 
+// /x 로 나가기를 요청한 시각 (0: 요청 없음)
+static time_t quit_requested = 0;
+
 static void raw_mode(void)
 {
 	struct termio tbuf;
@@ -70,9 +74,13 @@ static void raw_mode(void)
 	ioctl(0, TCSETAF, &tbuf);
 }
 
+static void out_str(const char *s);
+
 static void quit(int code)
 {
 	if ( sock >= 0 ) close(sock);
+	// 머드가 바꿔 놓은 색(검은 배경 등)을 BBS 기본색(흰 글자, 파란 배경)으로 되돌린다
+	out_str("\033[0m\033[=15F\033[=1G\033[2J\033[H");
 	ioctl(0, TCSETAF, &sys_term);
 	exit(code);
 }
@@ -244,6 +252,17 @@ static void from_user(unsigned char c)
 		}
 		out_str("\r\n");
 		last_cr = false;
+
+		// /x, /q : BBS 로 나가기. 머드에는 '끝' 을 보내 저장하고 나오게 하고,
+		// 로그인 전이라 끝나지 않으면 3 초 뒤 직접 끊는다
+		if ( (line_len == 2 && line[0] == '/' && (line[1] == 'x' || line[1] == 'X' || line[1] == 'q' || line[1] == 'Q')) ) {
+			static const char quit_cmd[] = "끝\r\n";
+			send_sock((const unsigned char *)quit_cmd, strlen(quit_cmd));
+			quit_requested = time(NULL);
+			line_len = 0;
+			return;
+		}
+
 		line[line_len++] = '\r';
 		line[line_len++] = '\n';
 		send_sock((unsigned char *)line, line_len);
@@ -330,6 +349,8 @@ int main(int argc, char **argv)
 		quit(0);
 	}
 
+	out_str(" (BBS 로 돌아가려면 게임에서 '끝' 또는 /x)\r\n");
+
 	unsigned char buf[4096];
 	while (1) {
 		fd_set fds;
@@ -337,7 +358,15 @@ int main(int argc, char **argv)
 		FD_SET(0, &fds);
 		FD_SET(sock, &fds);
 
-		if ( select(sock + 1, &fds, NULL, NULL, NULL) < 0 ) {
+		// /x 를 보냈는데 머드가 3 초 안에 끊지 않으면 (로그인 전 등) 직접 끊는다
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		if ( quit_requested && time(NULL) - quit_requested >= 3 ) {
+			break;
+		}
+
+		if ( select(sock + 1, &fds, NULL, NULL, quit_requested ? &tv : NULL) < 0 ) {
 			if ( errno == EINTR ) continue;
 			break;
 		}
