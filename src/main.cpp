@@ -164,15 +164,19 @@ int main(int argc, char **argv)
 	}
 	printf("\r\n [노    드] : pts/%s", tty);
 
-	// 새 쪽지 알림
+	// 쪽지 정보 (새 쪽지 / 받은 쪽지)
 	database::create_memo();
 	{
-		std::string q = "SELECT COUNT(*) AS CNT FROM memo WHERE RECIPIENT_USER_ID='"
-			+ database::escape(login_user_id) + "' AND RECIPIENT_DELETED=0 AND CONFIRMATION_DATETIME IS NULL";
+		std::string q = "SELECT COUNT(*) AS TOTAL, "
+			"COALESCE(SUM(CONFIRMATION_DATETIME IS NULL), 0) AS NEW FROM memo WHERE RECIPIENT_USER_ID='"
+			+ database::escape(login_user_id) + "' AND RECIPIENT_DELETED=0";
 		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
-		int cnt = r.size() > 0 ? atoi(r[0]["CNT"].c_str()) : 0;
-		if ( cnt > 0 ) {
-			printf("\r\n\r\n \033[=14F읽지 않은 쪽지가 %d 통 있습니다. (MEMO)\033[=15F", cnt);
+		int total = r.size() > 0 ? atoi(r[0]["TOTAL"].c_str()) : 0;
+		int unread = r.size() > 0 ? atoi(r[0]["NEW"].c_str()) : 0;
+		if ( unread > 0 ) {
+			printf("\r\n [쪽    지] : \033[=14F새 쪽지 %d통\033[=15F / 받은 쪽지 %d통 (MEMO 로 읽기)", unread, total);
+		} else {
+			printf("\r\n [쪽    지] : 새 쪽지 없음 / 받은 쪽지 %d통", total);
 		}
 	}
 
