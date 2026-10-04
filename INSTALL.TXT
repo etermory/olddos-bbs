@@ -216,3 +216,20 @@ src/jurassic 구성
 % cd /home/olddos/jurassic/bin && nohup ./startmud > /dev/null 2>&1 &
   kill 로 드라이버를 바로 끄면 접속 중인 사용자 자료가 저장되지 않는다.
   startmud 를 띄워 둔 채 '다운' 하면 10 초 뒤 자동으로 다시 뜬다 (재부팅).
+
+8) 업데이트 (소스를 고쳤거나 저장소가 바뀐 뒤)
+% cd /home/olddos/olddos-bbs && git pull
+% cd src/jurassic
+% ./build.sh /tmp/jurassic-build
+% ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
+  하늘소로 접속해서 '0 다운' -> startmud 가 10 초 뒤 새 버전으로 다시 띄운다.
+  머드가 실행 중이어도 설치된다. 사용자 자료(lib/data)는 그대로 남는다.
+  BBS 쪽 연결 프로그램이 바뀌었으면: cd /home/olddos/olddos-bbs/src && make mudlink
+
+9) 게임 내용 고치기
+  원본 게임 파일은 src/jurassic/jp2_v15.tgz 안에 있다 (HanLP/lib 아래).
+  고칠 파일은 같은 경로로 src/jurassic/libpatch/ 에 넣는다.
+    예) 원본 HanLP/lib/d/빌딩/로비.c  ->  src/jurassic/libpatch/d/빌딩/로비.c
+  deploy.sh 가 설치할 때 원본 위에 덮어쓴다. (파일 내용은 EUC-KR 로)
+  운영자 설정(adm/wizard/하늘소, adm/config/groups)도 이 방식으로 들어 있다.
+  고친 뒤 8) 의 deploy.sh 와 '0 다운' (빌드는 엔진을 고쳤을 때만 필요)
