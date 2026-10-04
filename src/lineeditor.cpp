@@ -6,6 +6,21 @@ void text_edit(std::vector<std::string> &list);
 void text_insert(std::vector<std::string> &list);
 void text_delete(std::vector<std::string> &list);
 
+// 들여쓰기와 입력 폭 (쪽지처럼 상자 안에 맞출 때 바꾼다. 기본은 게시판 그대로)
+static int le_indent = 0;
+static int le_width = 78;
+
+void line_editor_layout(int indent, int width)
+{
+	le_indent = indent;
+	le_width = width;
+}
+
+static std::string le_pad(void)
+{
+	return std::string(le_indent, ' ');
+}
+
 /* 라인 편집기 */
 bool line_editor(std::vector<std::string> &lines, bool edit)
 {
@@ -32,7 +47,7 @@ bool line_editor(std::vector<std::string> &lines, bool edit)
 
     while(1) {
 		printf(ESC_ENG);
-        printf("\r\n[S]등록 [Q]취소 [L]읽기 [E]수정 [A]추가 [I]삽입 [D]삭제 : ");
+        printf("\r\n%s[S]등록 [Q]취소 [L]읽기 [E]수정 [A]추가 [I]삽입 [D]삭제 : ", le_pad().c_str());
         line_input(buf, 2);
 
         if(buf[0] == 's' || buf[0] == 'S') { break; }
@@ -63,12 +78,14 @@ bool line_editor(std::vector<std::string> &lines, bool edit)
 
 void text_append(std::vector<std::string> &list)
 {
-    printf("\r\n\033$)1\033[?85h\r첫칸에 '.'을 찍으면 끝납니다.\r\n");
-	printf("0---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----\r\n");
-	
+    printf("\r\n\033$)1\033[?85h\r%s첫칸에 '.'을 찍으면 끝납니다.\r\n", le_pad().c_str());
+	std::string ruler = "0---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----";
+	printf("%s%s\r\n", le_pad().c_str(), ruler.substr(0, le_width).c_str());
+
 	char buf[81];
     while(1) {
-        line_input(buf, 78);
+		printf("%s", le_pad().c_str());
+        line_input(buf, le_width);
 
         if((buf[0] == '.' && buf[1] == '\0') || buf[0] == 0x1a) {
 			break;
@@ -89,13 +106,13 @@ void text_list(std::vector<std::string> &list)
     while (1) {
         if(i < 18) {
 			if ( l > list.size()-1 ) break;
-            printf("\r\n%d : %s", l+1, list[l].c_str());
+            printf("\r\n%s%d : %s", le_pad().c_str(), l+1, list[l].c_str());
 			l++;
             i++;
         }
         else {
 			char buf[2];
-            printf("\r\n계속[엔터] 중지[P] : ");
+            printf("\r\n%s계속[엔터] 중지[P] : ", le_pad().c_str());
 			line_input(buf, 1);
             if(buf[0] == 'p' || buf[0] == 'P') {
                 break;
@@ -110,15 +127,15 @@ void text_edit(std::vector<std::string> &list)
 {
 	char buf[81];
 
-	printf("\r\n줄번호 : ");
+	printf("\r\n%s줄번호 : ", le_pad().c_str());
 	line_input(buf, 4);
 	if ( strlen(buf) == 0 ) return;
 
 	unsigned int l = atoi(buf);
 	if ( l > list.size() || l <= 0 ) return;
 
-	printf("\r\n\033$)1\033[?85h\r%s\r\n", list[l-1].c_str());
-	line_input(buf, 78);
+	printf("\r\n\033$)1\033[?85h\r%s%s\r\n%s", le_pad().c_str(), list[l-1].c_str(), le_pad().c_str());
+	line_input(buf, le_width);
 
 	list[l-1] = std::string(buf);
 }
@@ -127,7 +144,7 @@ void text_delete(std::vector<std::string> &list)
 {
 	char buf[81];
 
-	printf("\r\n줄번호 : ");
+	printf("\r\n%s줄번호 : ", le_pad().c_str());
 	line_input(buf, 4);
 	if ( strlen(buf) == 0 ) return;
 
@@ -141,15 +158,15 @@ void text_insert(std::vector<std::string> &list)
 {
 	char buf[81];
 
-	printf("\r\n줄번호 : ");
+	printf("\r\n%s줄번호 : ", le_pad().c_str());
 	line_input(buf, 4);
 	if ( strlen(buf) == 0 ) return;
 
 	unsigned int l = atoi(buf);
 	if ( l > list.size() || l <= 0 ) return;
 
-	printf("\r\n입력: ");
-	line_input(buf, 78);
+	printf("\r\n%s입력: ", le_pad().c_str());
+	line_input(buf, le_width);
 	list.insert(list.begin()+(l-1), std::string(buf));
 }
 

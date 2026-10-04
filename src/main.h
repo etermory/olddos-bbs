@@ -212,6 +212,7 @@ std::string centered(const std::string s, const int w);
 std::string repeat(const std::string s, int n);
 
 bool line_editor(std::vector<std::string> &lines, bool edit);
+void line_editor_layout(int indent, int width);
 bool file_editor(char **lines, int *length);
 // Kermit 프로그램: $HANULSO 아래 G-Kermit (-i -r = 바이너리 받기, -i -s 파일 = 바이너리 보내기)
 #define KERMIT_PROG "%s/bin/gkermit"

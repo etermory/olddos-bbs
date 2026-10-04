@@ -195,7 +195,10 @@ void write_memo(std::string to, std::string title)
 	// 내용 (줄 편집기)
 	notice("\033[=7F내용을 입력하세요.");
 	std::vector<std::string> lines;
-	if ( !line_editor(lines, false) || lines.size() == 0 ) {
+	line_editor_layout(3, 74);		// 상자 안쪽 폭에 맞춘다
+	bool ok = line_editor(lines, false);
+	line_editor_layout(0, 78);
+	if ( !ok || lines.size() == 0 ) {
 		printf("\r\n\r\n   \033[=12F쪽지 쓰기를 취소했습니다.\033[=15F");
 		wait_enter();
 		return;
