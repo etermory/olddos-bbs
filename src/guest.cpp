@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 	query << "'" << database::escape(nick_name) << "', ";
 	query << "'" << database::escape(birthday) << "', ";
 	// 단방향 패스워드 알고리즘 사용
-	query << "PASSWORD('" << database::escape(user_passwd) << "'), ";
+	query << "'" << database::escape(database::hash_password(user_passwd).c_str()) << "', ";
 	query << "'" << database::escape(email_address) << "', ";
 	query << "'" << database::escape(sex) << "', ";
 	query << "'" << level << "', ";

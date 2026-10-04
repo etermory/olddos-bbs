@@ -29,7 +29,7 @@ main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 			lineeditor.o fileeditor.o upload.o download.o \
 			write.o edit.o base64.o pugixml.o hangul.o chatt.o \
 			news.o profile.o re.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
  
 ctime: ctime.o 
@@ -37,37 +37,37 @@ ctime: ctime.o
 
 guest: guest.o database.o utility.o textutil.o settings.o menu.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o guest.o database.o utility.o textutil.o settings.o menu.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 pass: pass.o database.o utility.o textutil.o settings.o menu.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o pass.o database.o utility.o textutil.o settings.o menu.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 sysop: sysop.o database.o utility.o textutil.o settings.o menu.o re.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o sysop.o database.o utility.o textutil.o settings.o menu.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 weather: weather.o utility.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o weather.o utility.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 exchange: exchange.o utility.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o exchange.o utility.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 hero: hero.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
 	$(CXX) -o ../bin/$@ pugixml.o hero.o database.o utility.o textutil.o settings.o menu.o re.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 lunar: lunar.o utility.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o lunar.o utility.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 biorhythm: biorhythm.o
@@ -80,7 +80,7 @@ mbti_gs: mbti_gs.o
 
 memo: memo.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
 	$(CXX) -o ../bin/$@ pugixml.o memo.o database.o utility.o textutil.o settings.o menu.o re.o \
-			$(LIBMYSQL) -lz -lpthread -lrt
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 chattclient: chattclient.o 

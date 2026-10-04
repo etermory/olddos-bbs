@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #include <mysql/mysql.h>
+#include <crypt.h>
 #include <iconv.h>
 
 #include <list>
@@ -90,6 +91,8 @@ namespace database {
 	bool open();
 	bool close();
 	std::string escape(const char *str);
+	std::string hash_password(const char *passwd);
+	bool verify_password(const char *passwd, const std::string &stored, bool *legacy);
 	void ensure_indexes(const std::vector<std::string> &boards);
 	bool create_attachment(void);
 	bool create_board(char *table_name);

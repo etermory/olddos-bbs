@@ -54,6 +54,54 @@ namespace database {
 		}
 	}
 
+	// 비밀번호 해시: glibc crypt() 의 SHA-512 ("$6$솔트$해시"), 솔트 16 자
+	// (MySQL PASSWORD() 는 약하고 MySQL 8 에서 없어져서 바꿈)
+	std::string hash_password(const char *passwd)
+	{
+		static const char chars[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+		unsigned char rnd[16];
+		int n = 0;
+		int fd = open("/dev/urandom", O_RDONLY);
+		if ( fd >= 0 ) {
+			n = read(fd, rnd, sizeof(rnd));
+			close(fd);
+		}
+		if ( n != (int)sizeof(rnd) ) {
+			srand(time(NULL) ^ (getpid() << 16));
+			for (unsigned int i=0; i<sizeof(rnd); i++) rnd[i] = rand() & 0xFF;
+		}
+
+		std::string salt = "$6$";
+		for (unsigned int i=0; i<sizeof(rnd); i++) {
+			salt += chars[rnd[i] % 64];
+		}
+		salt += "$";
+
+		char *r = crypt(passwd, salt.c_str());
+		return (r != NULL) ? r : "";
+	}
+
+	// 저장된 해시와 비밀번호가 맞는지.
+	// 예전 MySQL PASSWORD() 형식이면 *legacy = true (맞으면 새 해시로 바꿔 저장하도록)
+	bool verify_password(const char *passwd, const std::string &stored, bool *legacy)
+	{
+		*legacy = false;
+		if ( stored.empty() ) return false;
+
+		if ( stored[0] == '$' ) {
+			char *r = crypt(passwd, stored.c_str());
+			return r != NULL && stored == r;
+		}
+
+		*legacy = true;
+		char buf[1024];
+		bool ok;
+		snprintf(buf, sizeof(buf), "SELECT PASSWORD('%s')", escape(passwd).c_str());
+		std::string hashed = fetch((char*)buf, &ok);
+		return ok && !hashed.empty() && hashed == stored;
+	}
+
 	// SQL 문자열 이스케이프
 	std::string escape(const char *str)
 	{
@@ -682,13 +730,17 @@ namespace database {
 			return false;
 		}
 
-		snprintf(buf, sizeof(buf), "SELECT PASSWORD('%s')", escape(passwd).c_str());
-		std::string hashed = fetch((char*)buf, &ok);
-		if ( ok && !strcmp(hashed.c_str(), password.c_str()) ) {
-			return true;
+		bool legacy;
+		if ( !verify_password(passwd, password, &legacy) ) {
+			return false;
 		}
 
-		return false;
+		// 예전 PASSWORD() 해시면 이번 로그인에서 새 해시로 바꿔 둔다
+		if ( legacy ) {
+			set_user_password(user_id, passwd);
+		}
+
+		return true;
 	}
 
 #if 0
@@ -749,8 +801,12 @@ namespace database {
 	bool set_user_password(char *user_id, char *password)
 	{
 		char buf[1024];
-		snprintf(buf, sizeof(buf), "UPDATE member SET PASSWORD=PASSWORD('%s') WHERE USER_ID='%s';",
-				escape(password).c_str(), escape(user_id).c_str());
+		std::string hashed = hash_password(password);
+		if ( hashed.empty() ) {
+			return false;
+		}
+		snprintf(buf, sizeof(buf), "UPDATE member SET PASSWORD='%s' WHERE USER_ID='%s';",
+				escape(hashed.c_str()).c_str(), escape(user_id).c_str());
 		if ( mysql_query(mysql, buf) != 0 ) {
 			printf("\r\n(%d) [%s] \"%s\"\r\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 			press_enter();
@@ -933,7 +989,7 @@ namespace database {
 		query << "'" << port_number << "', ";
 		if ( strlen(password) > 0 ) {
 			// 단방향 패스워드 알고리즘 사용
-			query << "PASSWORD('" << escape(password) << "'), ";
+			query << "'" << escape(hash_password(password).c_str()) << "', ";
 		} else {
 			query << "'', ";
 		}
@@ -1035,12 +1091,7 @@ namespace database {
 		bool ok;
 		std::string password = fetch(buf, &ok);
 
-		
-		snprintf(buf, sizeof(buf), "SELECT PASSWORD('%s')", escape(passwd).c_str());
-		if ( !strcmp(fetch((char*)buf, &ok).c_str(), password.c_str()) ) {
-			return true;
-		}
-
-		return false;
+		bool legacy;
+		return verify_password(passwd, password, &legacy);
 	}
 }
