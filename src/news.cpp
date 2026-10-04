@@ -327,6 +327,20 @@ std::string child_text(pugi::xml_node node, const char *a, const char *b = NULL,
 }
 
 // 기사 읽음
+// 일본어 기사인지 (EUC-KR 의 히라가나 0xAA, 가타카나 0xAB 줄 글자가 있으면)
+// 조선일보 등의 RSS 에 일본어판 기사가 섞여 들어온다.
+bool has_kana(const std::string &s)
+{
+	for (unsigned int i=0; i<s.size(); i++) {
+		unsigned char c = s[i];
+		if ( c < 0x80 ) continue;
+		if ( (c == 0xAA || c == 0xAB) && i + 1 < s.size() && (unsigned char)s[i+1] >= 0xA1 )
+			return true;
+		i++;	// 2 바이트 글자
+	}
+	return false;
+}
+
 bool read_news(category c, std::vector<news_data> &list)
 {
 	char tmpdir[1024];
@@ -391,6 +405,7 @@ bool read_news(category c, std::vector<news_data> &list)
 		news_data data;
 		data.no = no;
 		data.title = clean_text(child_text(child, "title"));
+		if ( has_kana(data.title) ) continue;	// 일본어 기사는 뺀다
 
 		data.author = child_text(child, "author", "dc:creator");
 		// Atom: <author><name>..</name></author>
