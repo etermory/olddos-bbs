@@ -117,10 +117,3 @@ yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel
 출처와 라이선스:
 - MudOS 의 저작권은 Lars Pensjö, Erik Kay, Adam Beeman, Stephan Iannce, John Garnett, Tim Hollebeek 에게 있으며 **금전적 이익을 위해 사용할 수 없습니다** (`src/jurassic/driver/Copyright`). 비상업 용도로만 운영하세요.
 - 쥬라기공원 2 복원판은 MaGuN (HanLP) 이 만들었고, 크루젼(이상신)님과 꼬마기사(김진태)님이 나우누리 머드동호회에 공개한 구공원 라이브러리의 지역 데이터를 사용했습니다. 원작 쥬라기공원은 송재경, 김성배 님이 만들었습니다. 원작의 권리 관계는 확인되지 않았습니다.
-
-화면
--
-<img width="850" height="739" alt="image" src="https://github.com/user-attachments/assets/7e9b6b06-dbe8-4587-a79e-c77295dfa7db" />
-<img width="850" height="739" alt="image" src="https://github.com/user-attachments/assets/c1919b16-0487-4b2c-8026-2b2dafb58ec1" />
-<img width="850" height="739" alt="image" src="https://github.com/user-attachments/assets/df5e2bb2-b220-4701-916e-d28b977600e2" />
-<img width="850" height="739" alt="image" src="https://github.com/user-attachments/assets/a678b5da-d84f-4b62-908c-a467c53ffc83" />
