@@ -16,11 +16,16 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 		return false;
 	}
 
+	// 이전에 저장된 파일 이름에 위험한 문자가 있을 수 있으므로 / 는 막는다
+	if ( strchr(tmp_filename, '/') || strchr(filename, '/') ) {
+		return false;
+	}
+
 	// 임시 파일 이름으로 업로드된 패스
-	sprintf(path, "%s/file/%s", getenv("HANULSO"), tmp_filename);
+	snprintf(path, sizeof(path), "%s/file/%s", getenv("HANULSO"), tmp_filename);
 
 	// 본래의 파일 이름으로 복사될 위치
-	sprintf(path2, "%s/%s", tmpdir, filename);
+	snprintf(path2, sizeof(path2), "%s/%s", tmpdir, filename);
 
 	printf("\r\n파일 수신 준비 중입니다."); fflush(stdout);
 	
@@ -29,7 +34,7 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	add_user_tmpfile(path2);
 
 	// 임시 폴더로 본래의 이름으로 복사
-	sprintf(buf, "cp \"%s\" \"%s\"", path, path2);
+	snprintf(buf, sizeof(buf), "cp %s %s", shell_quote(path).c_str(), shell_quote(path2).c_str());
 	int a = system(buf);
 
 	if ( WEXITSTATUS(a) != 0 ) {
@@ -43,14 +48,15 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	fflush(stdout);
 
 	// zmodem 프로토콜 실행
+    std::string qname = shell_quote(filename);
     if (protocol == 1) {
-        sprintf(buf, "sz --xmodem -e \"%s\"", filename);
+        snprintf(buf, sizeof(buf), "sz --xmodem -e %s", qname.c_str());
     } else if(protocol == 2) {
-        sprintf(buf, "sz --ymodem -e \"%s\"", filename);
+        snprintf(buf, sizeof(buf), "sz --ymodem -e %s", qname.c_str());
     } else if(protocol == 3) {
-        sprintf(buf, "sz --zmodem -e \"%s\"", filename);
+        snprintf(buf, sizeof(buf), "sz --zmodem -e %s", qname.c_str());
     } else if(protocol == 4) {
-        sprintf(buf, KERMIT_PROG " -i -s \"%s\"", getenv("HANULSO"), filename);   // Kermit: 바이너리로 보내기
+        snprintf(buf, sizeof(buf), KERMIT_PROG " -i -s %s", getenv("HANULSO"), qname.c_str());   // Kermit: 바이너리로 보내기
     }
 	//sprintf(buf, "%s/bin/sexyz sz \"%s\"", getenv("HANULSO"), filename);
 	ioctl(0, TCSETAF, &sys_term);
@@ -64,7 +70,7 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	}
 
 	// 업로드된 임시 폴더를 삭제한다.
-	sprintf(buf, "rm -rf \"%s\"", tmpdir);
+	snprintf(buf, sizeof(buf), "rm -rf %s", shell_quote(tmpdir).c_str());
 	a = system(buf);
 
 	if ( WEXITSTATUS(a) != 0 ) {

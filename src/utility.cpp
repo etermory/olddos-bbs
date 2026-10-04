@@ -1048,6 +1048,21 @@ bool check_used_port(int port)
 	return false;
 }
 
+// 셸 명령 인자를 작은따옴표로 감싼다 (' 는 '\'' 로 바꿈)
+std::string shell_quote(const std::string &str)
+{
+	std::string ret = "'";
+	for (unsigned int i=0; i<str.length(); i++) {
+		if ( str[i] == '\'' ) {
+			ret += "'\\''";
+		} else {
+			ret += str[i];
+		}
+	}
+	ret += "'";
+	return ret;
+}
+
 std::string add_slashes(std::string str)
 {
 	std::string new_str;

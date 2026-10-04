@@ -264,6 +264,7 @@ std::string string_truncate (std::string str, int length, std::string suffix );
 std::string string_chop(std::string str, unsigned int length, std::string chop);
 bool check_used_port(int port);
 std::string add_slashes(std::string str);
+std::string shell_quote(const std::string &str);
 int check_password_strongness(std::string str);
 
 char *utf8_to_cp949(char * input);

@@ -361,10 +361,10 @@ bool open_chatt_room(int port, int max_user, char *greeting)
 {
 	// 대화방 서버 생성
 	if ( !check_used_port(port) ) {
-		std::string greeting2 = add_slashes(greeting);
+		std::string greeting2 = shell_quote(greeting);
 
 		char buf[1024];
-		sprintf(buf, "%s/bin/startchattserver \"%d\" \"%d\" \"%s\" > /dev/null", 
+		snprintf(buf, sizeof(buf), "%s/bin/startchattserver \"%d\" \"%d\" %s > /dev/null",
 				getenv("HANULSO"), port, max_user, greeting2.c_str());
 		
 		int a = system(buf);
@@ -385,8 +385,8 @@ bool connect_chatt_room(int port)
 	const char *nick_name = user["NICK_NAME"].c_str();
 
 	char cmd[1024];
-	sprintf(cmd, "%s/bin/chattclient \"127.0.0.1\" \"%d\" \"%s\" \"%s\"", 
-			getenv("HANULSO"), port, login_user_id, nick_name);
+	snprintf(cmd, sizeof(cmd), "%s/bin/chattclient \"127.0.0.1\" \"%d\" %s %s",
+			getenv("HANULSO"), port, shell_quote(login_user_id).c_str(), shell_quote(nick_name).c_str());
 	int a = system(cmd);
 
 	if ( WEXITSTATUS(a) != 0 ) {

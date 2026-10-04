@@ -63,7 +63,7 @@ bool get_list(std::string url, std::vector<std::string> &list)
 
     // -----------------------------------------------------------
 	char cmd[1024];
-	sprintf(cmd, "wget -O %s.json -o %s.log %s", tmpname, tmpname, url.c_str());
+	snprintf(cmd, sizeof(cmd), "wget -O %s.json -o %s.log %s", tmpname, tmpname, shell_quote(url).c_str());
 	int a = system(cmd);
 	if ( WEXITSTATUS(a) != 0 ) {
 		printf("\r\n다운로드를 실패하였습니다.\r\n");
@@ -227,7 +227,7 @@ void show_info(std::string code)
 
     // -----------------------------------------------------------
 	char cmd[1024];
-	sprintf(cmd, "wget -O %s.xml -o %s.log %s", tmpname, tmpname, url.c_str());
+	snprintf(cmd, sizeof(cmd), "wget -O %s.xml -o %s.log %s", tmpname, tmpname, shell_quote(url).c_str());
 	int a = system(cmd);
 	if ( WEXITSTATUS(a) != 0 ) {
 		printf("\r\n다운로드를 실패하였습니다.\r\n");

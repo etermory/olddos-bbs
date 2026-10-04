@@ -247,10 +247,13 @@ bool show_category(newspaper np, bool *goto_top)
 bool read_news(category c, std::vector<news_data> &list)
 {
 	char buf[1024];
-	sprintf(buf, "wget -O %s/tmp/news_%s.utf8.xml -o %s/tmp/news_%s.log %s", 
-			getenv("HANULSO"), login_user_id, 
-			getenv("HANULSO"), login_user_id, 
-			c.rss.c_str());
+	char base[1024];
+	snprintf(base, sizeof(base), "%s/tmp/news_%s", getenv("HANULSO"), login_user_id);
+	std::string utf8_file = shell_quote(std::string(base) + ".utf8.xml");
+	std::string log_file = shell_quote(std::string(base) + ".log");
+
+	snprintf(buf, sizeof(buf), "wget -O %s -o %s %s",
+			utf8_file.c_str(), log_file.c_str(), shell_quote(c.rss).c_str());
 	int a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
 		printf("\r\n다운로드를 실패하였습니다.\r\n");
@@ -260,11 +263,10 @@ bool read_news(category c, std::vector<news_data> &list)
 	}
 
 	char out_file[1024];
-	sprintf(out_file, "%s/tmp/news_%s.cp949.xml", getenv("HANULSO"), login_user_id);
+	snprintf(out_file, sizeof(out_file), "%s.cp949.xml", base);
 
-	sprintf(buf, "iconv -c -f UTF8 -t CP949//IGNORE//TRANSLIT "
-			"'%s/tmp/news_%s.utf8.xml' > ''%s''", 
-			getenv("HANULSO"), login_user_id, out_file);
+	snprintf(buf, sizeof(buf), "iconv -c -f UTF8 -t CP949//IGNORE//TRANSLIT %s > %s",
+			utf8_file.c_str(), shell_quote(out_file).c_str());
 
 	a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
@@ -278,19 +280,19 @@ bool read_news(category c, std::vector<news_data> &list)
 	std::string string = read_file(out_file);
 
 	// 임시 파일들 삭제
-	sprintf(buf, "rm -f \"%s/tmp/news_%s.utf8.xml\"", getenv("HANULSO"), login_user_id);
+	snprintf(buf, sizeof(buf), "rm -f %s", utf8_file.c_str());
 	a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
 		return false;
 	}
 
-	sprintf(buf, "rm -f \"%s/tmp/news_%s.cp949.xml\"", getenv("HANULSO"), login_user_id);
+	snprintf(buf, sizeof(buf), "rm -f %s", shell_quote(out_file).c_str());
 	a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
 		return false;
 	}
 
-	sprintf(buf, "rm -f \"%s/tmp/news_%s.log\"", getenv("HANULSO"), login_user_id);
+	snprintf(buf, sizeof(buf), "rm -f %s", log_file.c_str());
 	a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
 		return false;

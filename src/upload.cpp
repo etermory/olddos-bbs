@@ -112,7 +112,7 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	sprintf(dir, "%s/file", getenv("HANULSO"));
 	char *new_path = tempnam(dir, "file");
 
-	sprintf(buf, "mv \"%s\" \"%s\"", files[0].c_str(), new_path);
+	snprintf(buf, sizeof(buf), "mv %s %s", shell_quote(files[0]).c_str(), shell_quote(new_path).c_str());
 	a = system(buf);
 
 	if ( WEXITSTATUS(a) != 0 ) {
@@ -129,8 +129,8 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 
 	// 업로드된 파일 이름 (겹치지 않는 임시 파일 이름)
 	*tmp_filename = strdup(split_file_name(new_path).c_str());
-	// 본래의 업로드된 파일 이름
-	*filename = strdup(split_file_name(files[0]).c_str());
+	// 본래의 업로드된 파일 이름 (셸/경로에 위험한 문자는 _ 로 바꿈)
+	*filename = strdup(safe_name(split_file_name(files[0]).c_str()).c_str());
 	// 파일 사이즈
 	*size = file_size(new_path);
 

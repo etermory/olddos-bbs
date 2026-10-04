@@ -50,7 +50,7 @@ bool file_editor(char **lines, int *length)
 	
 	// 전송된 텍스트 파일을 unix2dos 를 수행한다.
 	//sprintf(buf, "unix2dos --quiet %s", files[0].c_str());
-	sprintf(buf, "%s/bin/unix2dos --quiet \"%s\"", getenv("HANULSO"), files[0].c_str());
+	snprintf(buf, sizeof(buf), "%s/bin/unix2dos --quiet %s", getenv("HANULSO"), shell_quote(files[0]).c_str());
 	a = system(buf);
 	if ( WEXITSTATUS(a) != 0 ) {
 		printf("\r\nunix2dos 실행을 실패하였습니다.\r\n");
@@ -74,7 +74,8 @@ bool file_editor(char **lines, int *length)
 				char out_file[1024];
 				sprintf(out_file, "%s.out", files[0].c_str());
 
-				sprintf(buf, "iconv -c -f JOHAB -t CP949//IGNORE//TRANSLIT '%s' > '%s'", files[0].c_str(), out_file);
+				snprintf(buf, sizeof(buf), "iconv -c -f JOHAB -t CP949//IGNORE//TRANSLIT %s > %s",
+						shell_quote(files[0]).c_str(), shell_quote(out_file).c_str());
 				a = system(buf);
 				if ( WEXITSTATUS(a) != 0 ) {
 					printf("\r\niconv 실행을 실패하였습니다.\r\n");
