@@ -463,8 +463,8 @@ void show_board(pugi::xml_node node)
 				"¹øÈ£",
 				centered("ÀÛ¼ºÀÚ", 12).c_str(), 
 				//centered("ID", 10).c_str(), 
-				centered("³¯Â¥", 5).c_str(), 
-				centered("Á¶È¸", 5).c_str(), 
+				centered("³¯Â¥", 8).c_str(), 
+				centered("Á¶È¸", 5).c_str(),  
 				centered("ÃßÃµ", 5).c_str(), 
 				"Á¦¸ñ");
         printf("\033[5;1H");
@@ -532,14 +532,15 @@ void show_board(pugi::xml_node node)
 #endif
 				title << row[std::string("TITLE")];
 
-				std::string title2 = string_truncate(title.str(), 40, "");
+				// ³¯Â¥¸¦ YY-MM-DD ·Î ´Ã¸° ¸¸Å­ Á¦¸ñÀ» ÁÙÀÓ (ÇÑ ÁÙ 79 ÀÚ)
+				std::string title2 = string_truncate(title.str(), 36, "");
 				
 				printf("%5s ", no);
                 if (exist == false) printf("[=1G[=7F");
 				printf("%s ", centered(string_truncate(nick_name, 10, ""), 12).c_str());
 				printf("[=1G[=15F");
 				printf("%s %s %s ", 
-					centered(date_time, 5).substr(5, 5).c_str(), 
+					std::string(date_time).substr(2, 8).c_str(),  
 					centered(hit, 5).c_str(), 
 					centered(recommend, 5).c_str());
 
