@@ -281,7 +281,7 @@ std::string clean_text(std::string s)
 	return trim(s);
 }
 
-// 날짜를 MM-DD 로 (RFC 822 "Sat, 04 Oct 2026 ..." 또는 "2026-10-04...")
+// 날짜를 YY-MM-DD 로 (RFC 822 "Sat, 04 Oct 2026 ..." 또는 "2026-10-04...")
 std::string short_date(const std::string &date)
 {
 	static const char *months[] = { "jan", "feb", "mar", "apr", "may", "jun",
@@ -290,7 +290,7 @@ std::string short_date(const std::string &date)
 	char buf[16];
 
 	if ( sscanf(date.c_str(), "%d-%d-%d", &y, &m, &d) == 3 ) {
-		snprintf(buf, sizeof(buf), "%02d-%02d", m, d);
+		snprintf(buf, sizeof(buf), "%02d-%02d-%02d", y % 100, m, d);
 		return buf;
 	}
 
@@ -300,7 +300,7 @@ std::string short_date(const std::string &date)
 	if ( sscanf(p, "%d %3s %d", &d, mon, &y) == 3 ) {
 		for (int i=0; i<12; i++) {
 			if ( !strncasecmp(mon, months[i], 3) ) {
-				snprintf(buf, sizeof(buf), "%02d-%02d", i+1, d);
+				snprintf(buf, sizeof(buf), "%02d-%02d-%02d", y % 100, i+1, d);
 				return buf;
 			}
 		}
@@ -474,7 +474,7 @@ bool show_news_menu(category c, std::string paper_name, bool *goto_top)
 		printf("%5s %s %s %s",
 				"번호",
 				centered("작성자", 12).c_str(),
-				centered("날짜", 5).c_str(),
+				centered("날짜", 8).c_str(),
 				"제목");
 		printf("\r\n%s\r\n", repeat("─", 40).c_str());
 
@@ -487,10 +487,11 @@ bool show_news_menu(category c, std::string paper_name, bool *goto_top)
 
 			news_data data = list[i];
 
-			std::string news_title = string_truncate(data.title, 54, "...");
+			// 날짜를 YY-MM-DD 로 늘린 만큼 제목을 줄임 (한 줄 79 자)
+			std::string news_title = string_truncate(data.title, 51, "...");
 			std::string author = data.author.empty() ? paper_name : data.author;
 
-			printf("%5d %s %5s ",
+			printf("%5d %s %8s ",
 				data.no,
 				centered(string_truncate(author, 10, ""), 12).c_str(),
 				short_date(data.date).c_str());
