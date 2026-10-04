@@ -22,49 +22,53 @@ static std::string user_id;
 #define C_MAGENTA	"\033[=13F"
 #define C_GRAY		"\033[=7F"
 #define C_BROWN		"\033[=6F"
+#define C_BLUE		"\033[=9F"
 
 #define MAX_LEVEL		12
 #define FIGHTS_PER_DAY	15
 
 // ------------------------------------------------------------------
 // 아스키 그림
+// 그림 안의 {r} 같은 표시는 글자색을 바꾼다.
+//   {r}빨강 {y}노랑 {g}초록 {c}하늘 {m}보라 {w}흰색 {b}갈색 {k}회색 {B}파랑
+//   {X} 는 그림의 기본색으로 되돌림
 // ------------------------------------------------------------------
 static const char *art_title[] = {
-	"   _   _  _____  ____    ___  ",
-	"  | | | || ____||  _ \\  / _ \\ ",
-	"  | |_| ||  _|  | |_) || | | |",
-	"  |  _  || |___ |  _ < | |_| |",
-	"  |_| |_||_____||_| \\_\\ \\___/ ",
+	"{r}   _   _  _____  ____    ___  ",
+	"{r}  | | | || ____||  _ \\  / _ \\ ",
+	"{y}  | |_| ||  _|  | |_) || | | |",
+	"{y}  |  _  || |___ |  _ < | |_| |",
+	"{g}  |_| |_||_____||_| \\_\\ \\___/ ",
 	NULL
 };
 
 static const char *art_town[] = {
-	"        |>>>                        |>>>",
-	"        |          ~      ~         |",
-	"    _  _|_  _                   _  _|_  _",
-	"   |;|_|;|_|;|     ________     |;|_|;|_|;|",
-	"   \\\\.    .  /    /        \\    \\\\.    .  /",
-	"    \\\\:  .  /    /  ______  \\    \\\\:  .  /",
-	"     ||:   |    |  |      |  |    ||:   |",
-	"     ||:.  |    |  |  []  |  |    ||:.  |",
-	"   __||:  .|____|__|______|__|____||:  .|__",
+	"{y}        |>>>                        |>>>",
+	"{b}        |{c}          ~      ~         {b}|",
+	"{r}    _  _|_  _                   _  _|_  _",
+	"{b}   |;|_|;|_|;|     {r}________{b}     |;|_|;|_|;|",
+	"{b}   \\\\.    .  /    {r}/        \\{b}    \\\\.    .  /",
+	"{b}    \\\\:  .  /    {r}/  ______  \\{b}    \\\\:  .  /",
+	"{b}     ||:   |    {w}|  |      |  |{b}    ||:   |",
+	"{b}     ||:.  |    {w}|  |  {y}[]{w}  |  |{b}    ||:.  |",
+	"{g}  ~~{b}_||:  .|____{w}|__|______|__|{b}____||:  .|_{g}~~",
 	NULL
 };
 
 static const char *art_forest[] = {
-	"      ^       ^^      ^       ^^       ^",
-	"     /|\\     /||\\    /|\\     /||\\     /|\\",
-	"    /_|_\\   /_||_\\  /_|_\\   /_||_\\   /_|_\\",
-	"   /__|__\\ /__||__\\/__|__\\ /__||__\\ /__|__\\",
-	"      |       ||      |       ||       |",
-	"  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+	"{g}      ^       ^^      ^       ^^       ^",
+	"{g}     /|\\     /||\\    /|\\     /||\\     /|\\",
+	"{g}    /_|_\\   /_||_\\  /_|_\\   /_||_\\   /_|_\\",
+	"{g}   /__|__\\ /__||__\\/__|__\\ /__||__\\ /__|__\\",
+	"{b}      |       ||      |       ||       |",
+	"{b}  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 	NULL
 };
 
 static const char *art_beast[] = {
 	"        /\\_____/\\",
-	"       /  o   o  \\",
-	"      ( ==  ^  == )",
+	"       /  {y}o   o{X}  \\",
+	"      ( ==  {r}^{X}  == )",
 	"       )         (",
 	"      (  )     (  )",
 	"     ( (  )   (  ) )",
@@ -75,11 +79,11 @@ static const char *art_beast[] = {
 static const char *art_human[] = {
 	"         _______",
 	"        /  ___  \\",
-	"       |  (o o)  |",
+	"       |  ({y}o o{X})  |",
 	"       |   \\_/   |",
 	"        \\_______/",
 	"      ___|  |  |___",
-	"     /   |  |  |   \\  --|==>",
+	"     /   |  |  |   \\  {w}--|==>{X}",
 	"    /____|__|__|____\\",
 	NULL
 };
@@ -87,17 +91,17 @@ static const char *art_human[] = {
 static const char *art_ghost[] = {
 	"        .-\"\"\"\"-.",
 	"       /  _  _  \\",
-	"      |  (o)(o)  |",
+	"      |  ({r}o{X})({r}o{X})  |",
 	"      |    __    |",
 	"      |   (__)   |",
 	"       \\        /",
-	"        \\/\\/\\/\\/  ~~",
+	"        \\/\\/\\/\\/  {k}~~{X}",
 	NULL
 };
 
 static const char *art_undead[] = {
 	"           .-.",
-	"          (o.o)",
+	"          ({r}o{X}.{r}o{X})",
 	"           |=|",
 	"          __|__",
 	"        //.=|=.\\\\",
@@ -111,18 +115,18 @@ static const char *art_undead[] = {
 static const char *art_goblin[] = {
 	"       \\\\  //",
 	"      .-'^^'-.",
-	"     /  O  O  \\",
+	"     /  {y}O  O{X}  \\",
 	"    |   (__)   |",
-	"     \\  \\__/  /",
+	"     \\  {r}\\__/{X}  /",
 	"      '-.__.-'",
-	"       /|  |\\    ===[]",
+	"       /|  |\\    {b}===[]{X}",
 	NULL
 };
 
 static const char *art_serpent[] = {
 	"            ____",
-	"           / o  \\___",
-	"          |   ____  >~",
+	"           / {y}o{X}  \\___",
+	"          |   ____  {r}>~{X}",
 	"     _____/  /    \\_/",
 	"    /  _____/",
 	"   /  /    ___",
@@ -134,32 +138,32 @@ static const char *art_serpent[] = {
 static const char *art_dragon[] = {
 	"                 __    __",
 	"          /\\    /  \\__/  \\    /\\",
-	"         /  \\  |  O    O  |  /  \\",
+	"         /  \\  |  {y}O    O{X}  |  /  \\",
 	"        / /\\ \\  \\   /\\   /  / /\\ \\",
 	"       /_/  \\_\\  \\  \\/  /  /_/  \\_\\",
-	"                /  \\__/  \\",
-	"         ~~~~  / /|    |\\ \\  ~~~~",
-	"        ~~~~  /_/ |____| \\_\\  ~~~~",
+	"                /  {y}\\__/{X}  \\",
+	"         {y}~~~~{X}  / /|    |\\ \\  {y}~~~~",
+	"        {y}~~~~{X}  /_/ |____| \\_\\  {y}~~~~",
 	NULL
 };
 
 static const char *art_master[] = {
 	"           ___",
-	"          (o o)",
+	"          ({w}o o{X})",
 	"         __\\_/__",
 	"        /  | |  \\",
 	"       /|  | |  |\\",
-	"      (_|  | |  |_)",
-	"         /_/ \\_\\",
+	"      (_|  | |  |_)   {w}|{X}",
+	"         /_/ \\_\\     {w}|{X}",
 	NULL
 };
 
 static const char *art_shop[] = {
-	"           />",
-	"   ()     //-------------------(",
-	"  (*)OXOX|[=================-   >",
-	"   ()     \\\\-------------------(",
-	"           \\>",
+	"           {y}/>",
+	"   {r}(){X}     {y}//{w}-------------------(",
+	"  {r}(*){b}OXOX{y}|[{w}=================-   >",
+	"   {r}(){X}     {y}\\\\{w}-------------------(",
+	"           {y}\\>",
 	NULL
 };
 
@@ -168,8 +172,8 @@ static const char *art_healer[] = {
 	"        |_____|",
 	"         |   |",
 	"        /     \\",
-	"       |   +   |",
-	"       |  +++  |",
+	"       |   {r}+{X}   |",
+	"       |  {r}+++{X}  |",
 	"        \\_____/",
 	NULL
 };
@@ -177,10 +181,26 @@ static const char *art_healer[] = {
 static const char *art_grave[] = {
 	"           _____",
 	"          /     \\",
-	"         |  R.I.P |",
-	"         |        |",
-	"         |        |",
-	"      ___|________|___",
+	"         | {w}R.I.P{X} |",
+	"         |       |",
+	"     {g},,,{X} |       | {g},,,",
+	"    {b}___|_______|___",
+	NULL
+};
+
+static const char *banner_victory[] = {
+	"{c}__   _____ ___ _____ ___  _____   __",
+	"{c}\\ \\ / /_ _/ __|_   _/ _ \\| _ \\ \\ / /",
+	"{y} \\ V / | | (__  | || (_) |   /\\ V / ",
+	"{y}  \\_/ |___\\___| |_| \\___/|_|_\\ |_|  ",
+	NULL
+};
+
+static const char *banner_levelup[] = {
+	"{m} _    _____   _____ _      _   _ ___ ",
+	"{m}| |  | __\\ \\ / / __| |    | | | | _ \\",
+	"{y}| |__| _| \\ V /| _|| |__  | |_| |  _/",
+	"{y}|____|___| \\_/ |___|____|  \\___/|_|  ",
 	NULL
 };
 
@@ -316,13 +336,66 @@ void print_header(const char *head_title)
     printf("\033[4;1H");
 }
 
-void print_art(const char **art, const char *color)
+// 그림 안의 색 표시를 글자색으로 바꿔 출력
+void print_marked(const char *line, const char *base)
 {
-	printf("%s", color);
-	for (int i=0; art[i] != NULL; i++) {
-		printf("      %s\r\n", art[i]);
+	printf("%s", base);
+	for (const char *p = line; *p; p++) {
+		if ( p[0] == '{' && p[1] != 0 && p[2] == '}' ) {
+			switch ( p[1] ) {
+				case 'r': printf(C_RED); break;
+				case 'y': printf(C_YELLOW); break;
+				case 'g': printf(C_GREEN); break;
+				case 'c': printf(C_CYAN); break;
+				case 'm': printf(C_MAGENTA); break;
+				case 'w': printf(C_WHITE); break;
+				case 'b': printf(C_BROWN); break;
+				case 'k': printf(C_GRAY); break;
+				case 'B': printf(C_BLUE); break;
+				case 'X': printf("%s", base); break;
+			}
+			p += 2;
+		} else {
+			putchar(*p);
+		}
 	}
 	printf(C_WHITE);
+}
+
+void at(int row, int col)
+{
+	printf("\033[%d;%dH", row, col);
+}
+
+// row, col 위치에 그림을 그린다
+void draw_art(const char **art, int row, int col, const char *color)
+{
+	for (int i=0; art[i] != NULL; i++) {
+		at(row + i, col);
+		print_marked(art[i], color);
+	}
+}
+
+// 지금 커서 위치부터 한 줄씩 그린다
+void print_art(const char **art, const char *color)
+{
+	for (int i=0; art[i] != NULL; i++) {
+		printf("      ");
+		print_marked(art[i], color);
+		printf("\r\n");
+	}
+}
+
+// 체력 막대 (■ 10 칸, 남은 비율에 따라 초록/노랑/빨강)
+void hp_bar(int v, int max)
+{
+	if ( v < 0 ) v = 0;
+	int fill = (max > 0) ? (v * 10 + max - 1) / max : 0;
+	if ( fill > 10 ) fill = 10;
+	const char *color = (v * 2 > max) ? C_GREEN : (v * 4 > max ? C_YELLOW : C_RED);
+	printf("%s", color);
+	for (int i=0; i<10; i++) printf("%s", i < fill ? "■" : "□");
+	printf(C_WHITE " %d/%d", v, max);
 }
 
 std::string ask(const char *msg)
@@ -559,17 +632,6 @@ foe make_monster(int level, int strength)
 // ------------------------------------------------------------------
 enum fight_result { WIN, LOSE, RUN };
 
-void print_bar(const char *label, int v, int max, const char *color)
-{
-	int width = 20;
-	int fill = (max > 0) ? v * width / max : 0;
-	if ( fill < 0 ) fill = 0;
-	if ( v > 0 && fill == 0 ) fill = 1;
-	printf(" %-16s %s", string_truncate(label, 16, "").c_str(), color);
-	for (int i=0; i<width; i++) printf("%s", i < fill ? "#" : ".");
-	printf(C_WHITE " %d/%d", v < 0 ? 0 : v, max);
-}
-
 // 받는 피해 (공격력 - 방어력/2, 공격력의 50~100%)
 int damage(int atk, int def)
 {
@@ -577,50 +639,79 @@ int damage(int atk, int def)
 	return d < 0 ? 0 : d;
 }
 
+void draw_fight(foe &f, const char *title, std::vector<std::string> &log)
+{
+	print_header(title);
+	draw_art(f.art, 5, 2, f.color);
+
+	int c = 44;
+	at(5, c);  printf("%s◀ %s" C_WHITE, f.color, f.name.c_str());
+	at(6, c + 2); hp_bar(f.hp, f.max_hp);
+	at(9, c);  printf(C_GREEN "▶ " C_WHITE "%s " C_CYAN "Lv.%d" C_WHITE, h.name.c_str(), h.level);
+	at(10, c + 2); hp_bar(h.hp, h.max_hp);
+	at(11, c + 2); printf(C_GRAY "공격 %d  방어 %d" C_WHITE, attack_power(), defense_power());
+	at(12, c + 2); printf(C_GRAY "%s / %s" C_WHITE, weapons[h.weapon].name, armors[h.armor].name);
+
+	at(15, 1); printf(C_GRAY "%s" C_WHITE, repeat("─", 39).c_str());
+	unsigned int start = log.size() > 5 ? log.size() - 5 : 0;
+	int r = 16;
+	for (unsigned int i=start; i<log.size(); i++, r++) {
+		at(r, 2);
+		printf("%s", log[i].c_str());
+	}
+	at(21, 1); printf(C_GRAY "%s" C_WHITE, repeat("─", 39).c_str());
+	at(22, 1);
+}
+
 // can_run: 도망칠 수 있는지 (사부님 결투는 도망 대신 포기)
 fight_result fight(foe &f, const char *title, bool can_run)
 {
 	std::vector<std::string> log;
-	log.push_back(std::string(C_CYAN) + f.name + C_WHITE + " 이(가) 나타났습니다!");
+	log.push_back(std::string(f.color) + f.name + C_WHITE " 이(가) 나타났습니다!");
 
 	while (1) {
-		print_header(title);
-		print_art(f.art, f.color);
-		printf("\r\n");
-		print_bar(f.name.c_str(), f.hp, f.max_hp, C_RED);
-		printf("\r\n");
-		print_bar(h.name.c_str(), h.hp, h.max_hp, C_GREEN);
-		printf("\r\n\r\n");
+		draw_fight(f, title, log);
 
-		// 최근 전투 기록 4 줄
-		unsigned int start = log.size() > 4 ? log.size() - 4 : 0;
-		for (unsigned int i=start; i<log.size(); i++) {
-			printf(" %s\r\n", log[i].c_str());
+		if ( f.hp <= 0 || h.hp <= 0 ) {
+			printf(" " C_GRAY "[Enter] 를 누르세요." C_WHITE);
+			press_enter();
+			break;
 		}
-		for (unsigned int i=log.size() - start; i<4; i++) printf("\r\n");
 
-		if ( f.hp <= 0 || h.hp <= 0 ) break;
+		std::string cmd = ask(can_run ?
+				" " C_YELLOW "[A]" C_WHITE "공격  " C_YELLOW "[S]" C_WHITE "혼신의 일격  " C_YELLOW "[R]" C_WHITE "도망  >> " :
+				" " C_YELLOW "[A]" C_WHITE "공격  " C_YELLOW "[S]" C_WHITE "혼신의 일격  " C_YELLOW "[R]" C_WHITE "포기  >> ");
 
-		std::string cmd = ask(can_run ? "\r\n [A]공격  [R]도망  >> " : "\r\n [A]공격  [R]포기  >> ");
-
+		char buf[256];
 		if ( !strcasecmp(cmd.c_str(), "r") ) {
 			if ( !can_run ) return RUN;
 			if ( rnd(1, 100) <= 55 ) {
-				printf("\r\n " C_YELLOW "무사히 도망쳤습니다." C_WHITE);
+				at(23, 1);
+				printf(" " C_YELLOW "무사히 도망쳤습니다." C_WHITE);
 				wait_enter();
 				return RUN;
 			}
-			log.push_back("도망치려 했지만 붙잡혔습니다!");
+			log.push_back(C_GRAY "도망치려 했지만 붙잡혔습니다!" C_WHITE);
+		} else if ( !strcasecmp(cmd.c_str(), "s") ) {
+			// 혼신의 일격: 40% 는 빗나가고, 맞으면 2.5 배
+			if ( rnd(1, 100) <= 40 ) {
+				log.push_back(C_GRAY "혼신의 일격이 크게 빗나갔습니다!" C_WHITE);
+			} else {
+				int d = damage(attack_power(), f.def) * 5 / 2 + 1;
+				f.hp -= d;
+				snprintf(buf, sizeof(buf), C_YELLOW "혼신의 일격!" C_WHITE " %s 에게 " C_YELLOW "%d" C_WHITE " 의 피해!", f.name.c_str(), d);
+				log.push_back(buf);
+				if ( f.hp <= 0 ) continue;
+			}
 		} else if ( !strcasecmp(cmd.c_str(), "a") || cmd.empty() ) {
 			int d = damage(attack_power(), f.def);
 			// 가끔 회심의 일격
 			bool crit = rnd(1, 100) <= 8;
 			if ( crit ) d = d * 2 + 1;
 			f.hp -= d;
-			char buf[256];
-			if ( d == 0 ) snprintf(buf, sizeof(buf), "공격이 빗나갔습니다.");
-			else if ( crit ) snprintf(buf, sizeof(buf), C_YELLOW "회심의 일격!" C_WHITE " %s 에게 %d 의 피해를 입혔습니다.", f.name.c_str(), d);
-			else snprintf(buf, sizeof(buf), "%s 에게 %d 의 피해를 입혔습니다.", f.name.c_str(), d);
+			if ( d == 0 ) snprintf(buf, sizeof(buf), C_GRAY "공격이 빗나갔습니다." C_WHITE);
+			else if ( crit ) snprintf(buf, sizeof(buf), C_YELLOW "회심의 일격!" C_WHITE " %s 에게 " C_YELLOW "%d" C_WHITE " 의 피해!", f.name.c_str(), d);
+			else snprintf(buf, sizeof(buf), "%s 에게 " C_YELLOW "%d" C_WHITE " 의 피해를 입혔습니다.", f.name.c_str(), d);
 			log.push_back(buf);
 			if ( f.hp <= 0 ) continue;
 		} else {
@@ -630,9 +721,8 @@ fight_result fight(foe &f, const char *title, bool can_run)
 		// 적의 반격
 		int d = damage(f.atk, defense_power());
 		h.hp -= d;
-		char buf[256];
-		if ( d == 0 ) snprintf(buf, sizeof(buf), "%s 의 공격을 피했습니다.", f.name.c_str());
-		else snprintf(buf, sizeof(buf), C_RED "%s 이(가) %s." C_WHITE " %d 의 피해!", f.name.c_str(), f.attack_msg.c_str(), d);
+		if ( d == 0 ) snprintf(buf, sizeof(buf), "%s 의 공격을 " C_GREEN "피했습니다." C_WHITE, f.name.c_str());
+		else snprintf(buf, sizeof(buf), "%s 이(가) %s. " C_RED "%d" C_WHITE " 의 피해!", f.name.c_str(), f.attack_msg.c_str(), d);
 		log.push_back(buf);
 	}
 
@@ -698,8 +788,9 @@ void go_forest(void)
 		check_new_day();
 		print_header("숲 속");
 		print_art(art_forest, C_GREEN);
-		printf("\r\n 남은 사냥 횟수 " C_YELLOW "%d" C_WHITE "   체력 %d/%d   소지금 %s 냥\r\n",
-				h.fights, h.hp, h.max_hp, money(h.gold).c_str());
+		printf("\r\n  남은 사냥 " C_YELLOW "%d" C_WHITE "   체력 ", h.fights);
+		hp_bar(h.hp, h.max_hp);
+		printf("   소지금 " C_YELLOW "%s냥" C_WHITE "\r\n", money(h.gold).c_str());
 
 		if ( h.dead ) {
 			printf("\r\n " C_RED "오늘은 쓰러져서 더 이상 사냥할 수 없습니다." C_WHITE "\r\n");
@@ -752,11 +843,20 @@ void go_forest(void)
 			h.gold += f.gold;
 			h.kills++;
 			save_hero();
-			printf("\r\n " C_YELLOW "%s 을(를) 물리쳤습니다!" C_WHITE, f.name.c_str());
-			printf("\r\n 경험치 " C_CYAN "%s" C_WHITE ", 돈 " C_YELLOW "%s 냥" C_WHITE " 을 얻었습니다.",
-					money(f.exp).c_str(), money(f.gold).c_str());
+
+			print_header("승리");
+			draw_art(banner_victory, 6, 22, C_CYAN);
+			at(12, 1);
+			printf("\r\n      " C_YELLOW "%s" C_WHITE " 을(를) 물리쳤습니다!\r\n", f.name.c_str());
+			printf("\r\n      경험치  " C_CYAN "+%s" C_WHITE "   (%s", money(f.exp).c_str(), money(h.exp).c_str());
+			if ( h.level < MAX_LEVEL ) printf(" / %s", money(exp_need[h.level]).c_str());
+			printf(")");
+			printf("\r\n      돈      " C_YELLOW "+%s 냥" C_WHITE "   (소지금 %s 냥)", money(f.gold).c_str(), money(h.gold).c_str());
+			printf("\r\n      체력    ");
+			hp_bar(h.hp, h.max_hp);
+			printf("\r\n");
 			if ( h.level < MAX_LEVEL && h.exp >= exp_need[h.level] ) {
-				printf("\r\n " C_MAGENTA "사부님께 도전할 만큼 강해졌습니다!" C_WHITE);
+				printf("\r\n      " C_MAGENTA "★ 사부님께 도전할 만큼 강해졌습니다! (마을에서 M)" C_WHITE "\r\n");
 			}
 			wait_enter();
 		} else if ( r == LOSE ) {
@@ -829,8 +929,14 @@ void go_master(void)
 		h.hp = h.max_hp;
 		save_hero();
 
-		printf("\r\n " C_MAGENTA "사부님: \"훌륭하구나! 이제 너는 %d 레벨이다.\"" C_WHITE, h.level);
-		printf("\r\n 최대 체력 +%d, 힘 +%d, 방어 +%d", add_hp, add_str, add_def);
+		print_header("레벨 업");
+		draw_art(banner_levelup, 6, 22, C_MAGENTA);
+		at(12, 1);
+		printf("\r\n      " C_CYAN "%s" C_WHITE ": \"훌륭하구나! 이제 너는 " C_YELLOW "%d 레벨" C_WHITE "이다.\"\r\n", masters[h.level - 1], h.level);
+		printf("\r\n      최대 체력 " C_GREEN "+%d" C_WHITE "   힘 " C_RED "+%d" C_WHITE "   방어 " C_CYAN "+%d" C_WHITE, add_hp, add_str, add_def);
+		printf("\r\n      체력      ");
+		hp_bar(h.hp, h.max_hp);
+		printf("\r\n");
 		char buf[256];
 		snprintf(buf, sizeof(buf), "%s 이(가) 사부님 %s 을(를) 이기고 %d 레벨이 되었습니다!",
 				h.name.c_str(), masters[h.level - 1], h.level);
@@ -1071,11 +1177,14 @@ void show_news(void)
 
 void show_status(void)
 {
-	printf(" " C_CYAN "%s" C_WHITE "  레벨 %d  체력 %d/%d  공격 %d  방어 %d  경험치 %s",
-			h.name.c_str(), h.level, h.hp, h.max_hp, attack_power(), defense_power(), money(h.exp).c_str());
+	printf("  " C_CYAN "%s" C_WHITE "  Lv." C_YELLOW "%d" C_WHITE "   체력 ", h.name.c_str(), h.level);
+	hp_bar(h.hp, h.max_hp);
+	printf("   공격 " C_RED "%d" C_WHITE "  방어 " C_CYAN "%d" C_WHITE "\r\n", attack_power(), defense_power());
+	printf("  경험치 %s", money(h.exp).c_str());
 	if ( h.level < MAX_LEVEL ) printf("/%s", money(exp_need[h.level]).c_str());
-	printf("\r\n 무기 %s  갑옷 %s  소지금 " C_YELLOW "%s 냥" C_WHITE "  남은 사냥 %d  영웅 %d 번\r\n",
-			weapons[h.weapon].name, armors[h.armor].name, money(h.gold).c_str(), h.fights, h.wins);
+	printf("   소지금 " C_YELLOW "%s냥" C_WHITE "   남은 사냥 " C_GREEN "%d" C_WHITE "   영웅 " C_MAGENTA "%d" C_WHITE "번\r\n",
+			money(h.gold).c_str(), h.fights, h.wins);
+	printf("  " C_GRAY "%s / %s" C_WHITE "\r\n", weapons[h.weapon].name, armors[h.armor].name);
 }
 
 // ------------------------------------------------------------------
@@ -1085,14 +1194,13 @@ void town(void)
 {
 	while (1) {
 		check_new_day();
-		print_header("용사의 전설 - 하늘마을");
+		print_header(C_YELLOW "용사의 전설" C_WHITE " - 하늘마을");
 		print_art(art_town, C_BROWN);
-		printf("\r\n");
 		show_status();
-		printf(" %s\r\n", repeat("─", 39).c_str());
-		printf("  " C_YELLOW "[F]" C_WHITE " 숲으로 사냥      " C_YELLOW "[M]" C_WHITE " 사부님께 도전    " C_YELLOW "[H]" C_WHITE " 약방\r\n");
-		printf("  " C_YELLOW "[W]" C_WHITE " 대장간(무기)     " C_YELLOW "[A]" C_WHITE " 갑옷 가게        " C_YELLOW "[B]" C_WHITE " 전장(돈 맡기기)\r\n");
-		printf("  " C_YELLOW "[R]" C_WHITE " 용사 순위        " C_YELLOW "[N]" C_WHITE " 마을 소식        " C_YELLOW "[Q]" C_WHITE " 게임 끝내기\r\n");
+		printf(C_GRAY " %s" C_WHITE "\r\n", repeat("─", 39).c_str());
+		printf("  " C_YELLOW "[F]" C_GREEN " ♣" C_WHITE " 숲으로 사냥    " C_YELLOW "[M]" C_MAGENTA " ★" C_WHITE " 사부님께 도전  " C_YELLOW "[H]" C_RED " ♥" C_WHITE " 약방\r\n");
+		printf("  " C_YELLOW "[W]" C_GRAY " ♠" C_WHITE " 대장간(무기)   " C_YELLOW "[A]" C_CYAN " ◆" C_WHITE " 갑옷 가게      " C_YELLOW "[B]" C_YELLOW " ●" C_WHITE " 전장(돈 맡기기)\r\n");
+		printf("  " C_YELLOW "[R]" C_YELLOW " ☆" C_WHITE " 용사 순위      " C_YELLOW "[N]" C_CYAN " ♪" C_WHITE " 마을 소식      " C_YELLOW "[Q]" C_GRAY " ◁" C_WHITE " 게임 끝내기\r\n");
 
 		std::string cmd = ask(" 선택 >> ");
 		const char *c = cmd.c_str();
@@ -1112,20 +1220,26 @@ void town(void)
 void title_screen(bool first)
 {
 	print_header("용사의 전설");
-	printf("\r\n");
-	print_art(art_title, C_YELLOW);
-	printf("\r\n      " C_RED "~ 붉은 용을 쓰러뜨릴 용사를 찾습니다 ~" C_WHITE "\r\n\r\n");
-
-	if ( first ) {
-		printf("  하늘마을 북쪽 숲에는 오래전부터 붉은 용이 살고 있습니다.\r\n");
-		printf("  숲에서 몬스터를 물리쳐 경험을 쌓고, 사부님을 이겨 실력을 올리세요.\r\n");
-		printf("  12 레벨이 되면 용의 둥지에 들어갈 수 있습니다.\r\n\r\n");
-		printf("  하루에 숲 사냥은 %d 번. 쓰러지면 지닌 돈을 잃고 다음 날 깨어납니다.\r\n", FIGHTS_PER_DAY);
-		printf("  돈은 전장에 맡겨 두세요!\r\n");
-		printf("\r\n  새 용사 " C_CYAN "%s" C_WHITE " 의 모험이 시작됩니다.\r\n", h.name.c_str());
-	} else {
-		printf("  다시 오셨군요, " C_CYAN "%s" C_WHITE " 님.\r\n", h.name.c_str());
+	draw_art(art_title, 5, 24, C_YELLOW);
+	draw_art(art_dragon, 11, 20, C_RED);
+	at(20, 1);
+	printf("              " C_RED "~ 붉은 용을 쓰러뜨릴 용사를 찾습니다 ~" C_WHITE "\r\n");
+	if ( !first ) {
+		printf("\r\n              다시 오셨군요, " C_CYAN "%s" C_WHITE " 님.", h.name.c_str());
+		wait_enter();
+		return;
 	}
+	wait_enter();
+
+	print_header("용사의 전설 - 이야기");
+	print_art(art_forest, C_GREEN);
+	printf("\r\n  하늘마을 북쪽 숲에는 오래전부터 " C_RED "붉은 용" C_WHITE "이 살고 있습니다.\r\n");
+	printf("  숲에서 몬스터를 물리쳐 경험을 쌓고, " C_CYAN "사부님" C_WHITE "을 이겨 실력을 올리세요.\r\n");
+	printf("  " C_YELLOW "12 레벨" C_WHITE "이 되면 용의 둥지에 들어갈 수 있습니다.\r\n\r\n");
+	printf("  하루에 숲 사냥은 " C_GREEN "%d 번" C_WHITE ". 쓰러지면 지닌 돈을 잃고 다음 날 깨어납니다.\r\n", FIGHTS_PER_DAY);
+	printf("  돈은 " C_YELLOW "전장" C_WHITE "에 맡겨 두세요!\r\n");
+	printf("  전투에서 " C_YELLOW "[S] 혼신의 일격" C_WHITE "은 빗나가기 쉽지만 맞으면 2.5 배 피해를 줍니다.\r\n");
+	printf("\r\n  새 용사 " C_CYAN "%s" C_WHITE " 의 모험이 시작됩니다.\r\n", h.name.c_str());
 	wait_enter();
 }
 
