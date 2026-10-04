@@ -176,6 +176,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del);
 // 성격 검사
 void run_mbti_gs();
 bool run_menu_program(pugi::xml_node node, const std::string &type);
+void print_news_title(const char *title);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);
 void print_biorhythm(char *user_id);

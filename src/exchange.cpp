@@ -24,21 +24,21 @@ static const currency currencies[] = {
 	{ "GBP", "영국 파운드", 1 },
 	{ "HKD", "홍콩 달러", 1 },
 	{ "TWD", "대만 달러", 1 },
-	{ "SGD", "싱가포르 달러", 1 },
+	{ "SGD", "싱가포르", 1 },
 	{ "THB", "태국 바트", 1 },
 	{ "VND", "베트남 동", 100 },
 	{ "PHP", "필리핀 페소", 1 },
-	{ "IDR", "인도네시아 루피아", 100 },
-	{ "MYR", "말레이시아 링깃", 1 },
+	{ "IDR", "인도네시아", 100 },
+	{ "MYR", "말레이시아", 1 },
 	{ "INR", "인도 루피", 1 },
 	{ "AUD", "호주 달러", 1 },
-	{ "NZD", "뉴질랜드 달러", 1 },
+	{ "NZD", "뉴질랜드", 1 },
 	{ "CAD", "캐나다 달러", 1 },
 	{ "CHF", "스위스 프랑", 1 },
-	{ "SEK", "스웨덴 크로나", 1 },
+	{ "SEK", "스웨덴", 1 },
 	{ "RUB", "러시아 루블", 1 },
 	{ "MNT", "몽골 투그릭", 100 },
-	{ "AED", "아랍에미리트 디르함", 1 },
+	{ "AED", "아랍에미리트", 1 },
 };
 
 static const int currency_count = sizeof(currencies) / sizeof(currencies[0]);
@@ -199,12 +199,11 @@ int main(int argc, char **argv)
 				int i = c * rows + r;
 				if ( i >= currency_count ) break;
 				const currency &cu = currencies[i];
-				char name[64];
-				snprintf(name, sizeof(name), "%s %s", cu.name, cu.code);
 				std::string unit = (cu.unit == 100) ? "(100)" : "";
 				double v = krw_per(json, cu.code) * cu.unit;
-				printf("  %-22s%5s %10s원  ",
-						string_truncate(name, 22, "").c_str(), unit.c_str(), comma(v, 2).c_str());
+				// 한 칸 33 자: 코드(3) 이름(12) 단위(5) 금액(10)원 -> 두 칸이면 76 자
+				printf("%s%-3s %-12s%5s%10s원", (c == 0) ? "  " : "    ",
+						cu.code, string_truncate(cu.name, 12, "").c_str(), unit.c_str(), comma(v, 2).c_str());
 			}
 			printf("\r\n");
 		}

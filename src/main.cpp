@@ -1845,6 +1845,9 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 
 	if ( !strcasecmp(type.c_str(), "biorhythm") ) {
 		printf(ESC_CLEAR);
+		// 다른 생활정보 화면과 같은 타이틀
+		print_news_title("바이오리듬");
+		printf("\033[4;1H");
 		print_biorhythm(login_user_id);
 		printf("\r\n [Enter] 를 누르세요.");
 		press_enter();
