@@ -43,6 +43,18 @@ sed -i "s|^CFLAGS=\"|CFLAGS=\"$EXTRA |" build.MudOS
 # 요즘 배포판에 없는 옛 라이브러리(-ly, -lnsl)는 빼고 링크
 make configure.h
 sed -i -E 's/(^| )-ly($| )/\1\2/g; s/(^| )-lnsl($| )/\1\2/g' system_libs
+
+# 옵션에 맞는 malloc.c, 함수 표 등을 만든다 (edit_source).
+# 서버에 따라 malloc.c 가 만들어지지 않는 일이 있어 직접 실행하고 확인한다.
+# (local_options 는 SYSMALLOC 을 쓴다)
+make files
+if [ ! -s malloc.c ]; then
+	echo "* malloc.c 가 없어 sysmalloc.c 로 만듭니다"
+	rm -f malloc.c
+	cp sysmalloc.c malloc.c
+fi
+[ -f mallocwrapper.c ] || touch mallocwrapper.c
+
 make
 echo
 echo "빌드 완료: $OUT/driver/driver"
