@@ -17,6 +17,7 @@
 **회원**
 - 가입, 로그인, 비밀번호 찾기 (새 비밀번호를 이메일로 발송)
 - 회원 정보 보기/변경 (`PF`, `PE`), 접속 중인 회원 목록 (`US`)
+- 쪽지 (`MEMO`): 받은/보낸 쪽지함, 쓰기, 답장, 지우기. 로그인할 때 읽지 않은 쪽지 수 알림
 - 회원 등급 (`hanulso.cfg` 의 `level`), 메뉴/게시판별 등급 제한
 - 비밀번호는 SHA-512 crypt 로 저장 (예전 MySQL `PASSWORD()` 해시는 로그인할 때 자동 전환)
 
@@ -56,6 +57,27 @@
 설치
 -
 설치 방법은 INSTALL.TXT 파일을 참고하세요.
+
+### 미리 설치할 패키지 (CentOS 6 기준)
+
+| 용도 | 패키지 |
+|---|---|
+| 텔넷 접속 | `xinetd` `telnet-server` |
+| 빌드 | `gcc-c++` `make` `zlib-devel` `openssl-devel` |
+| 데이터베이스 | `MariaDB-server` `MariaDB-client` (MariaDB 저장소), `mysql-devel` |
+| 파일 올리기/받기 | `lrzsz` (Zmodem/Ymodem/Xmodem), `gkermit` (소스로 빌드) |
+| 생활정보 (날씨/뉴스/환율 등) | `curl` `wget` `lynx` |
+| 글자 변환, 시스템 정보 | `iconv` (glibc-common, 기본 설치), `dos2unix` `unix2dos`, `redhat-lsb-core` |
+| 화면 편집기 | `nano` (소스로 빌드) |
+| 머드 게임 (쥬라기공원 2) | `gcc` `bison` |
+
+```bash
+yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel mysql-devel lrzsz curl wget lynx dos2unix unix2dos redhat-lsb-core
+```
+
+- 한글 로캘 `ko_KR.eucKR` 이 필요합니다 (`LANG=ko_KR.eucKR`).
+- `bin/mailsend` (비밀번호 찾기 메일) 는 `src/mailsend/` 의 소스를 빌드해 넣습니다 (`BUILD.TXT` 참고).
+- 글쓰기 화면 편집기는 `bin/pico` 를 실행합니다. 빌드한 nano 를 `bin/pico` 로 두세요.
 
 설정
 -

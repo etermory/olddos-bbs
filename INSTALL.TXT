@@ -101,6 +101,10 @@ GNU nano, version 2.9.6
 Email: nano@nano-editor.org	Web: https://nano-editor.org/
 Compiled options: --disable-libmagic --enable-utf8
 
+curl, wget, lynx 설치 (생활정보: 날씨/뉴스/환율, 운세)
+==============
+% yum install curl wget lynx
+
 lsb_release 설치 (배포판 확인 커맨드)
 ==============
 % yum install redhat-lsb-core
