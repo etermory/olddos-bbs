@@ -7,6 +7,18 @@ BIN=$(pwd)
 LOG=../lib/log/driver
 mkdir -p "$LOG"
 
+# 이미 떠 있으면 또 띄우지 않는다 (둘이 뜨면 나중 것의 드라이버는 포트가 겹쳐 계속 죽는다)
+running() {	# pid 파일의 프로세스가 살아 있고 명령줄에 $2 가 있으면 참
+	local pid
+	pid=$(cat "$1" 2>/dev/null)
+	[ -n "$pid" ] && [ "$pid" != $$ ] && kill -0 "$pid" 2>/dev/null &&
+		tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q "$2"
+}
+if running "$BIN/startmud.pid" startmud || running "$BIN/driver.pid" "driver config.jurassic"; then
+	echo "$(date) 이미 실행 중이라 시작하지 않음 (먼저 ./killmud)" | tee -a "$LOG/startmud.log" >&2
+	exit 1
+fi
+
 echo $$ > "$BIN/startmud.pid"
 
 while :; do
