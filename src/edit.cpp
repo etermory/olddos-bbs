@@ -120,8 +120,12 @@ bool edit_article(char *table_name, int no)
 				}
 
 				FILE *fp = fopen(tmpfile, "w");
+				// 긴 줄은 pico 의 줄바꿈 폭(-r76) 에 맞춰 미리 나눠 둔다 (pico 는 불러온 줄을 다시 나누지 않는다)
 				for(int i=0; i<lines.size(); i++) {
-					fprintf(fp, "%s\n", trim(lines[i]).c_str());
+					std::vector<std::string> parts = wrap_words(trim(lines[i]), 76);
+					for (unsigned int k=0; k<parts.size(); k++) {
+						fprintf(fp, "%s\n", parts[k].c_str());
+					}
 				}
 				fclose(fp);
 

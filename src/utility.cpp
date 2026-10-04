@@ -990,6 +990,37 @@ std::string trim(std::string s)
 
 // ------------------------------------------------------------------------------------------
 // 현재 접속자에 의해 생성된 임시 파일들 목록 추가
+// 한 줄을 width 칸 안에서 단어(공백) 단위로 나눈다. (EUC-KR 2 바이트 글자는 깨지 않는다)
+// 공백 없이 width 보다 긴 부분은 글자 단위로 자른다.
+std::vector<std::string> wrap_words(const std::string &line, int width)
+{
+	std::vector<std::string> out;
+	std::string rest = line;
+	while ( (int)rest.size() > width ) {
+		// width 안에서 2 바이트 글자를 깨지 않는 마지막 위치
+		int cut = 0;
+		while ( cut < (int)rest.size() ) {
+			int w = ((unsigned char)rest[cut] >= 0x80) ? 2 : 1;
+			if ( cut + w > width ) break;
+			cut += w;
+		}
+		// 그 안의 마지막 공백에서 끊는다
+		int sp = -1;
+		for (int i = cut; i > 0; i--) {
+			if ( rest[i] == ' ' ) { sp = i; break; }
+		}
+		if ( sp > 0 ) {
+			out.push_back(rest.substr(0, sp));
+			rest = rest.substr(sp + 1);
+		} else {
+			out.push_back(rest.substr(0, cut));
+			rest = rest.substr(cut);
+		}
+	}
+	out.push_back(rest);
+	return out;
+}
+
 // 화면 편집기(pico) 용 임시 파일. 편집할 때마다 따로 만든 디렉터리 안에 둔다.
 // pico 는 -o 로 이 디렉터리 밖의 파일을 읽거나(^R, 파일 목록) 쓰지(^O) 못한다.
 // 파일은 add_user_tmpfile 로 등록되어 접속을 끝낼 때 디렉터리와 함께 지워진다.
