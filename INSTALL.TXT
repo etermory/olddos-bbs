@@ -223,13 +223,34 @@ src/jurassic 구성
   취소는 '중지 다운'. startmud 를 띄워 둔 채 '다운' 하면 10 초 뒤 자동으로 다시 뜬다.
 
 8) 업데이트 (소스를 고쳤거나 저장소가 바뀐 뒤)
+  olddos 계정으로 한다 (root 라면 su - olddos).
+
+  가) 머드를 끄고, 빌드하고, 설치하고, 다시 켜기 (엔진/설정을 고쳤을 때, 가장 확실한 방법)
+% /home/olddos/jurassic/bin/killmud
+    startmud 와 드라이버를 모두 끈다. 접속자 자료는 저장된다.
+% cd /home/olddos/olddos-bbs && git pull
+% cd src/jurassic
+% ./build.sh /tmp/jurassic-build
+    "빌드 완료" 가 나와야 한다. 게임 내용(libpatch)만 바뀌었으면 건너뛰어도 된다
+    (단, /tmp/jurassic-build 가 남아 있어야 한다. 서버를 재부팅하면 지워진다).
+% ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
+    "설치 완료" 가 나와야 한다. 사용자 자료(lib/data)와 로그(lib/log)는 그대로 남는다.
+% cd /home/olddos/jurassic/bin && nohup ./startmud > /dev/null 2>&1 &
+% ps -ef | grep -E 'startmud|driver config.jurassic' | grep -v grep
+    startmud 와 driver config.jurassic 두 줄이 보이면 정상.
+    (CentOS 6 의 pgrep 은 -a 가 없다. pgrep -fl 'startmud|driver' 로도 볼 수 있다)
+% telnet 127.0.0.1 4444
+    접속 화면이 나오는지 확인. 안 뜨면 /home/olddos/jurassic/lib/log/driver/driver.err
+
+  나) 켜 둔 채로 설치하고 다시 띄우기 (접속자가 있을 때 짧게 끊고 싶을 때)
 % cd /home/olddos/olddos-bbs && git pull
 % cd src/jurassic
 % ./build.sh /tmp/jurassic-build
 % ./deploy.sh /home/olddos/jurassic /tmp/jurassic-build
 % /home/olddos/jurassic/bin/killmud -r
-  (또는 하늘소로 접속해서 '0 다운') -> startmud 가 10 초 뒤 새 버전으로 다시 띄운다.
-  머드가 실행 중이어도 설치된다. 사용자 자료(lib/data)는 그대로 남는다.
+    (또는 하늘소로 접속해서 '0 다운') -> startmud 가 10 초 뒤 새 버전으로 다시 띄운다.
+    머드가 실행 중이어도 설치된다.
+
   BBS 쪽 연결 프로그램이 바뀌었으면: cd /home/olddos/olddos-bbs/src && make mudlink
 
 9) 게임 내용 고치기
