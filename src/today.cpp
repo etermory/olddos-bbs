@@ -206,22 +206,11 @@ bool fetch_day(int m, int d, std::vector<event> &events, std::vector<std::string
 	char url[512];
 	snprintf(url, sizeof(url), "https://ko.wikipedia.org/w/index.php?title=%d%%EC%%9B%%94_%d%%EC%%9D%%BC&action=raw", m, d);
 
-    char tmpdir[1024];
-	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
-	std::string base = tempnam(tmpdir, "today");
-	std::string utf = base + ".txt", euc = base + ".euc";
-
-	bool ok = download_url(url, utf);
-	if ( ok ) {
-		char cmd[2048];
-		snprintf(cmd, sizeof(cmd), "iconv -c -f UTF-8 -t CP949//IGNORE %s > %s",
-				shell_quote(utf).c_str(), shell_quote(euc).c_str());
-		system(cmd);
-	}
-	std::string text = read_file(euc.c_str());
-	unlink(utf.c_str());
-	unlink(euc.c_str());
-	if ( !ok || text.empty() ) return false;
+	// 임시 파일 없이 받는다 (받는 중에 끊겨도 tmp 에 남지 않게)
+	std::string utf;
+	if ( !download_text(url, utf) ) return false;
+	std::string text = utf8_to_cp949(utf);
+	if ( text.empty() ) return false;
 
 	std::vector<std::string> lines = split_string(text, '\n');
 	std::string section;

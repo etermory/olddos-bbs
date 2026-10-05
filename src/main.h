@@ -312,6 +312,8 @@ std::vector<std::string> user_tmpfiles(void);
 void del_user_tmpfiles(void);
 void remove_tmp_dir(const char *dir);
 void sweep_stale_tmp(void);
+bool download_text(const std::string &url, std::string &out);
+std::string utf8_to_cp949(const std::string &in);
 
 void press_enter(void);
 void line_input(char *str,int len);

@@ -111,13 +111,8 @@ std::string json_string(const std::string &json, const char *key)
 // 1 KRW 기준 환율을 받아 온다
 bool get_rates(std::string &json)
 {
-    char tmpdir[1024];
-	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
-	std::string path = std::string(tempnam(tmpdir, "exch")) + ".json";
-
-	bool ok = download_url("http://open.er-api.com/v6/latest/KRW", path);
-	json = read_file(path.c_str());
-	unlink(path.c_str());
+	// 임시 파일 없이 받는다 (받는 중에 끊겨도 tmp 에 남지 않게)
+	bool ok = download_text("http://open.er-api.com/v6/latest/KRW", json);
 
 	return ok && json.find("\"result\":\"success\"") != std::string::npos;
 }

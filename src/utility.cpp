@@ -1068,7 +1068,8 @@ bool make_editor_tmpfile(char *dir, char *file, size_t size)
 	FILE *fp = fopen(file, "w");
 	if ( fp == NULL ) return false;
 	fclose(fp);
-	add_user_tmpfile(file);
+	// 폴더째 적어 둔다 (편집기가 다른 파일을 만들어도 접속을 끝낼 때 함께 지워지도록)
+	add_user_tmpfile(dir);
 	return true;
 }
 
@@ -1404,6 +1405,65 @@ bool download_url(const std::string &url, const std::string &path)
 	}
 
 	return false;
+}
+
+// 명령의 출력을 모두 읽는다
+static bool read_command_output(const std::string &cmd, std::string &out)
+{
+	out.clear();
+	FILE *fp = popen(cmd.c_str(), "r");
+	if ( fp == NULL ) return false;
+	char buf[8192];
+	size_t n;
+	while ( (n = fread(buf, 1, sizeof(buf), fp)) > 0 ) {
+		out.append(buf, n);
+	}
+	int st = pclose(fp);
+	return st != -1 && WIFEXITED(st) && WEXITSTATUS(st) == 0;
+}
+
+// URL 의 내용을 임시 파일 없이 받아 온다 (curl, 안 되면 wget).
+// 받는 중에 접속이 끊겨도 tmp 에 찌꺼기가 남지 않는다.
+bool download_text(const std::string &url, std::string &out)
+{
+	const char *ua = "Mozilla/5.0 (compatible; OldDosBBS/1.0)";
+
+	if ( read_command_output("curl -s -L -k --max-time 20 -A " + shell_quote(ua) + " " + shell_quote(url), out)
+			&& !out.empty() ) {
+		return true;
+	}
+	if ( read_command_output("wget -q -T 20 -t 1 --no-check-certificate -U " + shell_quote(ua)
+				+ " -O - " + shell_quote(url), out) && !out.empty() ) {
+		return true;
+	}
+	out.clear();
+	return false;
+}
+
+// UTF-8 을 완성형(CP949) 으로. 바꿀 수 없는 글자는 버린다 (iconv -c 와 같음)
+std::string utf8_to_cp949(const std::string &in)
+{
+	iconv_t cd = iconv_open("CP949//TRANSLIT", "UTF-8");
+	if ( cd == (iconv_t)-1 ) return in;
+
+	std::string out;
+	char *src = (char*)in.data();
+	size_t left = in.size();
+	char buf[8192];
+	while ( left > 0 ) {
+		char *dst = buf;
+		size_t room = sizeof(buf);
+		size_t r = iconv(cd, &src, &left, &dst, &room);
+		out.append(buf, dst - buf);
+		if ( r == (size_t)-1 && errno != E2BIG ) {
+			// 바꿀 수 없는 글자나 깨진 글자: 한 바이트씩 건너뛴다
+			// (남은 뒷 바이트들도 깨진 글자로 다시 걸려 차례로 건너뛰어진다)
+			src++;
+			left--;
+		}
+	}
+	iconv_close(cd);
+	return out;
 }
 
 // 셸 명령 인자를 작은따옴표로 감싼다 (' 는 '\'' 로 바꿈)

@@ -1,5 +1,11 @@
 #include "main.h"
 
+// 함수를 빠져나갈 때 (실패해서 중간에 돌아가도) 임시 폴더를 지운다
+struct file_editor_tmp_dir {
+	std::string dir;
+	~file_editor_tmp_dir() { if ( !dir.empty() ) remove_tmp_dir(dir.c_str()); }
+};
+
 bool file_editor(char **lines, int *length)
 {
 	char tmpdir[9072];
@@ -19,6 +25,11 @@ bool file_editor(char **lines, int *length)
 		press_enter();
 		return false;
 	}
+	file_editor_tmp_dir guard;
+	guard.dir = tmpdir;
+
+	// 전송 중에 통신이 끊기면 접속 종료 처리(host_close)에서 폴더째 지우도록 적어 둔다
+	add_user_tmpfile(tmpdir);
 
 	// 폴더 변경
 	chdir(tmpdir);
@@ -89,15 +100,7 @@ bool file_editor(char **lines, int *length)
 		}
 	}
 
-	// 임시 폴더 삭제
-	sprintf(buf, "rm -rf %s", tmpdir);
-	a = system(buf);
-
-	if ( WEXITSTATUS(a) != 0 ) {
-		printf("\r\n파일 전송을 실패하였습니다.");
-		printf("\r\n[Enter] 를 누르세요.");
-		press_enter();
-	}
+	// 임시 폴더는 guard 가 지운다
 
 #if 0
 	*lines = (char*)malloc(text.length()+1);

@@ -343,34 +343,19 @@ bool has_kana(const std::string &s)
 
 bool read_news(category c, std::vector<news_data> &list)
 {
-	char tmpdir[1024];
-	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
-	std::string base = tempnam(tmpdir, "news");
-	std::string xml_file = base + ".xml";
-	std::string out_file = base + ".cp949.xml";
-
-	if ( !download_url(c.rss, xml_file) ) {
-		unlink(xml_file.c_str());
+	// 임시 파일 없이 받는다 (받는 중에 끊겨도 tmp 에 남지 않게)
+	std::string string;
+	if ( !download_text(c.rss, string) ) {
 		printf("\r\n다운로드를 실패하였습니다.\r\n");
 		printf("\r\n[Enter] 를 누르세요.");
 		press_enter();
 		return false;
 	}
 
-	std::string string = read_file(xml_file.c_str());
-
 	// UTF-8 이면 완성형으로 변환
 	if ( !is_euckr_xml(string) ) {
-		char buf[4096];
-		snprintf(buf, sizeof(buf), "iconv -c -f UTF-8 -t CP949//IGNORE//TRANSLIT %s > %s",
-				shell_quote(xml_file).c_str(), shell_quote(out_file).c_str());
-		system(buf);
-		string = read_file(out_file.c_str());
+		string = utf8_to_cp949(string);
 	}
-
-	// 임시 파일들 삭제
-	unlink(xml_file.c_str());
-	unlink(out_file.c_str());
 
 	// 버퍼 파싱
 	pugi::xml_document doc;

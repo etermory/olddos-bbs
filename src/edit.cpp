@@ -176,8 +176,8 @@ bool edit_article(char *table_name, int no)
 					ok = false;
 				}
 
-				// 파일 삭제
-				unlink(tmpfile);
+				// 편집 폴더째 삭제 (파일만 지우면 빈 폴더가 tmp 에 쌓인다)
+				remove_tmp_dir(edit_dir);
 				break;
 
 			// zmodem 업로드 

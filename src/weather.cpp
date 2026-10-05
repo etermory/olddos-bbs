@@ -431,15 +431,8 @@ std::string date_after(int days)
 // URL 의 내용을 받아 온다
 bool fetch_csv(const char *url, std::string &csv)
 {
-    char tmpdir[1024];
-	snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", getenv("HANULSO"));
-	std::string path = std::string(tempnam(tmpdir, "weather")) + ".csv";
-
-	bool ok = download_url(url, path);
-	csv = read_file(path.c_str());
-	unlink(path.c_str());
-
-	return ok && !csv.empty();
+	// 임시 파일 없이 받는다 (받는 중에 끊겨도 tmp 에 남지 않게)
+	return download_text(url, csv);
 }
 
 // 미세먼지 등급 (환경부 기준)

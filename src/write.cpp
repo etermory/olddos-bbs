@@ -117,8 +117,8 @@ int write_article(char *table_name)
 					ret = -1;
 				}
 
-				// 파일 삭제
-				unlink(tmpfile);
+				// 편집 폴더째 삭제 (파일만 지우면 빈 폴더가 tmp 에 쌓인다)
+				remove_tmp_dir(edit_dir);
 				break;
 
 			} else if ( !strcasecmp(buf, "3") ) {
