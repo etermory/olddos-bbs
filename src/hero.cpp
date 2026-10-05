@@ -14,14 +14,24 @@ char tty[10];
 static std::string user_id;
 
 // 색 (이야기 터미널 글자색)
+// ansi.h 의 표준 ANSI 색 대신 이야기 터미널 글자색 (ESC[=nF) 을 쓴다
+#undef C_WHITE
 #define C_WHITE		"\033[=15F"
+#undef C_YELLOW
 #define C_YELLOW	"\033[=14F"
+#undef C_RED
 #define C_RED		"\033[=12F"
+#undef C_GREEN
 #define C_GREEN		"\033[=10F"
+#undef C_CYAN
 #define C_CYAN		"\033[=11F"
+#undef C_MAGENTA
 #define C_MAGENTA	"\033[=13F"
+#undef C_GRAY
 #define C_GRAY		"\033[=7F"
+#undef C_BROWN
 #define C_BROWN		"\033[=6F"
+#undef C_BLUE
 #define C_BLUE		"\033[=9F"
 
 #define MAX_LEVEL		12

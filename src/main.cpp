@@ -1755,15 +1755,12 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 		// 오늘의 운세
 		} else if ( !strcasecmp(args[0].c_str(), "luck") ) {
-			printf("\r\n");
-
-			printf("잠시만 기다리세요. 운세 정보를 가져오는 중입니다...");
+			// 예전에는 운세 사이트를 긁어 왔지만 사이트가 바뀌면 깨져서 bin/fortune 으로
+			char buf[1024];
+			snprintf(buf, sizeof(buf), "%s/bin/fortune %s %s %s", getenv("HANULSO"),
+					shell_quote(host_name).c_str(), shell_quote(login_user_id).c_str(), shell_quote(tty).c_str());
 			fflush(stdout);
-
-			print_luck(login_user_id);
-
-			printf("\r\n [Enter] 를 누르세요.");
-			press_enter();
+			system(buf);
 
 		// 성격 검사 프로그램
 		} else if ( !strcasecmp(args[0].c_str(), "mbti") ) {
