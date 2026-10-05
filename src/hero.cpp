@@ -796,13 +796,14 @@ foe make_monster(int level, int strength)
 	// 한 번 싸우면 체력의 20% 쯤 줄도록 (장비가 처지면 35% 쯤)
 	f.max_hp = (int)(ratk * 1.4 * m) + 5;
 	f.hp = f.max_hp;
-	f.atk = (int)((ref_max_hp(level) / 8.0 + ref_defense(level) / 2.0) / 0.75 * m);
+	f.atk = (int)((ref_max_hp(level) / 8.0 + ref_defense(level) / 2.0) / 0.75 * m * 1.05);
 
 	int need = exp_need[(level < 11) ? level : 11];
-	// 레벨마다 12 번쯤 싸우면 사부님께 도전할 수 있도록
-	f.exp = (int)(need / 12.0 * m) + 1;
+	// 레벨마다 30 번쯤 싸워야 사부님께 도전할 수 있도록 (하루 15 번이니 2~3 일에 한 레벨)
+	f.exp = (int)(need / 30.0 * m) + 1;
 	int price = ref_price[(level < 11) ? level : 11];
-	f.gold = (int)(price / 12.0 * m) + level * 10;
+	// 그 레벨 장비 값을 20 번쯤 싸워야 모으도록
+	f.gold = (int)(price / 20.0 * m) + level * 10;
 	return f;
 }
 
@@ -1139,9 +1140,9 @@ void go_master(void)
 	f.attack_msg = "가르침의 일격을 날립니다";
 	f.art = art_master;
 	f.color = C_CYAN;
-	f.max_hp = (int)(f.max_hp * 1.3);
+	f.max_hp = (int)(f.max_hp * 1.4);
 	f.hp = f.max_hp;
-	f.atk = (int)(f.atk * 1.1);
+	f.atk = (int)(f.atk * 1.2);
 
 	fight_result r = fight(f, "사부님과의 결투", false);
 	// 수련 결투에서는 죽지 않는다
