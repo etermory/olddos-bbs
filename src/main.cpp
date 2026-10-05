@@ -1525,8 +1525,27 @@ bool jump_go(std::string go)
 }
 
 
+// 안 읽은 쪽지 수
+static int unread_memo_count(void)
+{
+	std::string q = "SELECT COUNT(*) AS NEW FROM memo WHERE RECIPIENT_USER_ID='"
+		+ database::escape(login_user_id) + "' AND RECIPIENT_DELETED=0 AND CONFIRMATION_DATETIME IS NULL";
+	std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+	return r.size() > 0 ? atoi(r[0]["NEW"].c_str()) : 0;
+}
+
 void prompt(char *cmd, bool enable_write, bool enable_del)
 {
+	// 접속해 있는 동안 새 쪽지가 오면 알린다 (처음 한 번은 기준만 잡음, 로그인 화면에서 알렸으므로)
+	{
+		static int last_unread = -1;
+		int unread = unread_memo_count();
+		if ( last_unread >= 0 && unread > last_unread ) {
+			printf("\r\n\033[=14F※ 새 쪽지가 도착했습니다. (안 읽은 쪽지 %d통, MEMO 로 읽기)\033[=15F\r\n", unread);
+		}
+		last_unread = unread;
+	}
+
 	printf(ESC_ENG);
 	//printf("주요명령(W,P,DD) 이동(GO,번호) 초기화면(T) 종료(X)\r\n");
 	printf("주요명령(");
@@ -1608,8 +1627,12 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 		// 쪽지
 		} else if ( !strcasecmp(args[0].c_str(), "memo") ) {
+			// MEMO {아이디/닉네임} 이면 그 사람에게 바로 쓴다
 			std::string cmd = std::string(getenv("HANULSO")) + "/bin/memo "
 				+ shell_quote(tty) + " " + shell_quote(login_user_id);
+			if ( args.size() > 1 ) {
+				cmd += " " + shell_quote(args[1]);
+			}
 			fflush(stdout);
 			system(cmd.c_str());
 

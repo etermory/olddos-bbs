@@ -386,7 +386,7 @@ void show_memos(void)
 int main(int argc, char **argv)
 {
 	if ( argc < 3 ) {
-		printf("usage: %s <tty> <user_id>\n", argv[0]);
+		printf("usage: %s <tty> <user_id> [recipient]\n", argv[0]);
 		return 1;
 	}
 	snprintf(tty, sizeof(tty), "%s", argv[1]);
@@ -412,6 +412,20 @@ int main(int argc, char **argv)
 
 	// 쪽지 테이블 생성
 	database::create_memo();
+
+	// bin/memo <tty> <아이디> <받는 사람> : 그 사람에게 바로 쓰고 돌아간다
+	if ( argc > 3 && argv[3][0] ) {
+		std::string to = find_recipient(argv[3]);
+		if ( !to.empty() ) {
+			write_memo(to, "");
+			database::close();
+			ioctl(0, TCSETAF, &sys_term);
+			return 0;
+		}
+		print_header("쪽지", 0, 0, 0);
+		printf("\r\n  '%s' 아이디나 닉네임을 찾을 수 없습니다. 쪽지함을 엽니다.\r\n", display_text(argv[3]).c_str());
+		wait_enter();
+	}
 
 	show_memos();
 
