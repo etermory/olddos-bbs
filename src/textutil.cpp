@@ -150,6 +150,28 @@ static bool basic_tag(const std::string &name, std::string &out, bbs_stats &s, b
 }
 
 // [태그:N] 칸 맞춤: N 이 양수면 오른쪽, 음수면 왼쪽으로 N 칸. 길면 자른다
+// 화면에 보이는 칸 수 (ESC[..글자 색 코드는 빼고 센다)
+static int visible_width(const std::string &s)
+{
+	int w = 0;
+	for ( std::string::size_type i = 0; i < s.size(); i++ ) {
+		if ( s[i] == '\033' && i + 1 < s.size() && s[i + 1] == '[' ) {
+			i += 2;
+			while ( i < s.size() && !isalpha((unsigned char)s[i]) ) i++;
+			continue;
+		}
+		w++;
+	}
+	return w;
+}
+
+// 가운데 맞춤: 앞에 빈칸을 넣어 width 칸의 가운데에 놓는다
+static std::string center_in(const std::string &s, int width)
+{
+	int w = visible_width(s);
+	return w >= width ? s : std::string((width - w) / 2, ' ') + s;
+}
+
 static std::string fit_width(const std::string &v, int width)
 {
 	if ( width == 0 ) return v;
@@ -178,6 +200,7 @@ std::string replace_bbcode(std::string text)
 		std::string::size_type e = text.find(']', b + 1);
 		std::string name, value;
 		int width = 0;
+		bool center = false;
 		bool found = false;
 		std::string tmpl;
 		bool conditional = false;
@@ -191,7 +214,11 @@ std::string replace_bbcode(std::string text)
 			}
 			std::string::size_type colon = inner.find(':');
 			name = inner.substr(0, colon);
-			if ( colon != std::string::npos ) width = atoi(inner.c_str() + colon + 1);
+			if ( colon != std::string::npos ) {
+				// [이름:^N] 가운데 맞춤
+				center = inner.size() > colon + 1 && inner[colon + 1] == '^';
+				width = atoi(inner.c_str() + colon + (center ? 2 : 1));
+			}
 			bool valid = !name.empty();
 			for ( unsigned int i = 0; i < name.size(); i++ ) {
 				char c = name[i];
@@ -204,7 +231,19 @@ std::string replace_bbcode(std::string text)
 		}
 		if ( found ) {
 			out.append(text, pos, b - pos);
-			if ( !conditional ) {
+			if ( center ) {
+				// 가운데 맞춤: 문장이 있으면 문장 전체를 width 칸 가운데에. 넘치면 값을 줄인다
+				if ( !conditional || (!value.empty() && value != "0") ) {
+					std::string::size_type ps = tmpl.find("%s");
+					std::string before = conditional ? (ps == std::string::npos ? tmpl : tmpl.substr(0, ps)) : "";
+					std::string after = (conditional && ps != std::string::npos) ? tmpl.substr(ps + 2) : "";
+					int room = width - visible_width(before) - visible_width(after);
+					if ( room < 0 ) room = 0;
+					std::string v = (int)value.size() > room ? string_truncate(value, room, "") : value;
+					if ( conditional && ps == std::string::npos ) v = "";
+					out += center_in(before + v + after, width);
+				}
+			} else if ( !conditional ) {
 				out += fit_width(value, width);
 			} else if ( !value.empty() && value != "0" ) {
 				std::string::size_type ps = tmpl.find("%s");
