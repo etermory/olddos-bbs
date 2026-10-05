@@ -563,6 +563,54 @@ std::string display_text(const std::string &s)
 	return trim(r);
 }
 
+// 터미널에 커서 위치를 물어(ESC[6n) 응답 ESC[행;열R 을 읽는다
+static bool query_cursor(int *row, int *col)
+{
+	printf("\033[6n");
+	fflush(stdout);
+
+	char buf[32];
+	int len = 0;
+	while ( len < (int)sizeof(buf) - 1 ) {
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = 800000;
+		if ( select(1, &fds, NULL, NULL, &tv) <= 0 ) break;
+		char ch;
+		if ( read(0, &ch, 1) != 1 ) break;
+		buf[len++] = ch;
+		if ( ch == 'R' ) break;
+	}
+	buf[len] = 0;
+
+	char *p = strrchr(buf, '[');
+	return p != NULL && sscanf(p + 1, "%d;%d", row, col) == 2;
+}
+
+// 터미널 줄 수. 커서를 맨 아래로 보내 위치를 물어보고 원래 자리로 돌려 놓는다.
+// 위치를 알려 주지 않는 터미널이면 telnet 이 알려 준 창 크기, 그것도 없으면 24 줄
+int terminal_rows(void)
+{
+	int rows = 0;
+	int r0, c0;
+	if ( query_cursor(&r0, &c0) ) {
+		printf("\033[999;999H");
+		int r, c;
+		if ( query_cursor(&r, &c) ) rows = r;
+		printf("\033[%d;%dH", r0, c0);
+		fflush(stdout);
+	}
+	if ( rows < 10 ) {
+		struct winsize ws;
+		if ( ioctl(0, TIOCGWINSZ, &ws) == 0 && ws.ws_row >= 10 ) rows = ws.ws_row;
+	}
+	if ( rows < 10 || rows > 200 ) rows = 24;
+	return rows;
+}
+
 // 입력 버퍼(stdio)나 소켓에 바로 이어서 들어온 글자가 있는지
 static bool input_pending(int msec)
 {

@@ -134,6 +134,9 @@ int main(int argc, char **argv)
 	// 전보 (접속자 파일에 pid 를 적기 전에 시그널 처리를 준비)
 	telegram_init();
 
+	// 터미널 줄 수 (25 줄 이상이면 여유 있는 화면, 24 줄이면 txt/*24.txt)
+	screen_rows = terminal_rows();
+
 	// --------------------------------------
 	// 접속ID 기록
 	char buf[1024];

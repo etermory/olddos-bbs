@@ -269,11 +269,24 @@ std::string replace_bbcode(std::string text)
 	return text;
 }
 
+// 접속한 터미널의 줄 수 (BBS 는 로그인할 때 terminal_rows() 로 알아낸다)
+int screen_rows = 24;
+
 void print_file(const char *filename)
 {
     char buf[9072];
 
     sprintf(buf,"%s/%s", getenv("HANULSO"), filename);
+
+	// 24 줄 화면이면, 24 줄에 맞춰 따로 만든 파일(이름 끝에 24: top.txt -> top24.txt)이 있으면 그것을
+	if ( screen_rows < 25 ) {
+		std::string alt = buf;
+		std::string::size_type dot = alt.rfind('.');
+		if ( dot != std::string::npos && alt.find('/', dot) == std::string::npos ) {
+			alt = alt.substr(0, dot) + "24" + alt.substr(dot);
+			if ( access(alt.c_str(), R_OK) == 0 ) snprintf(buf, sizeof(buf), "%s", alt.c_str());
+		}
+	}
 	std::string text = read_file(buf);
 	text = replace_bbcode(text);
 
