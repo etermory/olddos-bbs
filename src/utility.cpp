@@ -1064,6 +1064,39 @@ std::string screen_editor_command(const char *dir, const char *file)
 	return std::string(getenv("HANULSO")) + "/bin/pico -r76 -o " + shell_quote(dir) + " " + shell_quote(file);
 }
 
+// $HANULSO/tmp 안의 임시 폴더를 통째로 지운다 (다른 곳은 실수로라도 지우지 않도록 확인)
+void remove_tmp_dir(const char *dir)
+{
+	std::string base = std::string(getenv("HANULSO")) + "/tmp/";
+	std::string d = dir;
+	if ( d.compare(0, base.size(), base) != 0 || d.size() <= base.size() || d.find("..") != std::string::npos ) {
+		return;
+	}
+	std::string cmd = "rm -rf " + shell_quote(d);
+	system(cmd.c_str());
+}
+
+// 강제 종료, 서버 재시작처럼 정리하지 못하고 남은 임시 폴더/파일을 지운다.
+// (tmp/file*: 파일 주고받기, tmp/edit*: 글 편집, tmp/*.file: 접속자별 임시 파일 목록)
+// 하루가 지난 것만, 한 시간에 한 번만 (접속할 때마다 tmp 를 뒤지지 않도록)
+void sweep_stale_tmp(void)
+{
+	char marker[1024];
+	snprintf(marker, sizeof(marker), "%s/tmp/.sweep", getenv("HANULSO"));
+	struct stat st;
+	if ( stat(marker, &st) == 0 && time(NULL) - st.st_mtime < 3600 ) {
+		return;
+	}
+	FILE *fp = fopen(marker, "w");
+	if ( fp != NULL ) fclose(fp);
+
+	std::string tmp = shell_quote(std::string(getenv("HANULSO")) + "/tmp");
+	std::string cmd = "find " + tmp + " -mindepth 1 -maxdepth 1 "
+		"\\( -name 'file*' -o -name 'edit*' -o -name '*.file' \\) -mmin +1440 "
+		"-exec rm -rf {} + > /dev/null 2>&1";
+	system(cmd.c_str());
+}
+
 void add_user_tmpfile(char *path)
 {
 	char buf[1024];
@@ -1107,7 +1140,17 @@ void del_user_tmpfiles(void)
 
 	std::vector<std::string> files = user_tmpfiles();
 	for(unsigned int i=0; i<files.size(); i++) {
-		if ( file_exists((char*)files[i].c_str()) ) {
+		struct stat st;
+		// lstat: 다운로드용 심볼릭 링크는 가리키는 파일이 없어도 지워야 하므로
+		if ( files[i].empty() || lstat(files[i].c_str(), &st) != 0 ) {
+			continue;
+		}
+		// 파일 주고받기 임시 폴더는 받다 만 파일째 지운다
+		if ( S_ISDIR(st.st_mode) ) {
+			remove_tmp_dir(files[i].c_str());
+			continue;
+		}
+		{
 			// 파일 삭제
 			unlink((char*)files[i].c_str());
 

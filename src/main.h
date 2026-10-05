@@ -309,6 +309,8 @@ std::vector<std::string> wrap_words(const std::string &line, int width);
 std::string screen_editor_command(const char *dir, const char *file);
 std::vector<std::string> user_tmpfiles(void);
 void del_user_tmpfiles(void);
+void remove_tmp_dir(const char *dir);
+void sweep_stale_tmp(void);
 
 void press_enter(void);
 void line_input(char *str,int len);

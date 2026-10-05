@@ -1,5 +1,11 @@
 #include "main.h"
 
+// 함수를 빠져나갈 때 (실패해서 중간에 돌아가도) 임시 폴더를 지운다
+struct download_tmp_dir {
+	std::string dir;
+	~download_tmp_dir() { if ( !dir.empty() ) remove_tmp_dir(dir.c_str()); }
+};
+
 bool file_download(int protocol, char *tmp_filename, char *filename)
 {
 	char buf[9072];
@@ -8,18 +14,23 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	char path[1024];
 	char path2[1024];
 
+	// 이전에 저장된 파일 이름에 위험한 문자가 있을 수 있으므로 / 는 막는다
+	if ( strchr(tmp_filename, '/') || strchr(filename, '/') ) {
+		return false;
+	}
+
 	// ---------------------------------------------------
-	// 우선 임시 폴더를 생성하여 본래의 업로드 파일 이름으로 복사한다.
+	// 우선 임시 폴더를 생성하여 본래의 업로드 파일 이름으로 연결(복사)한다.
 	sprintf(tmpdir, "%s/tmp", getenv("HANULSO"));
 	sprintf(tmpdir, "%s", tempnam(tmpdir, "file"));
 	if ( !mkdir2(tmpdir) ) {
 		return false;
 	}
+	download_tmp_dir guard;
+	guard.dir = tmpdir;
 
-	// 이전에 저장된 파일 이름에 위험한 문자가 있을 수 있으므로 / 는 막는다
-	if ( strchr(tmp_filename, '/') || strchr(filename, '/') ) {
-		return false;
-	}
+	// 전송 중에 통신이 끊기면 접속 종료 처리(host_close)에서 폴더째 지우도록 적어 둔다
+	add_user_tmpfile(tmpdir);
 
 	// 임시 파일 이름으로 업로드된 패스
 	snprintf(path, sizeof(path), "%s/file/%s", getenv("HANULSO"), tmp_filename);
@@ -28,22 +39,21 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	snprintf(path2, sizeof(path2), "%s/%s", tmpdir, filename);
 
 	printf("\r\n파일 수신 준비 중입니다."); fflush(stdout);
-	
-	// 임시 파일 패스를 적어둔다. 
-	// 파일 복사중 통신을 종료하면 쓰레기 파일로 남기 때문에 나중에 자동 종료시 삭제한다.
-	add_user_tmpfile(path2);
 
-	// 임시 폴더로 본래의 이름으로 복사
-	snprintf(buf, sizeof(buf), "cp %s %s", shell_quote(path).c_str(), shell_quote(path2).c_str());
-	int a = system(buf);
-
-	if ( WEXITSTATUS(a) != 0 ) {
-		return false;
+	// 본래의 이름으로 심볼릭 링크 (큰 파일도 복사하지 않아 빠르고, 남아도 자리를 차지하지 않는다)
+	// 링크를 못 만들면 복사
+	int a = 0;
+	if ( symlink(path, path2) != 0 ) {
+		snprintf(buf, sizeof(buf), "cp %s %s", shell_quote(path).c_str(), shell_quote(path2).c_str());
+		a = system(buf);
+		if ( WEXITSTATUS(a) != 0 ) {
+			return false;
+		}
 	}
-		
+
 	// 임시 폴더로 이동
 	chdir(tmpdir);
-	
+
 	printf("\r\n전송 프로토콜을 실행하세요.\r\n");
 	fflush(stdout);
 
@@ -65,18 +75,7 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 
 	chdir(getenv("HANULSO"));
 
-	if ( WEXITSTATUS(a) != 0 ) {
-		return false;
-	}
-
-	// 업로드된 임시 폴더를 삭제한다.
-	snprintf(buf, sizeof(buf), "rm -rf %s", shell_quote(tmpdir).c_str());
-	a = system(buf);
-
-	if ( WEXITSTATUS(a) != 0 ) {
-		return false;
-	}
-
-	return true;
+	// 임시 폴더는 guard 가 지운다
+	return WEXITSTATUS(a) == 0;
 }
 

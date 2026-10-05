@@ -38,12 +38,18 @@ static void strip_xmodem_pad(const char *path)
 		truncate(path, cut);
 }
 
+// 함수를 빠져나갈 때 (실패해서 중간에 돌아가도) 받다 만 파일째 임시 폴더를 지운다
+struct upload_tmp_dir {
+	std::string dir;
+	~upload_tmp_dir() { if ( !dir.empty() ) remove_tmp_dir(dir.c_str()); }
+};
+
 bool file_upload(int protocol, const char *xname, char **tmp_filename, char **filename, int *size)
 {
 	char tmpdir[9072];
 	char dir[9072];
 	char buf[9072];
-		
+
 	*size = 0;
 
 	// ---------------------------------------------------
@@ -54,13 +60,18 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	if ( !mkdir2(tmpdir) ) {
 		return false;
 	}
+	upload_tmp_dir guard;
+	guard.dir = tmpdir;
+
+	// 전송 중에 통신이 끊기면 접속 종료 처리(host_close)에서 폴더째 지우도록 적어 둔다
+	add_user_tmpfile(tmpdir);
 
 	// 폴더 변경
 	chdir(tmpdir);
-	
+
 	printf("\r\n전송 프로토콜을 실행하세요.\r\n");
 	fflush(stdout);
-	
+
 	// zmodem 프로토콜 실행
 	ioctl(0, TCSETAF, &sys_term);
 	int a;
@@ -105,7 +116,7 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 		printf("\r\n전송된 파일이 없습니다.");
 		return false;
 	}
-	
+
 	// ---------------------------------------------------
 	// 업로드된 첨부 파일을 랜덤 이름으로 변경하여 file 폴더에 옮긴다.
 	// 첨부 파일 이름 생성 (file랜덤이름)
@@ -119,13 +130,7 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 		return false;
 	}
 
-	// 업로드된 임시 폴더를 삭제한다.
-	sprintf(buf, "rm -rf \"%s\"", tmpdir);
-	a = system(buf);
-
-	if ( WEXITSTATUS(a) != 0 ) {
-		return false;
-	}
+	// 임시 폴더는 guard 가 지운다
 
 	// 업로드된 파일 이름 (겹치지 않는 임시 파일 이름)
 	*tmp_filename = strdup(split_file_name(new_path).c_str());

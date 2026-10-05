@@ -141,6 +141,9 @@ int main(int argc, char **argv)
 	// 오늘 최고 동시 접속 기록
 	stats_record_online();
 
+	// 강제 종료 등으로 남은 오래된 임시 파일 정리 (한 시간에 한 번)
+	sweep_stale_tmp();
+
 	// ------------------------------------
 	bool exist;
 	std::map<std::string, std::string> user = database::user_info(login_user_id, &exist);
