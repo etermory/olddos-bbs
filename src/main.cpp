@@ -33,8 +33,13 @@ int main(int argc, char **argv)
 	read_settings("hanulso.cfg");
 	// --------------------------------------
 	// DB open ...
-	if ( database::open() == false )
+	if ( database::open() == false ) {
+		// ctime 이 만든 접속자 파일
+		char buf[1024];
+		snprintf(buf, sizeof(buf), "%s/tmp/%s.tty", getenv("HANULSO"), tty);
+		unlink(buf);
 		exit(1);
+	}
 
 	// 회원 테이블 생성
 	database::create_member();

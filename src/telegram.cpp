@@ -135,15 +135,8 @@ static std::vector<int> online_pids(const std::string &user_id)
 		char sid[256] = "";
 		int pid = 0;
 		sscanf(trim(read_file(files[i].c_str())).c_str(), "%255s %d", sid, &pid);
-		if ( pid <= 0 ) continue;
 		// 강제 종료로 남은 파일의 pid 를 다른 프로그램이 받았을 수 있으니 BBS(main) 인지 확인
-		// (ctime 이 execl("bin/main", "main", ...) 으로 띄우므로 argv[0] 이 main)
-		char path[64];
-		snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
-		std::string argv0 = read_file(path).c_str();
-		std::string::size_type slash = argv0.rfind('/');
-		if ( slash != std::string::npos ) argv0 = argv0.substr(slash + 1);
-		if ( argv0 != "main" ) continue;
+		if ( !is_bbs_process(pid) ) continue;
 		pids.push_back(pid);
 	}
 	return pids;

@@ -28,8 +28,13 @@ void raw_mode(void)
 }
 
 /* 프로그램 종료 루틴 */
-int host_close (void)  
+int host_close (void)
 {
+	// ctime 이 만든 (로그인 전) 접속자 파일
+	char buf[1024];
+	snprintf(buf, sizeof(buf), "%s/tmp/%s.tty", getenv("HANULSO"), tty);
+	unlink(buf);
+
 	database::close();
 
     ioctl(0, TCSETAF, &sys_term);

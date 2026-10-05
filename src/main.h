@@ -298,6 +298,7 @@ bool download_url(const std::string &url, const std::string &path);
 std::string fix_hangul(const std::string &s);
 std::string display_text(const std::string &s);
 bool read_tty_file(const std::string &path, std::string &user_id);
+bool is_bbs_process(int pid);
 int check_password_strongness(std::string str);
 
 char *utf8_to_cp949(char * input);

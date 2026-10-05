@@ -503,6 +503,22 @@ std::string fix_hangul(const std::string &s)
 	return r;
 }
 
+// 그 pid 가 살아 있는 BBS(main) 프로세스인지.
+// 강제 종료로 남은 접속자 파일의 pid 를 다른 프로그램이 받았을 수 있으므로 이름까지 본다.
+// (ctime 이 execl("bin/main", "main", ...) 으로 띄우므로 argv[0] 이 main)
+bool is_bbs_process(int pid)
+{
+	if ( pid <= 0 ) return false;
+	if ( kill(pid, 0) != 0 && errno == ESRCH ) return false;
+	char path[64];
+	snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
+	std::string argv0 = read_file(path).c_str();
+	if ( argv0.empty() ) return true;		// /proc 를 못 읽으면 살아 있는 것으로
+	std::string::size_type slash = argv0.rfind('/');
+	if ( slash != std::string::npos ) argv0 = argv0.substr(slash + 1);
+	return argv0 == "main";
+}
+
 // 접속자 파일(tmp/<tty>.tty: "아이디 pid") 을 읽는다.
 // 로그인 전(빈 파일)이면 false, 프로세스가 이미 죽었으면 (강제 종료 등으로 남은 파일) 지우고 false.
 bool read_tty_file(const std::string &path, std::string &user_id)
@@ -514,8 +530,8 @@ bool read_tty_file(const std::string &path, std::string &user_id)
 		return false;
 	}
 
-	// pid 가 없는 예전 형식은 살아 있는 것으로 본다
-	if ( pid > 0 && kill(pid, 0) != 0 && errno == ESRCH ) {
+	// pid 가 없는 예전 형식: 지금 코드는 늘 pid 를 적으므로 예전에 남은 파일이다
+	if ( pid <= 0 || !is_bbs_process(pid) ) {
 		unlink(path.c_str());
 		return false;
 	}
@@ -1090,10 +1106,27 @@ void sweep_stale_tmp(void)
 	FILE *fp = fopen(marker, "w");
 	if ( fp != NULL ) fclose(fp);
 
+	// 하루 지난 임시 파일/폴더: 파일 주고받기(file*), 글 편집(edit*), 접속자별 목록(*.file),
+	// 날씨/환율/뉴스/오늘(*.csv, *.json, *.xml ...) 등. 예전 코드가 실패할 때 지우지 않고 남긴 것도.
+	// 접속자 파일(*.tty), 숨김 파일(.db_index_v1 같은 표시), stats.cache, 로그(*.log) 는 남긴다.
 	std::string tmp = shell_quote(std::string(getenv("HANULSO")) + "/tmp");
 	std::string cmd = "find " + tmp + " -mindepth 1 -maxdepth 1 "
-		"\\( -name 'file*' -o -name 'edit*' -o -name '*.file' \\) -mmin +1440 "
+		"! -name '*.tty' ! -name '.*' ! -name 'stats.cache' ! -name 'mailsend.log' -mmin +1440 "
 		"-exec rm -rf {} + > /dev/null 2>&1";
+	system(cmd.c_str());
+
+	// 접속자 파일: 프로세스가 없는 것 (read_tty_file 이 지운다)
+	char pattern[1024];
+	snprintf(pattern, sizeof(pattern), "%s/tmp/*.tty", getenv("HANULSO"));
+	std::vector<std::string> ttys = find_files(pattern);
+	for ( unsigned int i = 0; i < ttys.size(); i++ ) {
+		std::string id;
+		read_tty_file(ttys[i], id);
+	}
+	// 로그인 전(빈) 접속자 파일이 한 시간 넘게 남은 것: 로그인 화면은 10 분 입력이 없으면 끊기므로
+	// (가입/비밀번호 찾기 중 끊김 등으로 남은 것)
+	cmd = "find " + tmp + " -mindepth 1 -maxdepth 1 -name '*.tty' -empty -mmin +60 "
+		"-exec rm -f {} + > /dev/null 2>&1";
 	system(cmd.c_str());
 }
 
