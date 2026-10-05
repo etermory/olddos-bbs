@@ -20,12 +20,12 @@ endif
 .c.o: ; $(CC) -c $(CFLAGS) -o $*.o $<
 .cpp.o: ; $(CXX) -c $(CFLAGS) -o $*.o $<
 
-all: ctime main guest pass sysop weather exchange lunar hero today fortune mudlink memo biorhythm chattclient chattserver mbti_gs   
+all: ctime main guest pass sysop weather exchange lunar hero rain today fortune mudlink memo biorhythm chattclient chattserver mbti_gs   
 
 main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 	base64.o pugixml.o upload.o download.o write.o edit.o hangul.o \
-	settings.o menu.o chatt.o news.o profile.o re.o attendance.o
-	$(CXX) -o ../bin/$@ main.o utility.o textutil.o database.o settings.o menu.o attendance.o \
+	settings.o menu.o chatt.o news.o profile.o re.o attendance.o telegram.o graffiti.o
+	$(CXX) -o ../bin/$@ main.o utility.o textutil.o database.o settings.o menu.o attendance.o telegram.o graffiti.o \
 			lineeditor.o fileeditor.o upload.o download.o \
 			write.o edit.o base64.o pugixml.o hangul.o chatt.o \
 			news.o profile.o re.o \
@@ -62,6 +62,11 @@ exchange: exchange.o utility.o pugixml.o
 
 hero: hero.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
 	$(CXX) -o ../bin/$@ pugixml.o hero.o database.o utility.o textutil.o settings.o menu.o re.o \
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
+	$(STRIP) ../bin/$@
+
+rain: rain.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
+	$(CXX) -o ../bin/$@ pugixml.o rain.o database.o utility.o textutil.o settings.o menu.o re.o \
 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 

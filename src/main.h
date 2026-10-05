@@ -185,6 +185,17 @@ void attendance_login_info(const char *user_id);
 bool is_birthday_today(const std::string &birthday);
 void birthday_celebrate(const char *nick);
 void show_attendance(const char *user_id);
+
+// 전보 (telegram.cpp)
+void telegram_init(void);
+void telegram_show_pending(void);
+void telegram_live_begin(const char *prompt_text);
+void telegram_live_end(void);
+void telegram_command(const std::string &cmd);
+
+// 한줄 낙서장 (graffiti.cpp)
+void graffiti_login_info(void);
+void show_graffiti(const char *user_id, bool is_admin);
 void print_news_title(const char *title);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);
@@ -300,6 +311,7 @@ void line_input(char *str,int len);
 void line_input_edit(char *str, char *init_str, int len);
 void line_input2(char *mess, char *str, int len);
 void line_input_echo(char *str, int len);
+extern void (*line_input_wait_hook)(const char *typed);
 int yesno(int defaultkey);
 void goto_screen(int row, int col);
 void clear_screen(void);

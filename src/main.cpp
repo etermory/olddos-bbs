@@ -123,6 +123,9 @@ int main(int argc, char **argv)
 		retry+=1;
 	}
 
+	// 전보 (접속자 파일에 pid 를 적기 전에 시그널 처리를 준비)
+	telegram_init();
+
 	// --------------------------------------
 	// 접속ID 기록
 	char buf[1024];
@@ -182,6 +185,9 @@ int main(int argc, char **argv)
 
 	// 출석 체크, 오늘 생일인 회원
 	attendance_login_info(login_user_id);
+
+	// 한줄 낙서장 최근 한 줄
+	graffiti_login_info();
 
 	// 바이오리듬 출력
 	printf("\r\n\r\n");
@@ -1554,6 +1560,9 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 		last_unread = unread;
 	}
 
+	// 다른 화면에 있는 동안 온 전보
+	telegram_show_pending();
+
 	printf(ESC_ENG);
 	//printf("주요명령(W,P,DD) 이동(GO,번호) 초기화면(T) 종료(X)\r\n");
 	printf("주요명령(");
@@ -1566,7 +1575,10 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 	}
 	printf(") 이동(GO,번호) 초기화면(T) 종료(X)\r\n");
 	printf("선택(도움말[H]) >> ");
+	// 입력을 기다리는 동안 전보가 오면 바로 띄운다
+	telegram_live_begin("선택(도움말[H]) >> ");
 	line_input(cmd, 30);
+	telegram_live_end();
 		
 	std::vector<std::string> args = split_string(std::string(cmd), ' ');
 	if ( args.size() == 0 ) return;
@@ -1632,6 +1644,14 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 				printf("\r\n[Enter] 를 누르세요.");
 				press_enter();
 			}
+
+		// 전보
+		} else if ( !strcasecmp(args[0].c_str(), "to") ) {
+			telegram_command(cmd);
+
+		// 한줄 낙서장
+		} else if ( !strcasecmp(args[0].c_str(), "ns") ) {
+			show_graffiti(login_user_id, login_user_is_admin);
 
 		// 출석부
 		} else if ( !strcasecmp(args[0].c_str(), "at") ) {

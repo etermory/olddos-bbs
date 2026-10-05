@@ -561,6 +561,21 @@ static bool input_pending(int msec)
 	return select(1, &fds, NULL, NULL, &tv) > 0;
 }
 
+// 입력을 기다리는 동안 1 초마다 불리는 함수 (프롬프트에서 전보를 띄울 때).
+// 지금까지 화면에 친 글자를 넘겨, 메시지를 띄운 뒤 입력 줄을 다시 그릴 수 있게 한다.
+void (*line_input_wait_hook)(const char *typed) = NULL;
+
+static int wait_getchar(const char *str, int typed_len)
+{
+	if ( line_input_wait_hook != NULL ) {
+		while ( !input_pending(1000) ) {
+			std::string typed(str, typed_len > 0 ? typed_len : 0);
+			line_input_wait_hook(typed.c_str());
+		}
+	}
+	return getchar();
+}
+
 // ------------------------------------------------------------------------
 void _line_input(char *str, char *init_str, int len, int echo)
 {
@@ -580,7 +595,7 @@ void _line_input(char *str, char *init_str, int len, int echo)
 		putchar(init_str[j]);
 	}
 
-    while((c=getchar()) != '\r' ) {
+    while((c=wait_getchar(str, (wait_trail && !skip_trail) ? i - 1 : i)) != '\r' ) {
 		// 접속이 끊기면 (EOF) 무한 루프에 빠지지 않도록 종료
 		if ( c == EOF ) {
 			host_close();

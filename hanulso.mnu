@@ -96,6 +96,11 @@
 			<item type="program" prog="mudlink" args="4100" go="muhan" door="3" access_level="1">
 				<name>무한대전 (muhan)</name>
 			</item>
+
+			<!-- 산성비 타자 게임 -->
+			<item type="program" prog="rain" go="rain" door="4" access_level="1">
+				<name>산성비 (rain)</name>
+			</item>
 		</item>
 
 		
