@@ -335,6 +335,9 @@ src/muhan 구성
     플레이어, 게시판, 편지, 로그는 그대로 남는다.
     NOPULL=1 (git pull 건너뜀)
     세계 데이터를 원본으로 되돌리려면: RESET_WORLD=1 (rooms, objmon, help 만 다시 풂)
+    공지: log/news (접속하면 모두에게), log/DM_news (운영자에게만). EUC-KR 텍스트로 서버에서
+    바로 고치면 다음 접속부터 보인다. 도스박물관 기본 문구는 src/muhan/datapatch/log 에 있고,
+    설치할 때 서버의 파일이 원본 그대로일 때만 바꾼다 (서버에서 고친 내용은 덮어쓰지 않는다).
   데이터 경로가 실행 파일에 들어가므로, 설치 디렉터리를 바꾸려면
 % /home/olddos/olddos-bbs/src/muhan/update.sh /다른/설치/디렉터리
 

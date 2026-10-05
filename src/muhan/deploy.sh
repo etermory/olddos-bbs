@@ -38,6 +38,19 @@ elif [ -n "$RESET_WORLD" ]; then
 	tar xzf "$SRC/muhan_data.tgz" -C "$DEST" ./rooms ./objmon ./help
 fi
 
+# datapatch/: 도스박물관에 맞게 바꾼 데이터 파일 (공지 log/news, log/DM_news 등)
+# 서버의 파일이 없거나 원본(muhan_data.tgz) 그대로일 때만 바꾼다. 서버에서 고친 내용은 덮어쓰지 않는다.
+if [ -d "$SRC/datapatch" ]; then
+	(cd "$SRC/datapatch" && find . -type f) | while read -r f; do
+		dst="$DEST/${f#./}"
+		if [ ! -f "$dst" ] || tar xzf "$SRC/muhan_data.tgz" -O "$f" 2>/dev/null | cmp -s - "$dst"; then
+			mkdir -p "$(dirname "$dst")"
+			cp "$SRC/datapatch/$f" "$dst"
+			say "도스박물관 기본값으로 바꿈: ${f#./}"
+		fi
+	done
+fi
+
 # 플레이어 파일은 이름의 첫 글자(초성) 별 폴더에 저장된다: player/가 ... player/하, player/temp
 # (원본 저장소에는 빈 폴더가 빠져 있다. 폴더 이름은 EUC-KR)
 mkdir -p "$DEST/player" "$DEST/log" "$DEST/post" "$DEST/bin"
