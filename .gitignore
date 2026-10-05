@@ -3,6 +3,8 @@ hanulso.cfg
 
 # 에디터 임시 파일
 *.swp
+*.swo
+.*.sw[a-p]
 *~
 
 # 덤프 이미지
