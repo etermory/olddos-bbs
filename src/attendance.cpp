@@ -101,26 +101,32 @@ void attendance_login_info(const char *user_id)
 		printf("\r\n [출    석] : 오늘 출석 완료 (%d번째) / 연속 %d일 / 총 %d일 (AT 로 출석부)", rank, streak, total);
 	}
 
-	// 오늘 생일인 회원
+	// 오늘 생일인 회원 (한 줄 80 칸에 맞추고, 넘치면 "외 N명")
 	std::vector<std::map<std::string, std::string> > b = database::fetch_rows((char*)
 			"SELECT USER_ID, NICK_NAME, BIRTHDAY FROM member WHERE "
 			"(MONTH(BIRTHDAY) = MONTH(CURDATE()) AND DAYOFMONTH(BIRTHDAY) = DAYOFMONTH(CURDATE())) "
 			"OR (MONTH(BIRTHDAY) = 2 AND DAYOFMONTH(BIRTHDAY) = 29 AND MONTH(CURDATE()) = 2 "
 			"    AND DAYOFMONTH(CURDATE()) = 28 AND DAYOFMONTH(LAST_DAY(CURDATE())) = 28) "
-			"ORDER BY NICK_NAME LIMIT 8");
-	if ( b.size() > 0 ) {
+			"ORDER BY NICK_NAME LIMIT 100");
+	std::vector<std::string> list;
+	for ( unsigned int i = 0; i < b.size(); i++ ) {
+		std::string n = display_text(b[i]["NICK_NAME"]);
+		if ( n.empty() ) n = display_text(b[i]["USER_ID"]);
+		if ( !n.empty() ) list.push_back(string_truncate(n, 16, ""));
+	}
+	if ( list.size() > 0 ) {
+		// " [생    일] : " 14 칸 + 이름들 + " 외 NN명" 8 칸 + " 님 생일 축하!" 14 칸 <= 79
 		std::string names;
-		for ( unsigned int i = 0; i < b.size(); i++ ) {
-			std::string n = display_text(b[i]["NICK_NAME"]);
-			if ( n.empty() ) n = display_text(b[i]["USER_ID"]);
-			if ( n.empty() ) continue;
-			if ( !names.empty() ) names += ", ";
-			names += n;
+		unsigned int shown = 0;
+		for ( ; shown < list.size(); shown++ ) {
+			std::string next = names + (names.empty() ? "" : ", ") + list[shown];
+			int limit = (shown + 1 < list.size()) ? 79 - 14 - 14 - 8 : 79 - 14 - 14;
+			if ( (int)next.size() > limit && shown > 0 ) break;
+			names = next;
 		}
-		if ( !names.empty() ) {
-			printf("\r\n [생    일] : " A_MAGENTA "오늘 생일인 회원 %s" A_WHITE " 축하해 주세요!",
-					string_truncate(names, 44, "..").c_str());
-		}
+		char more[32] = "";
+		if ( shown < list.size() ) snprintf(more, sizeof(more), " 외 %d명", (int)(list.size() - shown));
+		printf("\r\n [생    일] : " A_MAGENTA "%s" A_WHITE "%s 님 생일 축하!", names.c_str(), more);
 	}
 }
 
