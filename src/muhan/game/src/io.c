@@ -258,6 +258,7 @@ int	fd;
 {
 	int		i;
 
+	print(fd, "\033[2J\033[H");	/* clear screen (BBS screen stays otherwise) */
 	/*************************************************************/
 	/* The following lines must be left intact as part of the    */
 	/* copyright agreement.					     */
