@@ -153,6 +153,15 @@ const currency *find_currency(const std::string &code)
 
 int main(int argc, char **argv)
 {
+	// bin/exchange --usd : 1 달러가 몇 원인지 "1,380.50" (txt 파일의 [usd_rate])
+	if ( argc > 1 && !strcmp(argv[1], "--usd") ) {
+		std::string json;
+		double v = get_rates(json) ? krw_per(json, "USD") : 0;
+		if ( v <= 0 ) return 1;
+		printf("%s\n", comma(v, 2).c_str());
+		return 0;
+	}
+
 	if ( argc > 1 ) {
 		snprintf(host_name, sizeof(host_name), "%s", argv[1]);
 	}

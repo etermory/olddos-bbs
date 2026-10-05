@@ -161,6 +161,8 @@ static std::string fit_width(const std::string &v, int width)
 
 // 글 속의 [태그] 를 값으로 바꾼다. 태그 이름은 영문 소문자/숫자/_ ,
 // 모르는 태그나 [Enter] 처럼 태그가 아닌 것은 그대로 둔다.
+//   [이름]  [이름:8]  [이름:-8]
+//   [이름?문장 %s 문장]  값이 비었거나 0 이면 통째로 빈칸, 아니면 %s 자리에 값
 std::string replace_bbcode(std::string text)
 {
 	std::string out;
@@ -177,8 +179,16 @@ std::string replace_bbcode(std::string text)
 		std::string name, value;
 		int width = 0;
 		bool found = false;
-		if ( e != std::string::npos && e - b <= 40 ) {
+		std::string tmpl;
+		bool conditional = false;
+		if ( e != std::string::npos && e - b <= 200 ) {
 			std::string inner = text.substr(b + 1, e - b - 1);
+			std::string::size_type q = inner.find('?');
+			if ( q != std::string::npos ) {
+				tmpl = inner.substr(q + 1);
+				conditional = true;
+				inner = inner.substr(0, q);
+			}
 			std::string::size_type colon = inner.find(':');
 			name = inner.substr(0, colon);
 			if ( colon != std::string::npos ) width = atoi(inner.c_str() + colon + 1);
@@ -194,7 +204,12 @@ std::string replace_bbcode(std::string text)
 		}
 		if ( found ) {
 			out.append(text, pos, b - pos);
-			out += fit_width(value, width);
+			if ( !conditional ) {
+				out += fit_width(value, width);
+			} else if ( !value.empty() && value != "0" ) {
+				std::string::size_type ps = tmpl.find("%s");
+				out += (ps == std::string::npos) ? tmpl : tmpl.substr(0, ps) + fit_width(value, width) + tmpl.substr(ps + 2);
+			}
 			pos = e + 1;
 		} else {
 			// 태그가 아니면 '[' 만 넘기고 계속 (ESC[ 다음에 오는 태그도 찾도록)

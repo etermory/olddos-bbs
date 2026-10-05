@@ -333,6 +333,15 @@ void show_day(int m, int d)
 
 int main(int argc, char **argv)
 {
+	// bin/today --quote : 오늘의 명언 한 줄 "명언 - 저자" (txt 파일의 [today_quote])
+	if ( argc > 1 && !strcmp(argv[1], "--quote") ) {
+		time_t t = time(NULL);
+		struct tm *tm = localtime(&t);
+		int q = ((tm->tm_mon + 1) * 31 + tm->tm_mday) % quote_count;
+		printf("%s - %s\n", quotes[q][0], quotes[q][1]);
+		return 0;
+	}
+
 	if ( argc > 1 ) {
 		snprintf(host_name, sizeof(host_name), "%s", argv[1]);
 	}

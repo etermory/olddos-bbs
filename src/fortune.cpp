@@ -260,6 +260,17 @@ void choose(int kind)
 
 int main(int argc, char **argv)
 {
+	// bin/fortune --line YYYY-MM-DD : 그 생년월일의 "띠<TAB>별자리<TAB>오늘의 운세 한 줄"
+	//   (txt 파일의 [ddi], [zodiac], [my_fortune])
+	if ( argc > 2 && !strcmp(argv[1], "--line") ) {
+		int y, m, d;
+		if ( sscanf(argv[2], "%d-%d-%d", &y, &m, &d) != 3 || y <= 1900 || m < 1 || m > 12 || d < 1 || d > 31 ) return 1;
+		int di = ddi_of(y, m, d);
+		int si = star_of(m, d);
+		printf("%s띠\t%s\t%s\n", ddi[di], stars[si].name, total_msgs[seed_of(0, di, 1) % COUNT(total_msgs)]);
+		return 0;
+	}
+
 	std::string user_id = (argc > 2) ? argv[2] : "";
 	snprintf(tty, sizeof(tty), "%s", argc > 3 ? argv[3] : "");
 

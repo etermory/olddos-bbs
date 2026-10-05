@@ -627,8 +627,39 @@ void show_info(const region &r)
     press_enter();
 }
 
+// 지금 날씨 한 줄 "맑음 18℃" (서울 중구)
+static bool now_line(std::string &line)
+{
+	std::string json;
+	if ( !download_text("http://api.open-meteo.com/v1/forecast?latitude=37.56&longitude=127.00"
+				"&current=temperature_2m,weather_code&timezone=Asia%2FSeoul", json) ) {
+		return false;
+	}
+	// "current_units" 에도 같은 이름이 있으므로 "current":{ 뒤에서 찾는다
+	std::string::size_type p = json.find("\"current\":{");
+	if ( p == std::string::npos ) return false;
+	std::string cur = json.substr(p);
+	std::string::size_type t = cur.find("\"temperature_2m\":");
+	std::string::size_type c = cur.find("\"weather_code\":");
+	if ( t == std::string::npos || c == std::string::npos ) return false;
+	double temp = atof(cur.c_str() + t + 17);	// "temperature_2m": 17 자
+	int code = atoi(cur.c_str() + c + 15);		// "weather_code": 15 자
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%s %d℃", weather_name(code).c_str(), round_int(temp));
+	line = buf;
+	return true;
+}
+
 int main(int argc, char **argv)
 {
+	// bin/weather --now : 서울 지금 날씨 한 줄 (txt 파일의 [weather])
+	if ( argc > 1 && !strcmp(argv[1], "--now") ) {
+		std::string line;
+		if ( !now_line(line) ) return 1;
+		printf("%s\n", line.c_str());
+		return 0;
+	}
+
 	if ( argc > 1 ) {
 		snprintf(host_name, sizeof(host_name), "%s", argv[1]);
 	}
