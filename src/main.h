@@ -196,6 +196,10 @@ void telegram_command(const std::string &cmd);
 // 한줄 낙서장 (graffiti.cpp)
 void graffiti_login_info(void);
 void show_graffiti(const char *user_id, bool is_admin);
+
+// 오늘의 통계 (stats.cpp)
+void stats_record_online(void);
+void show_stats(void);
 void print_news_title(const char *title);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);

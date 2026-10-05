@@ -138,6 +138,9 @@ int main(int argc, char **argv)
 		fclose(fp);
 	}
 
+	// 오늘 최고 동시 접속 기록
+	stats_record_online();
+
 	// ------------------------------------
 	bool exist;
 	std::map<std::string, std::string> user = database::user_info(login_user_id, &exist);
@@ -1648,6 +1651,10 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 		// 전보
 		} else if ( !strcasecmp(args[0].c_str(), "to") ) {
 			telegram_command(cmd);
+
+		// 오늘의 통계
+		} else if ( !strcasecmp(args[0].c_str(), "st") ) {
+			show_stats();
 
 		// 한줄 낙서장
 		} else if ( !strcasecmp(args[0].c_str(), "ns") ) {

@@ -24,8 +24,8 @@ all: ctime main guest pass sysop weather exchange lunar hero rain today fortune 
 
 main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 	base64.o pugixml.o upload.o download.o write.o edit.o hangul.o \
-	settings.o menu.o chatt.o news.o profile.o re.o attendance.o telegram.o graffiti.o
-	$(CXX) -o ../bin/$@ main.o utility.o textutil.o database.o settings.o menu.o attendance.o telegram.o graffiti.o \
+	settings.o menu.o chatt.o news.o profile.o re.o attendance.o telegram.o graffiti.o stats.o
+	$(CXX) -o ../bin/$@ main.o utility.o textutil.o database.o settings.o menu.o attendance.o telegram.o graffiti.o stats.o \
 			lineeditor.o fileeditor.o upload.o download.o \
 			write.o edit.o base64.o pugixml.o hangul.o chatt.o \
 			news.o profile.o re.o \
