@@ -1,0 +1,34 @@
+#!/bin/bash
+# 무한대전 실행 (엔진이 죽으면 10 초 뒤 다시 띄운다)
+#   cd <설치 디렉터리>/bin && nohup ./startmud > /dev/null 2>&1 &
+# 멈추려면: ./killmud   다시 띄우려면: ./killmud -r
+# 포트: bin/port (기본 4100). 127.0.0.1 에서만 접속을 받는다 (BBS 의 mudlink 로 연결).
+cd "$(dirname "$0")"
+BIN=$(pwd)
+LOG=../log
+mkdir -p "$LOG"
+PORT=$(cat "$BIN/port" 2>/dev/null || echo 4100)
+
+# 이미 떠 있으면 또 띄우지 않는다 (둘이 뜨면 나중 것은 포트가 겹쳐 계속 죽는다)
+running() {	# pid 파일의 프로세스가 살아 있고 명령줄에 $2 가 있으면 참
+	local pid
+	pid=$(cat "$1" 2>/dev/null)
+	[ -n "$pid" ] && [ "$pid" != $$ ] && kill -0 "$pid" 2>/dev/null &&
+		tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q "$2"
+}
+if running "$BIN/startmud.pid" startmud || running "$BIN/frp.pid" "frp "; then
+	echo "$(date) 이미 실행 중이라 시작하지 않음 (먼저 ./killmud)" | tee -a "$LOG/startmud.log" >&2
+	exit 1
+fi
+
+echo $$ > "$BIN/startmud.pid"
+
+while :; do
+	echo "$(date) 무한대전 시작 (포트 $PORT)" >> "$LOG/startmud.log"
+	./frp "$PORT" > "$LOG/frp.out" 2>&1 &
+	echo $! > "$BIN/frp.pid"
+	wait $!
+	CODE=$?
+	echo "$(date) 무한대전 종료 (코드 $CODE)" >> "$LOG/startmud.log"
+	sleep 10
+done

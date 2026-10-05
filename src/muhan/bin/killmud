@@ -1,0 +1,71 @@
+#!/bin/bash
+# 무한대전 끄기
+#   ./killmud      startmud 와 엔진을 모두 끈다
+#   ./killmud -r   엔진만 끈다 -> startmud 가 10 초 뒤 다시 띄운다 (재시작)
+#
+# 엔진은 kill(SIGTERM) 을 받으면 접속자를 모두 저장하고 끝난다.
+# 30 초 안에 끝나지 않을 때만 kill -9 (이때는 저장되지 않는다).
+cd "$(dirname "$0")"
+BIN=$(pwd)
+
+say() {
+	case "${LC_ALL:-${LANG:-}}" in
+		*[Ee][Uu][Cc]*|*949*) printf '%s\n' "$*" | iconv -f UTF-8 -t CP949 2>/dev/null || printf '%s\n' "$*" ;;
+		*) printf '%s\n' "$*" ;;
+	esac
+}
+
+alive() {
+	local pidfile=$1 name=$2 pid
+	[ -f "$pidfile" ] || return 1
+	pid=$(cat "$pidfile" 2>/dev/null)
+	[ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 1
+	tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q "$name" || return 1
+	echo "$pid"
+}
+
+wait_exit() {
+	local pid=$1 i=0
+	while [ $i -lt $2 ]; do
+		kill -0 "$pid" 2>/dev/null || return 0
+		sleep 1
+		i=$((i + 1))
+	done
+	return 1
+}
+
+LOOP=$(alive "$BIN/startmud.pid" startmud)
+DRV=$(alive "$BIN/frp.pid" "frp ")
+
+if [ "$1" = "-r" ]; then
+	if [ -z "$LOOP" ]; then
+		say "startmud 가 실행 중이 아닙니다. 다시 띄우지 못하므로 그만둡니다."
+		say "실행: cd $BIN && nohup ./startmud > /dev/null 2>&1 &"
+		exit 1
+	fi
+	if [ -z "$DRV" ]; then
+		say "엔진이 실행 중이 아닙니다. startmud 가 곧 띄웁니다."
+		exit 0
+	fi
+	kill "$DRV"
+	wait_exit "$DRV" 30 || kill -9 "$DRV"
+	say "엔진을 껐습니다. startmud 가 10 초 뒤 다시 띄웁니다."
+	exit 0
+fi
+
+# 먼저 startmud 를 꺼야 엔진을 다시 띄우지 않는다
+if [ -n "$LOOP" ]; then
+	kill "$LOOP"
+	wait_exit "$LOOP" 5 || kill -9 "$LOOP"
+fi
+if [ -n "$DRV" ]; then
+	kill "$DRV"
+	wait_exit "$DRV" 30 || kill -9 "$DRV"
+fi
+rm -f "$BIN/startmud.pid" "$BIN/frp.pid"
+
+if [ -z "$LOOP" ] && [ -z "$DRV" ]; then
+	say "무한대전이 실행 중이 아닙니다."
+else
+	say "무한대전을 껐습니다."
+fi

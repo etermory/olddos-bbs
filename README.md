@@ -82,6 +82,7 @@
 **머드 게임** (`go game`)
 - 용사의 전설: 옛 BBS 도어 게임 방식의 1 인용 텍스트 RPG
 - 쥬라기공원 2: PC통신 시절 머드의 HanLP 복원판 (아래 머드 게임 항목 참고)
+- 무한대전: Mordor 기반의 1990 년대 한글 머드, 64 비트로 이식 (아래 머드 게임 항목 참고)
 
 **운영자**
 - 운영자 메뉴 (`SYSOP`): 회원 검색, 등급/비밀번호 변경, 회원 삭제, 게시물 삭제
@@ -149,6 +150,7 @@ olddos 계정에서 실행합니다.
 |---|---|
 | BBS 소스, 화면 파일(`txt/`), 메뉴(`*.mnu`) | `/home/olddos/olddos-bbs/update.sh` |
 | 쥬라기공원 머드 (엔진, 게임 내용 `libpatch`) | `/home/olddos/olddos-bbs/src/jurassic/update.sh` |
+| 무한대전 | `/home/olddos/olddos-bbs/src/muhan/update.sh` |
 | 둘 다 | BBS 먼저, 그다음 머드 (머드 쪽은 `NOPULL=1`) |
 
 ### BBS — `update.sh`
@@ -210,9 +212,11 @@ olddos 계정에서 실행합니다.
 
 드라이버는 kill(SIGTERM) 을 받으면 접속자 자료를 저장하고 끝납니다. 게임 안에서는 운영자(하늘소)로 `0 다운` 해도 됩니다.
 
+무한대전도 같은 방식입니다: `src/muhan/update.sh`, `/home/olddos/muhan/bin/killmud` (`-r` 다시 띄우기). 처음 실행하면 데이터를 풀어 새로 설치하고, 그다음부터는 실행 파일만 바꿉니다 (플레이어와 게임 안에서 고친 방은 그대로).
+
 머드 게임
 -
-대문 메뉴의 **7. 머드 게임** (`go game`) 에서 두 가지 텍스트 게임을 즐길 수 있습니다.
+대문 메뉴의 **7. 머드 게임** (`go game`) 에서 세 가지 텍스트 게임을 즐길 수 있습니다.
 
 ### 1. 용사의 전설 — `go hero`
 
@@ -248,3 +252,18 @@ olddos 계정에서 실행합니다.
 출처와 라이선스:
 - MudOS 의 저작권은 Lars Pensjö, Erik Kay, Adam Beeman, Stephan Iannce, John Garnett, Tim Hollebeek 에게 있으며 **금전적 이익을 위해 사용할 수 없습니다** (`src/jurassic/driver/Copyright`). 비상업 용도로만 운영하세요.
 - 쥬라기공원 2 복원판은 MaGuN (HanLP) 이 만들었고, 크루젼(이상신)님과 꼬마기사(김진태)님이 나우누리 머드동호회에 공개한 구공원 라이브러리의 지역 데이터를 사용했습니다. 원작 쥬라기공원은 송재경, 김성배 님이 만들었습니다. 원작의 권리 관계는 확인되지 않았습니다.
+
+### 3. 무한대전 — `go muhan`
+
+무한대전은 Mordor 2.5 (Brett J. Vickers, 1992) 를 금오공대 네트워크 동아리가 한글화하고 고친 1990 년대 한글 머드입니다. 명령어도 한글입니다 (`봐`, `북`, `정보`, `끝` ...). 원본은 [nicecapj/mudmuhan](https://github.com/nicecapj/mudmuhan) 입니다.
+
+- `src/muhan/game/src` — 엔진 소스 (EUC-KR). 원본은 리눅스 커널 2.0 (32 비트) 용입니다
+- `src/muhan/muhan_data.tgz` — 방 3,218 개와 몬스터, 물건, 도움말, 게시판 (원본 그대로)
+- 64 비트로 옮기며 고친 것
+  - 데이터 파일에 C 구조체를 그대로 저장하는 방식이라 64 비트에서는 크기가 달라집니다. `disk32.c` 가 읽고 쓸 때 32 비트 배치로 바꿔 원본 데이터를 그대로 씁니다. 변환 코드는 `tools/gen_disk32.py` 가 `mstruct.h` 에서 만들고, 103 개 필드의 위치가 32 비트와 같은지 `tools/layout_check.c` 로 검사했습니다
+  - 가변 인자를 `int` 매개변수로 흉내 낸 `print`/`logf` 등에서 포인터가 잘리지 않게, 선언 없이 쓴 표준 함수(`malloc` 등) 정리
+  - 같은 플레이를 32 비트 빌드와 64 비트 빌드에 돌려 출력이 같은지 확인했습니다
+- `127.0.0.1:4100` 에서만 접속을 받고 BBS 는 `bin/mudlink` 로 연결합니다. 운영자는 `하늘소` 입니다
+
+출처와 라이선스: Mordor 는 Brett J. Vickers 의 저작물로 비상업 용도로만 쓸 수 있습니다. 무한대전 한글판은 금오공대 네트워크 동아리가 만들었고, 배포 권리는 확인되지 않았습니다.
+

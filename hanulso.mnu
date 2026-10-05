@@ -91,6 +91,11 @@
 			<item type="program" prog="mudlink" args="4444" go="jurassic" door="2" access_level="1">
 				<name>쥬라기공원 2 (jurassic)</name>
 			</item>
+
+			<!-- 무한대전 (Mordor 기반, 금오공대 한글판). src/muhan 에서 따로 띄움. args 는 포트 -->
+			<item type="program" prog="mudlink" args="4100" go="muhan" door="3" access_level="1">
+				<name>무한대전 (muhan)</name>
+			</item>
 		</item>
 
 		

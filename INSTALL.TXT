@@ -299,3 +299,54 @@ src/jurassic 구성
   deploy.sh 가 설치할 때 원본 위에 덮어쓴다. (파일 내용은 EUC-KR 로)
   운영자 설정(adm/wizard/하늘소, adm/config/groups)도 이 방식으로 들어 있다.
   고친 뒤 8) 의 deploy.sh 와 '0 다운' (빌드는 엔진을 고쳤을 때만 필요)
+
+머드 게임 연결 (무한대전)
+==============
+대문 7 번 [머드 게임] -> 3 번은 같은 서버에서 따로 띄운 무한대전에 연결한다.
+BBS 는 bin/mudlink 로 127.0.0.1:4100 에만 접속시킨다. (포트는 hanulso.mnu 의 args 와
+설치 디렉터리의 bin/port 를 같게)
+무한대전은 Mordor 2.5 (Brett J. Vickers) 를 금오공대 네트워크 동아리가 한글화한 머드다.
+원본: https://github.com/nicecapj/mudmuhan  비상업 용도로만 운영한다.
+
+src/muhan 구성
+  game/src       엔진 소스 (원본을 64 비트에서 돌도록 고친 것, EUC-KR)
+  muhan_data.tgz 방/몬스터/물건/도움말/게시판 데이터 (원본 그대로, 파일 이름이 EUC-KR 이라 묶음)
+  tools/         gen_disk32.py (disk32.c/h 를 만듦), layout_check.c (구조체 배치 검사)
+  build.sh, deploy.sh, update.sh, bin/startmud, bin/killmud
+
+64 비트로 옮기며 고친 것 (원본은 리눅스 커널 2.0, 32 비트)
+  - 데이터 파일에 C 구조체를 그대로 저장한다 (room 480, object 352, creature 1184 바이트).
+    disk32.c 가 읽고 쓸 때 32 비트 배치로 바꾼다. 원본 데이터 파일을 그대로 쓴다.
+    32 비트 라이브러리(glibc-devel.i686)는 필요 없다.
+  - print/logf 등 가변 인자를 int 매개변수로 흉내 낸 함수 -> long (포인터가 잘리지 않게)
+  - 표준 헤더를 넣어 malloc 등이 int 로 잘리지 않게, logf/send 이름 충돌 정리
+  - 127.0.0.1 에서만 접속을 받음, SIGTERM 에 접속자 저장 후 종료, SO_REUSEADDR
+  - 운영자 이름: 하늘소 (원래의 테스토스/꽃/뽀뽀 는 지움. 비워 두지 않으면 아무나 그 이름으로
+    가입해 운영자가 된다)
+
+1) 빌드 도구
+% yum install gcc make
+
+2) 설치 / 업데이트 (olddos 계정)
+% /home/olddos/olddos-bbs/src/muhan/update.sh
+    받기 -> 빌드 -> 끄기 -> 설치 -> 시작 -> 127.0.0.1:4100 확인
+    처음 실행하면 /home/olddos/muhan 에 데이터를 풀고 플레이어 폴더(player/가 ... 하, temp)를 만든다.
+    그다음부터는 실행 파일만 바꾼다. 방/몬스터/물건(운영자가 게임 안에서 고칠 수 있음),
+    플레이어, 게시판, 편지, 로그는 그대로 남는다.
+    NOPULL=1 (git pull 건너뜀)
+    세계 데이터를 원본으로 되돌리려면: RESET_WORLD=1 (rooms, objmon, help 만 다시 풂)
+  데이터 경로가 실행 파일에 들어가므로, 설치 디렉터리를 바꾸려면
+% /home/olddos/olddos-bbs/src/muhan/update.sh /다른/설치/디렉터리
+
+3) 끄기 / 켜기
+% /home/olddos/muhan/bin/killmud          끄기 (접속자 저장 후)
+% /home/olddos/muhan/bin/killmud -r       다시 띄우기
+% cd /home/olddos/muhan/bin && nohup ./startmud > /dev/null 2>&1 &     꺼 둔 것 켜기
+  부팅 때 자동 실행: /etc/rc.local 에
+  su - olddos -c 'cd /home/olddos/muhan/bin && nohup ./startmud > /dev/null 2>&1 &'
+  로그: /home/olddos/muhan/log/ (log, startmud.log, frp.out)
+
+4) 운영자
+  게임에서 '하늘소' 로 캐릭터를 만들면 접속할 때 운영자(DM) 가 된다.
+  운영자 이름은 game/src/mtype.h 의 DMNAME.
+  운영 방법은 src/muhan/game/DM.DOC 와 game/docs 를 참고 (EUC-KR).
