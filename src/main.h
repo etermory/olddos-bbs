@@ -287,6 +287,8 @@ std::vector<std::string> find_files_time_sorted(char *dir);
 bool mkdir2 (char *dir);
 std::string trim(std::string s);
 void bbcode_printf(const char *fmt,...);
+extern std::string (*bbcode_tag_hook)(const std::string &name, bool *found);
+std::string bbtag_value(const std::string &name, bool *found);
 std::string utf8_substr2(const std::string &str,int start, int length);
 std::string string_truncate_center (std::string str, int max, std::string sep );
 std::string string_truncate (std::string str, int length, std::string suffix );

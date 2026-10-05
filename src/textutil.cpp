@@ -1,6 +1,6 @@
 #include "main.h"
 
-// BBì½”ë“œë¥¼ êµì²´í•˜ëŠ” printf í•¨ìˆ˜
+// BBÄÚµå¸¦ ±³Ã¼ÇÏ´Â printf ÇÔ¼ö
 void bbcode_printf(const char *fmt,...)
 {
 	char buff[9072];
@@ -13,7 +13,7 @@ void bbcode_printf(const char *fmt,...)
 	printf("%s", replace_bbcode(buff).c_str());
 }
 
-// ì²« í™”ë©´ í†µê³„
+// Ã¹ È­¸é Åë°è
 struct bbs_stats {
 	int members;
 	int conns;
@@ -21,7 +21,7 @@ struct bbs_stats {
 	int today;
 };
 
-// í†µê³„ë¥¼ ìƒˆë¡œ ê³„ì‚°
+// Åë°è¸¦ »õ·Î °è»ê
 static void compute_bbs_stats(bbs_stats &s)
 {
 	char buf[9072];
@@ -32,15 +32,15 @@ static void compute_bbs_stats(bbs_stats &s)
 	s.articles = 0;
 	s.today = 0;
 
-	// ì „ì²´ íšŒì› ìˆ˜
+	// ÀüÃ¼ È¸¿ø ¼ö
 	std::string count = database::fetch((char*)"SELECT COUNT(*) FROM member;", &ok);
 	if ( ok ) s.members = atoi(count.c_str());
 
-	// ì „ì²´ ì ‘ì†ì ìˆ˜: ë¡œê·¸ì¸í•˜ë©´ tmp/<tty>.tty ì— ì•„ì´ë””ë¥¼ ê¸°ë¡í•˜ë¯€ë¡œ ë‚´ìš©ì´ ìˆëŠ” íŒŒì¼ ìˆ˜
-	// (ì ‘ì†ìë§ˆë‹¤ DB ë¥¼ ì¡°íšŒí•˜ë©´ ì ‘ì†ìê°€ ë§ì„ ë•Œ ë¶€ë‹´ì´ ì»¤ì„œ íŒŒì¼ë§Œ í™•ì¸)
+	// ÀüÃ¼ Á¢¼ÓÀÚ ¼ö: ·Î±×ÀÎÇÏ¸é tmp/<tty>.tty ¿¡ ¾ÆÀÌµğ¸¦ ±â·ÏÇÏ¹Ç·Î ³»¿ëÀÌ ÀÖ´Â ÆÄÀÏ ¼ö
+	// (Á¢¼ÓÀÚ¸¶´Ù DB ¸¦ Á¶È¸ÇÏ¸é Á¢¼ÓÀÚ°¡ ¸¹À» ¶§ ºÎ´ãÀÌ Ä¿¼­ ÆÄÀÏ¸¸ È®ÀÎ)
 	sprintf(buf, "%s/tmp/*.tty", getenv("HANULSO"));
 	std::vector<std::string> files = find_files(buf);
-	// (ê°•ì œ ì¢…ë£Œë¡œ ë‚¨ì€ íŒŒì¼ì€ read_tty_file ì´ pid ë¥¼ í™•ì¸í•´ ì§€ìš´ë‹¤)
+	// (°­Á¦ Á¾·á·Î ³²Àº ÆÄÀÏÀº read_tty_file ÀÌ pid ¸¦ È®ÀÎÇØ Áö¿î´Ù)
 	for(unsigned int i=0; i<files.size(); i++) {
 		std::string user_id;
 		if ( read_tty_file(files[i], user_id) ) {
@@ -48,7 +48,7 @@ static void compute_bbs_stats(bbs_stats &s)
 		}
 	}
 
-	// ì „ì²´ ê²Œì‹œê¸€ ìˆ˜, ì˜¤ëŠ˜ì˜ ê²Œì‹œê¸€ ìˆ˜
+	// ÀüÃ¼ °Ô½Ã±Û ¼ö, ¿À´ÃÀÇ °Ô½Ã±Û ¼ö
 	for(unsigned int i=0; i<table_names.size(); i++) {
 		sprintf(buf, "SELECT COUNT(*), SUM(DATE(DATE_TIME)=CURDATE()) FROM %s;", table_names[i].c_str());
 		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows(buf);
@@ -62,7 +62,7 @@ static void compute_bbs_stats(bbs_stats &s)
 	}
 }
 
-// í†µê³„ëŠ” 60ì´ˆ ë™ì•ˆ íŒŒì¼ì— ìºì‹œí•´ì„œ ì—¬ëŸ¬ ì ‘ì†ìê°€ í•¨ê»˜ ì“´ë‹¤
+// Åë°è´Â 60ÃÊ µ¿¾È ÆÄÀÏ¿¡ Ä³½ÃÇØ¼­ ¿©·¯ Á¢¼ÓÀÚ°¡ ÇÔ²² ¾´´Ù
 static void get_bbs_stats(bbs_stats &s)
 {
 	char path[1024];
@@ -78,7 +78,7 @@ static void get_bbs_stats(bbs_stats &s)
 
 	compute_bbs_stats(s);
 
-	// ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤ê°€ ì½ëŠ” ì¤‘ì— ë°˜ì¯¤ ì“´ íŒŒì¼ì„ ë³´ì§€ ì•Šë„ë¡ ì„ì‹œ íŒŒì¼ì— ì“°ê³  ì´ë¦„ì„ ë°”ê¾¼ë‹¤
+	// ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÀĞ´Â Áß¿¡ ¹İÂë ¾´ ÆÄÀÏÀ» º¸Áö ¾Êµµ·Ï ÀÓ½Ã ÆÄÀÏ¿¡ ¾²°í ÀÌ¸§À» ¹Ù²Û´Ù
 	char tmp[1100];
 	snprintf(tmp, sizeof(tmp), "%s.%d", path, (int)getpid());
 	FILE *fp = fopen(tmp, "w");
@@ -96,25 +96,113 @@ static std::string int_string(int v)
 	return tmp.str();
 }
 
-std::string replace_bbcode(std::string text)
+// textutil ÀÌ ¸ğ¸£´Â [ÅÂ±×] ¸¦ ¹°¾îº¼ °÷ (BBS(main) Àº bbtags.cpp ÀÇ bbtag_value)
+std::string (*bbcode_tag_hook)(const std::string &name, bool *found) = NULL;
+
+// ¾î´À ÇÁ·Î±×·¥¿¡¼­³ª ¾Æ´Â ÅÂ±×. ¿¹Àü ÀÌ¸§(nummembers)°ú _ ÀÌ¸§(num_members) µÑ ´Ù
+static bool basic_tag(const std::string &name, std::string &out, bbs_stats &s, bool &stats_loaded)
 {
-	// í˜¸ìŠ¤íŠ¸ ì´ë¦„
-	if ( text.find("[hostname]", 0) != std::string::npos ) {
-		text = replace_all(text, "[hostname]", host_name);
+	if ( name == "hostname" || name == "host_name" ) {
+		out = host_name;
+		return true;
 	}
 
-	// ì „ì²´ íšŒì› ìˆ˜, ì ‘ì†ì ìˆ˜, ê²Œì‹œê¸€ ìˆ˜, ì˜¤ëŠ˜ì˜ ê²Œì‹œê¸€ ìˆ˜
-	if ( text.find("[nummembers]", 0) != std::string::npos ||
-			text.find("[numconns]", 0) != std::string::npos ||
-			text.find("[numarticles]", 0) != std::string::npos ||
-			text.find("[todaynumarticles]", 0) != std::string::npos ) {
-		bbs_stats s;
-		get_bbs_stats(s);
-		text = replace_all(text, "[nummembers]", int_string(s.members));
-		text = replace_all(text, "[numconns]", int_string(s.conns));
-		text = replace_all(text, "[numarticles]", int_string(s.articles));
-		text = replace_all(text, "[todaynumarticles]", int_string(s.today));
+	static const char *stat_names[][2] = {
+		{ "nummembers", "num_members" }, { "numconns", "num_conns" },
+		{ "numarticles", "num_articles" }, { "todaynumarticles", "today_num_articles" } };
+	for ( int i = 0; i < 4; i++ ) {
+		if ( name == stat_names[i][0] || name == stat_names[i][1] ) {
+			if ( !stats_loaded ) {
+				get_bbs_stats(s);
+				stats_loaded = true;
+			}
+			int v[] = { s.members, s.conns, s.articles, s.today };
+			out = int_string(v[i]);
+			return true;
+		}
 	}
+
+	time_t t = time(NULL);
+	struct tm *tm = localtime(&t);
+	char buf[64];
+	if ( name == "date" ) {
+		strftime(buf, sizeof(buf), "%Y-%m-%d", tm);
+		out = buf;
+		return true;
+	}
+	if ( name == "time" ) {
+		strftime(buf, sizeof(buf), "%H:%M", tm);
+		out = buf;
+		return true;
+	}
+	if ( name == "weekday" ) {
+		static const char *wday[] = { "ÀÏ", "¿ù", "È­", "¼ö", "¸ñ", "±İ", "Åä" };
+		out = wday[tm->tm_wday];
+		return true;
+	}
+	if ( name == "uptime" ) {
+		long sec = atol(read_file("/proc/uptime").c_str());
+		snprintf(buf, sizeof(buf), "%ldÀÏ %ld½Ã°£", sec / 86400, sec % 86400 / 3600);
+		out = buf;
+		return true;
+	}
+	return false;
+}
+
+// [ÅÂ±×:N] Ä­ ¸ÂÃã: N ÀÌ ¾ç¼ö¸é ¿À¸¥ÂÊ, À½¼ö¸é ¿ŞÂÊÀ¸·Î N Ä­. ±æ¸é ÀÚ¸¥´Ù
+static std::string fit_width(const std::string &v, int width)
+{
+	if ( width == 0 ) return v;
+	int w = width < 0 ? -width : width;
+	std::string s = (int)v.size() > w ? string_truncate(v, w, "") : v;
+	std::string pad((int)s.size() < w ? w - s.size() : 0, ' ');
+	return width > 0 ? pad + s : s + pad;
+}
+
+// ±Û ¼ÓÀÇ [ÅÂ±×] ¸¦ °ªÀ¸·Î ¹Ù²Û´Ù. ÅÂ±× ÀÌ¸§Àº ¿µ¹® ¼Ò¹®ÀÚ/¼ıÀÚ/_ ,
+// ¸ğ¸£´Â ÅÂ±×³ª [Enter] Ã³·³ ÅÂ±×°¡ ¾Æ´Ñ °ÍÀº ±×´ë·Î µĞ´Ù.
+std::string replace_bbcode(std::string text)
+{
+	std::string out;
+	bbs_stats s;
+	bool stats_loaded = false;
+	std::string::size_type pos = 0;
+	while ( 1 ) {
+		std::string::size_type b = text.find('[', pos);
+		if ( b == std::string::npos ) {
+			out.append(text, pos, std::string::npos);
+			break;
+		}
+		std::string::size_type e = text.find(']', b + 1);
+		std::string name, value;
+		int width = 0;
+		bool found = false;
+		if ( e != std::string::npos && e - b <= 40 ) {
+			std::string inner = text.substr(b + 1, e - b - 1);
+			std::string::size_type colon = inner.find(':');
+			name = inner.substr(0, colon);
+			if ( colon != std::string::npos ) width = atoi(inner.c_str() + colon + 1);
+			bool valid = !name.empty();
+			for ( unsigned int i = 0; i < name.size(); i++ ) {
+				char c = name[i];
+				if ( !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') ) valid = false;
+			}
+			if ( valid ) {
+				found = basic_tag(name, value, s, stats_loaded);
+				if ( !found && bbcode_tag_hook != NULL ) value = bbcode_tag_hook(name, &found);
+			}
+		}
+		if ( found ) {
+			out.append(text, pos, b - pos);
+			out += fit_width(value, width);
+			pos = e + 1;
+		} else {
+			// ÅÂ±×°¡ ¾Æ´Ï¸é '[' ¸¸ ³Ñ±â°í °è¼Ó (ESC[ ´ÙÀ½¿¡ ¿À´Â ÅÂ±×µµ Ã£µµ·Ï)
+			out.append(text, pos, b + 1 - pos);
+			pos = b + 1;
+		}
+	}
+	text = out;
 
 /*
 	char *tmp = "[numarticles:bbb:10 ]";
@@ -167,7 +255,7 @@ std::string replace_bbcode(std::string text)
 		"[=7G", "[=15G"
 	};
 	
-	// ìƒ‰ ë³€ê²½
+	// »ö º¯°æ
 	for(unsigned int i=0; i<32; i++) {
 		char bbcode[1024];
 		sprintf(bbcode, "[%s]", COLORNAMES[i]);

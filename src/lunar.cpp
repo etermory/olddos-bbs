@@ -701,6 +701,30 @@ void show_calendar(void)
 
 int main(int argc, char **argv)
 {
+	// bin/lunar --today [YYYY-MM-DD] : 오늘(또는 그 날)의 음력 날짜와 공휴일/명절 이름
+	//   (txt 파일의 [lunar_date], [holiday])  "음력 8월 25일<TAB>추석"
+	if ( argc > 1 && !strcmp(argv[1], "--today") ) {
+		init_lunar();
+		time_t t = time(NULL);
+		struct tm *tm = localtime(&t);
+		int y = tm->tm_year + 1900, m = tm->tm_mon + 1, d = tm->tm_mday;
+		if ( argc > 2 ) sscanf(argv[2], "%d-%d-%d", &y, &m, &d);
+		if ( !valid_solar(y, m, d) ) return 1;
+		int ly, lm, ld;
+		bool leap;
+		solar_to_lunar(y, m, d, &ly, &lm, &ld, &leap);
+		std::string name;
+		std::vector<holiday> list = holidays_of_year(y);
+		for ( unsigned int i = 0; i < list.size(); i++ ) {
+			if ( list[i].y == y && list[i].m == m && list[i].d == d ) {
+				name = list[i].name;
+				break;
+			}
+		}
+		printf("음력 %s%d월 %d일\t%s\n", leap ? "윤" : "", lm, ld, name.c_str());
+		return 0;
+	}
+
 	if ( argc > 1 ) {
 		snprintf(host_name, sizeof(host_name), "%s", argv[1]);
 	}

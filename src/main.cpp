@@ -32,6 +32,9 @@ int main(int argc, char **argv)
 	// --------------------------------------
 	read_settings("hanulso.cfg");
 	// --------------------------------------
+	// txt 파일의 [태그] 중 BBS 에서만 아는 값 (bbtags.cpp)
+	bbcode_tag_hook = bbtag_value;
+
 	// DB open ...
 	if ( database::open() == false ) {
 		// ctime 이 만든 접속자 파일
