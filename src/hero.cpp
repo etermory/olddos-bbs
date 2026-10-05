@@ -591,6 +591,17 @@ std::string money(long v)
 	return r;
 }
 
+// 1 만이 넘고 만 단위로 떨어지면 "1500만" 처럼 줄인다 (좁은 표에서)
+std::string money_short(long v)
+{
+	if ( v >= 10000 && v % 10000 == 0 ) {
+		char buf[32];
+		snprintf(buf, sizeof(buf), "%ld만", v / 10000);
+		return buf;
+	}
+	return money(v);
+}
+
 std::string today_string(void)
 {
 	char buf[32];
@@ -837,7 +848,7 @@ void draw_fight(foe &f, const char *title, std::vector<std::string> &log)
 	int c = 44;
 	at(5, c);  printf("%s◀ %s" C_WHITE, f.color, f.name.c_str());
 	at(6, c + 2); hp_bar(f.hp, f.max_hp);
-	at(9, c);  printf(C_GREEN "▶ " C_WHITE "%s " C_CYAN "Lv.%d" C_WHITE, h.name.c_str(), h.level);
+	at(9, c);  printf(C_GREEN "▶ " C_WHITE "%s " C_CYAN "Lv.%d" C_WHITE, string_truncate(h.name, 16, "").c_str(), h.level);
 	at(10, c + 2); hp_bar(h.hp, h.max_hp);
 	at(11, c + 2); printf(C_GRAY "공격 %d  방어 %d" C_WHITE, attack_power(), defense_power());
 	at(12, c + 2); printf(C_GRAY "%s / %s" C_WHITE, weapons[h.weapon].name, armors[h.armor].name);
@@ -1408,9 +1419,11 @@ void go_store(void)
 				if ( a.atk ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "공%d ", a.atk);
 				if ( a.def ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "방%d ", a.def);
 				if ( a.hp ) snprintf(eff + strlen(eff), sizeof(eff) - strlen(eff), "체%d ", a.hp);
-				printf("  %s%2d. %-12s %-10s%10s냥" C_WHITE " ",
+				if ( eff[0] ) eff[strlen(eff) - 1] = 0;
+				printf("%s%s%2d. %-12s %-14s%6s냥" C_WHITE,
+						c > 0 ? " " : "",
 						i == h.acc ? C_CYAN : (a.price <= h.gold ? C_WHITE : C_GRAY),
-						i, a.name, eff, money(a.price).c_str());
+						i, a.name, eff, money_short(a.price).c_str());
 			}
 			printf("\r\n");
 		}
@@ -1542,9 +1555,9 @@ void show_news(void)
 
 void show_status(void)
 {
-	printf("  " C_CYAN "%s" C_WHITE "  Lv." C_YELLOW "%d" C_WHITE "   체력 ", h.name.c_str(), h.level);
+	printf("  " C_CYAN "%s" C_WHITE "  Lv." C_YELLOW "%d" C_WHITE "  체력 ", string_truncate(h.name, 12, "").c_str(), h.level);
 	hp_bar(h.hp, h.max_hp);
-	printf("   공격 " C_RED "%d" C_WHITE "  방어 " C_CYAN "%d" C_WHITE "\r\n", attack_power(), defense_power());
+	printf("  공격 " C_RED "%d" C_WHITE "  방어 " C_CYAN "%d" C_WHITE "\r\n", attack_power(), defense_power());
 	printf("  경험치 %s", money(h.exp).c_str());
 	if ( h.level < MAX_LEVEL ) printf("/%s", money(exp_need[h.level]).c_str());
 	printf("   소지금 " C_YELLOW "%s냥" C_WHITE "   남은 사냥 " C_GREEN "%d" C_WHITE "   영웅 " C_MAGENTA "%d" C_WHITE "번\r\n",
