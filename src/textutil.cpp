@@ -293,13 +293,22 @@ void print_file(const char *filename)
 
     sprintf(buf,"%s/%s", getenv("HANULSO"), filename);
 
-	// 24 줄 화면이면, 24 줄에 맞춰 따로 만든 파일(이름 끝에 24: top.txt -> top24.txt)이 있으면 그것을
-	if ( screen_rows < 25 ) {
-		std::string alt = buf;
-		std::string::size_type dot = alt.rfind('.');
-		if ( dot != std::string::npos && alt.find('/', dot) == std::string::npos ) {
-			alt = alt.substr(0, dot) + "24" + alt.substr(dot);
-			if ( access(alt.c_str(), R_OK) == 0 ) snprintf(buf, sizeof(buf), "%s", alt.c_str());
+	// 화면 줄 수에 맞춰 따로 만든 파일. 이름 끝 숫자가 그 파일이 쓰는 화면 줄 수다.
+	//   top.txt (25 줄), top24.txt (24 줄), top28.txt (28 줄 이상) ...
+	// 화면에 들어가는 것 중 가장 큰 것을 쓴다. (24 줄 화면이면 top24.txt, 29 줄이면 top28.txt)
+	std::string path = buf;
+	std::string::size_type dot = path.rfind('.');
+	if ( dot != std::string::npos && path.find('/', dot) == std::string::npos ) {
+		std::string stem = path.substr(0, dot), ext = path.substr(dot);
+		int top = screen_rows > 99 ? 99 : screen_rows;
+		for ( int n = top; n >= 24; n-- ) {
+			if ( n == 25 ) break;		// 25 줄은 이름에 숫자가 없는 기본 파일
+			char alt[9200];
+			snprintf(alt, sizeof(alt), "%s%d%s", stem.c_str(), n, ext.c_str());
+			if ( access(alt, R_OK) == 0 ) {
+				snprintf(buf, sizeof(buf), "%s", alt);
+				break;
+			}
 		}
 	}
 	std::string text = read_file(buf);
