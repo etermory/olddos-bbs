@@ -48,7 +48,9 @@ main() {
 
 	# 5) 시작
 	step "5/6 시작"
-	( cd "$DEST/bin" && nohup ./startmud > /dev/null 2>&1 & )
+	# startmud 는 스스로 자기 디렉터리로 옮긴다. 하위 셸 없이 바로 띄워야
+	# 이 스크립트의 출력(터미널/파이프)을 붙잡고 남는 bash 가 생기지 않는다.
+	nohup "$DEST/bin/startmud" > /dev/null 2>&1 < /dev/null &
 
 	# 6) 확인: 포트가 열릴 때까지 최대 30 초
 	step "6/6 확인: 127.0.0.1:$PORT"
