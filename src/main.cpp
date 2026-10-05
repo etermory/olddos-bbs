@@ -180,12 +180,20 @@ int main(int argc, char **argv)
 		}
 	}
 
-	
+	// 출석 체크, 오늘 생일인 회원
+	attendance_login_info(login_user_id);
+
 	// 바이오리듬 출력
 	printf("\r\n\r\n");
 	print_biorhythm(login_user_id);
 	printf("\r\n [Enter] 를 누르세요.");
 	press_enter();
+
+	// 생일이면 축하 화면
+	if ( is_birthday_today(user["BIRTHDAY"]) ) {
+		std::string nick = display_text(user["NICK_NAME"]);
+		birthday_celebrate(nick.empty() ? login_user_id : nick.c_str());
+	}
 	
 	// -----------------------------
 	pugi::xml_document doc;
@@ -1624,6 +1632,10 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 				printf("\r\n[Enter] 를 누르세요.");
 				press_enter();
 			}
+
+		// 출석부
+		} else if ( !strcasecmp(args[0].c_str(), "at") ) {
+			show_attendance(login_user_id);
 
 		// 쪽지
 		} else if ( !strcasecmp(args[0].c_str(), "memo") ) {

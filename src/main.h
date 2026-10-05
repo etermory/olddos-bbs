@@ -179,6 +179,12 @@ void prompt(char *cmd, bool enable_write, bool enable_del);
 // 성격 검사
 void run_mbti_gs();
 bool run_menu_program(pugi::xml_node node, const std::string &type);
+
+// 출석 체크 / 생일 축하 (attendance.cpp)
+void attendance_login_info(const char *user_id);
+bool is_birthday_today(const std::string &birthday);
+void birthday_celebrate(const char *nick);
+void show_attendance(const char *user_id);
 void print_news_title(const char *title);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);
