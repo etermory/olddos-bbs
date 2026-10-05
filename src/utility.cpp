@@ -568,6 +568,9 @@ void (*line_input_wait_hook)(const char *typed) = NULL;
 static int wait_getchar(const char *str, int typed_len)
 {
 	if ( line_input_wait_hook != NULL ) {
+		// getchar() 는 읽기 전에 화면 출력(stdout)을 내보내지만 select 로 기다릴 때는
+		// 내보내지 않으므로, 먼저 내보내야 프롬프트가 보인다
+		fflush(stdout);
 		while ( !input_pending(1000) ) {
 			std::string typed(str, typed_len > 0 ? typed_len : 0);
 			line_input_wait_hook(typed.c_str());
