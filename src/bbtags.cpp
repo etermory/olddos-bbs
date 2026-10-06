@@ -405,7 +405,7 @@ static long menu_articles(pugi::xml_node node, int *boards)
 	return total;
 }
 
-// 3 칸 안으로: 999 까지는 그대로, 그보다 많으면 1k, 12k ...
+// 3 칸 안으로 (괄호를 붙여 5 칸): 999 까지는 그대로, 그보다 많으면 1k, 12k ...
 static std::string compact_count(long n)
 {
 	char buf[32];
@@ -429,7 +429,7 @@ static std::string articles_of(const std::string &door)
 		} else if ( !strcmp(c.attribute("type").value(), "menu") ) {
 			n = menu_articles(c, &boards);
 		}
-		return boards > 0 ? compact_count(n) : "";
+		return boards > 0 ? "(" + compact_count(n) + ")" : "";		// (57), (1k)
 	}
 	return "";
 }
