@@ -126,6 +126,18 @@
 			<item type="program" prog="omok" go="omok" door="5" access_level="1">
 				<name>오목 (omok)</name>
 			</item>
+
+			<item type="program" prog="baseball" go="baseball" door="6" access_level="1">
+				<name>숫자야구 (baseball)</name>
+			</item>
+
+			<item type="program" prog="mine" go="mine" door="7" access_level="1">
+				<name>지뢰찾기 (mine)</name>
+			</item>
+
+			<item type="program" prog="blackjack" go="blackjack" door="8" access_level="1">
+				<name>블랙잭 (blackjack)</name>
+			</item>
 		</item>
 
 		

@@ -25,7 +25,7 @@
 // ------------------------------------------------------------------
 // 대화방 서버 : bin/chattserver <포트> <최대 인원> <환영 메세지> [permanent]
 //   permanent 이면 '만남의 광장' 처럼 늘 열려 있는 방 (방장 없음, 아무도 없어도 닫히지 않음)
-// 명령: /SAY 귓속말, /LIST 접속자, /ME 행동, /주사위(/DICE), /끝말잇기(/WORD), /퀴즈(/QUIZ), /HELP
+// 명령: /SAY 귓속말, /LIST 접속자, /ME 행동, /주사위(/DICE), /끝말잇기(/WORD), /퀴즈(/QUIZ), /사다리(/LADDER), /HELP
 // 들어온 사람에게 최근 대화 10 줄을 보여 주고, 너무 빨리/같은 말을 되풀이하면 막는다.
 // ------------------------------------------------------------------
 
@@ -683,6 +683,105 @@ static void game_tick(void)
 	}
 }
 
+// ------------------------------------------------------------------
+// 사다리 타기:  /사다리 철수 영희 민수 / 당첨 꽝 꽝
+//   결과를 빼면 하나만 당첨, 나머지는 꽝.  다리마다 10 칸 (7 명이면 70 칸)
+// ------------------------------------------------------------------
+static std::string cut_bytes(const std::string &s, unsigned int max)
+{
+	unsigned int k = 0;
+	while ( k < s.size() ) {
+		unsigned int w = ((unsigned char)s[k] >= 0x80 && k + 1 < s.size()) ? 2 : 1;
+		if ( k + w > max ) break;
+		k += w;
+	}
+	return s.substr(0, k);
+}
+
+static std::string center10(const std::string &s)
+{
+	std::string t = cut_bytes(s, 8);
+	int left = (10 - (int)t.size()) / 2;
+	return std::string(left, ' ') + t + std::string(10 - left - t.size(), ' ');
+}
+
+static void ladder(client &c, const std::string &rest)
+{
+	std::string left = rest, right;
+	std::string::size_type sl = rest.find('/');
+	if ( sl != std::string::npos ) { left = rest.substr(0, sl); right = rest.substr(sl + 1); }
+	std::vector<std::string> names, results, t;
+	t = split_string(left, ' ');
+	for ( unsigned int i = 0; i < t.size(); i++ ) if ( !trim(t[i]).empty() ) names.push_back(trim(t[i]));
+	t = split_string(right, ' ');
+	for ( unsigned int i = 0; i < t.size(); i++ ) if ( !trim(t[i]).empty() ) results.push_back(trim(t[i]));
+
+	int n = names.size();
+	if ( n < 2 || n > 7 ) {
+		tell(c, "[알림] /사다리 이름1 이름2 ... [/ 결과1 결과2 ...]  (2~7명, 결과를 빼면 하나만 당첨)");
+		return;
+	}
+	if ( results.empty() ) {
+		results.assign(n, "꽝");
+		results[rand() % n] = "당첨";
+	}
+	if ( (int)results.size() != n ) {
+		tell(c, "[알림] 결과 수가 이름 수와 같아야 합니다. 예) /사다리 철수 영희 / 커피 과자");
+		return;
+	}
+
+	// 가로대: rung[r][i] 는 r 번째 줄에서 i 와 i+1 다리를 잇는다 (이웃한 가로대는 같은 줄에 두지 않는다)
+	const int ROWS = 8;
+	std::vector<std::vector<bool> > rung(ROWS, std::vector<bool>(n, false));
+	for ( int r = 0; r < ROWS; r++ )
+		for ( int i = 0; i < n - 1; i++ )
+			if ( !(i > 0 && rung[r][i - 1]) && rand() % 100 < 35 ) rung[r][i] = true;
+	// 이웃한 두 다리 사이에는 가로대가 적어도 하나
+	for ( int i = 0; i < n - 1; i++ ) {
+		bool any = false;
+		for ( int r = 0; r < ROWS; r++ ) if ( rung[r][i] ) any = true;
+		for ( int tries = 0; !any && tries < 50; tries++ ) {
+			int r = rand() % ROWS;
+			if ( (i > 0 && rung[r][i - 1]) || (i + 1 < n - 1 && rung[r][i + 1]) ) continue;
+			rung[r][i] = any = true;
+		}
+	}
+
+	std::string art = "\r\n" C_YELLOW "[사다리] " + std::string(c.nickname) + " 님이 사다리를 탔습니다." C_WHITE "\r\n";
+	std::string line = "  " C_CYAN;
+	for ( int i = 0; i < n; i++ ) line += center10(names[i]);
+	art += line + C_WHITE "\r\n";
+	for ( int r = -1; r <= ROWS; r++ ) {
+		line = "  " C_GRAY;
+		for ( int i = 0; i < n; i++ ) {
+			bool lr = r >= 0 && r < ROWS && i > 0 && rung[r][i - 1];
+			bool rr = r >= 0 && r < ROWS && i < n - 1 && rung[r][i];
+			line += lr ? "──" : "    ";
+			line += lr ? "┤" : (rr ? "├" : "│");
+			line += rr ? "──" : "    ";
+		}
+		art += line + C_WHITE "\r\n";
+	}
+	line = "  " C_GREEN;
+	for ( int i = 0; i < n; i++ ) line += center10(results[i]);
+	art += line + C_WHITE "\r\n";
+
+	// 결과
+	std::string res = "  ";
+	for ( int i = 0; i < n; i++ ) {
+		int pos = i;
+		for ( int r = 0; r < ROWS; r++ ) {
+			if ( pos < n - 1 && rung[r][pos] ) pos++;
+			else if ( pos > 0 && rung[r][pos - 1] ) pos--;
+		}
+		std::string one = cut_bytes(names[i], 8) + " → " + cut_bytes(results[pos], 8);
+		if ( res.size() + one.size() + 3 > 72 ) { art += C_YELLOW + res + C_WHITE "\r\n"; res = "  "; }
+		res += one + "   ";
+	}
+	art += C_YELLOW + res + C_WHITE "\r\n";
+	broadcast(art, true);
+}
+
 static void help_func(const client &c)
 {
 	const char *lines[] = {
@@ -693,6 +792,7 @@ static void help_func(const client &c)
 		"/주사위 [N]          주사위 (1~6, 또는 1~N)   /DICE",
 		"/끝말잇기            끝말잇기 시작 (/끝말잇기 그만)   /WORD",
 		"/퀴즈                퀴즈 다섯 문제 (/퀴즈 그만)   /QUIZ",
+		"/사다리 이름들 [/ 결과들]  사다리 타기 (2~7명)   /LADDER",
 		"/INVITE 아이디       대화방 밖의 접속자에게 이 방으로 오라는 전보",
 		"/TIME                말한 시각 표시 켜기/끄기",
 		"/BYE                 나가기",
@@ -800,6 +900,9 @@ bool command(client &c, const std::string &line)
 		int n = atoi(rest.c_str());
 		if ( n < 2 || n > 1000 ) n = 6;
 		notice(std::string("[주사위] ") + c.nickname + " 님이 주사위(1~" + itos(n) + ")를 굴려 " + itos(1 + rand() % n) + " 이(가) 나왔습니다.");
+	} else if ( cmd == "/ladder" || cmd == "/사다리" ) {
+		if ( !flood_check(c, line) ) return true;
+		ladder(c, rest);
 	} else if ( cmd == "/word" || cmd == "/끝말잇기" ) {
 		if ( rest == "그만" || rest == "stop" ) {
 			if ( game == G_WORD ) end_game(std::string(c.nickname) + " 님이 그만두었습니다.");
