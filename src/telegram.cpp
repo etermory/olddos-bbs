@@ -82,13 +82,37 @@ static void print_telegrams(std::vector<std::map<std::string, std::string> > &ro
 	}
 }
 
+// 알림 파일을 읽고 지운다. 전보/쪽지는 DB 에서 따로 보여 주므로 게시판 알림(◆ 꼬리말, ◆ 새 글)만 남긴다
+static std::vector<std::string> take_board_notices(void)
+{
+	char notice[1024];
+	snprintf(notice, sizeof(notice), "%s/tmp/%s.notice", getenv("HANULSO"), tty);
+	std::vector<std::string> out;
+	std::vector<std::string> lines = split_string(read_file(notice), '\n');
+	unlink(notice);
+	for ( unsigned int i = 0; i < lines.size(); i++ ) {
+		std::string l = trim(lines[i]);
+		if ( l.compare(0, 2, "◆") == 0 && l.find("새 쪽지") == std::string::npos ) out.push_back(l);
+	}
+	return out;
+}
+
+static void print_board_notices(const std::vector<std::string> &notes)
+{
+	for ( unsigned int i = 0; i < notes.size(); i++ ) {
+		printf(T_CYAN "%s" T_WHITE "\r\n", string_truncate(notes[i], 78, "").c_str());
+	}
+}
+
 // 프롬프트를 띄우기 전: 다른 화면에 있는 동안 온 전보
 void telegram_show_pending(void)
 {
-	// 대화방 같은 다른 화면용 알림은 프롬프트로 돌아왔으니 지운다 (전보/쪽지는 여기서 다시 보여 줌)
-	char notice[1024];
-	snprintf(notice, sizeof(notice), "%s/tmp/%s.notice", getenv("HANULSO"), tty);
-	unlink(notice);
+	// 대화방 같은 다른 화면용 알림은 프롬프트로 돌아왔으니 지운다 (게시판 알림만 여기서 보여 줌)
+	std::vector<std::string> notes = take_board_notices();
+	if ( notes.size() > 0 ) {
+		printf("\r\n");
+		print_board_notices(notes);
+	}
 
 	telegram_signal = 0;
 	last_poll = time(NULL);
@@ -107,10 +131,12 @@ static void telegram_wait_hook(const char *typed)
 	telegram_signal = 0;
 	last_poll = now;
 
+	std::vector<std::string> notes = take_board_notices();
 	std::vector<std::map<std::string, std::string> > rows = fetch_telegrams();
-	if ( rows.size() == 0 ) return;
+	if ( rows.size() == 0 && notes.size() == 0 ) return;
 
 	printf("\r\033[K");
+	print_board_notices(notes);
 	print_telegrams(rows);
 	printf("%s%s", live_prompt.c_str(), typed);
 	fflush(stdout);

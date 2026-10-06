@@ -118,7 +118,7 @@ bool add_comment(const char *table, int no, std::string text)
 		std::string author = r.substr(0, tab);
 		if ( author != login_user_id ) {
 			notify_online(author, "◆ 꼬리말 ─ " + nick_or_id(login_user_id) + " 님이 '" +
-					string_truncate(display_text(r.substr(tab + 1)), 30, "..") + "' 에 꼬리말을 달았습니다.", false);
+					string_truncate(display_text(r.substr(tab + 1)), 30, "..") + "' 에 꼬리말을 달았습니다.", true);
 		}
 	}
 	return true;
@@ -151,18 +151,32 @@ void delete_comments_of(const char *table, int no)
 }
 
 // ------------------------------------------------------------------
-// 여러 게시판에서 모은 글 목록 (새 글 모아보기, 전체 검색)
+// 여러 게시판에서 모은 글 목록 (NEW, FIND, BEST, MY)
 // ------------------------------------------------------------------
 pugi::xml_node menu_root;
+std::string current_board;		// 지금 들어가 있는 게시판 (SUB 로 구독할 때)
+
+board_scope::board_scope(const char *id) : old(current_board) { current_board = id; }
+board_scope::~board_scope() { current_board = old; }
 
 struct found_article {
 	std::string table, board, user_id, date_time, title;
-	int no, hit;
+	std::string col;		// 날짜 칸 대신 보일 것 (BEST: 추천 / 조회)
+	std::string mark;		// 제목 앞 표시 (MY: 새 꼬리말)
+	int no, hit, recommend;
 	pugi::xml_node node;
 };
 
 static bool newer_first(const found_article &a, const found_article &b)
 {
+	return a.date_time > b.date_time;
+}
+
+// 인기: 추천 하나를 조회 10 으로 친다
+static bool best_first(const found_article &a, const found_article &b)
+{
+	int sa = a.recommend * 10 + a.hit, sb = b.recommend * 10 + b.hit;
+	if ( sa != sb ) return sa > sb;
 	return a.date_time > b.date_time;
 }
 
@@ -179,6 +193,16 @@ static void readable_boards(pugi::xml_node node, std::vector<pugi::xml_node> &ou
 	}
 }
 
+static pugi::xml_node board_node(const std::string &table)
+{
+	std::vector<pugi::xml_node> boards;
+	if ( menu_root ) readable_boards(menu_root, boards);
+	for ( unsigned int i = 0; i < boards.size(); i++ ) {
+		if ( table == boards[i].attribute("id").value() ) return boards[i];
+	}
+	return pugi::xml_node();
+}
+
 static std::string board_name(pugi::xml_node n)
 {
 	std::string s = trim(n.child_value("name"));
@@ -187,39 +211,52 @@ static std::string board_name(pugi::xml_node n)
 	return s.empty() ? n.attribute("id").value() : s;
 }
 
+static found_article to_found(const std::string &table, pugi::xml_node node, std::map<std::string, std::string> &row)
+{
+	found_article a;
+	a.table = table;
+	a.board = board_name(node);
+	a.no = atoi(row["NO"].c_str());
+	a.user_id = row["USER_ID"];
+	a.date_time = row["DATE_TIME"];
+	a.title = row["TITLE"];
+	a.hit = atoi(row["HIT"].c_str());
+	a.recommend = atoi(row["RECOMMEND"].c_str());
+	a.node = node;
+	return a;
+}
+
 // 게시판마다 where 조건으로 찾아 모은다 (게시판마다 limit 개까지)
-static std::vector<found_article> collect(const std::string &where, int limit)
+static std::vector<found_article> collect(const std::string &where, int limit, const std::string &order = "NO DESC")
 {
 	std::vector<found_article> out;
 	std::vector<pugi::xml_node> boards;
 	if ( menu_root ) readable_boards(menu_root, boards);
 	for ( unsigned int i = 0; i < boards.size(); i++ ) {
 		std::string table = boards[i].attribute("id").value();
-		char lim[16];
-		snprintf(lim, sizeof(lim), "%d", limit);
-		std::string q = "SELECT NO, USER_ID, DATE_TIME, TITLE, HIT FROM " + table + " WHERE " + where +
-			" ORDER BY NO DESC LIMIT " + lim;
+		std::string q = "SELECT NO, USER_ID, DATE_TIME, TITLE, HIT, RECOMMEND FROM " + table + " WHERE " + where +
+			" ORDER BY " + order + " LIMIT " + TO_STRING(limit);
 		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
-		for ( unsigned int k = 0; k < r.size(); k++ ) {
-			found_article a;
-			a.table = table;
-			a.board = board_name(boards[i]);
-			a.no = atoi(r[k]["NO"].c_str());
-			a.user_id = r[k]["USER_ID"];
-			a.date_time = r[k]["DATE_TIME"];
-			a.title = r[k]["TITLE"];
-			a.hit = atoi(r[k]["HIT"].c_str());
-			a.node = boards[i];
-			out.push_back(a);
-		}
+		for ( unsigned int k = 0; k < r.size(); k++ ) out.push_back(to_found(table, boards[i], r[k]));
 	}
 	std::sort(out.begin(), out.end(), newer_first);
 	return out;
 }
 
+// 지난번 접속 시각 (접속해 있는 동안은 LASTLOGIN_DATETIME 이 지난번 것). 없으면 ""
+static std::string previous_login(void)
+{
+	bool exist;
+	std::map<std::string, std::string> u = database::user_info(login_user_id, &exist);
+	std::string since = u["LASTLOGIN_DATETIME"];
+	if ( since.size() < 10 || since.compare(0, 4, "0000") == 0 ) return "";
+	return since;
+}
+
 // 그 글 읽기 (게시판의 첨부/답글 설정을 따라)
 static void open_article(const found_article &a)
 {
+	board_scope scope(a.table.c_str());
 	bool attachment = strcasecmp(a.node.child_value("attachment"), "no") != 0;
 	bool reply = !strcasecmp(a.node.child_value("reply"), "yes");
 	bool is_dir;
@@ -227,7 +264,27 @@ static void open_article(const found_article &a)
 	show_article((char*)a.table.c_str(), 1, 1, (char*)name.c_str(), a.no, attachment, reply, &is_dir);
 }
 
-static void article_list(const std::string &head, const std::string &empty_msg, std::vector<found_article> &list)
+// 화면 위 석 줄 (호스트 이름, 가운데 제목, 오른쪽 쪽 정보)
+static void list_header(const std::string &head, const std::string &right)
+{
+	printf(ESC_CLEAR);
+	printf("\033[1;1H");
+	printf("\033[=9F\033[=1G%s\033[=15F\033[=1G", repeat("─", 40).c_str());
+	printf("\033[1;1H");
+	printf("\033[1A\033[7m%s\033[0m", host_name);
+	int hw = strlen(strip_ansi_codes(head.c_str()));
+	printf("\033[2;1H\r\033[%dC%s", (80 - hw) / 2, head.c_str());
+	if ( !right.empty() ) {
+		int rw = strlen(strip_ansi_codes(right.c_str()));
+		printf("\r\033[%dC%s", 79 - rw, right.c_str());
+	}
+	printf("\033[3;1H");
+	printf("\033[=0F\033[=1G%s\033[=15F\033[=1G", repeat("━", 40).c_str());
+	printf("\033[4;1H");
+}
+
+static void article_list(const std::string &head, const std::string &empty_msg, std::vector<found_article> &list,
+		const std::string &col_label = "날짜")
 {
 	unsigned int page = 0;
 	const unsigned int per = 15;
@@ -235,30 +292,22 @@ static void article_list(const std::string &head, const std::string &empty_msg, 
 		unsigned int pages = list.empty() ? 1 : (list.size() + per - 1) / per;
 		if ( page >= pages ) page = pages - 1;
 
-		printf(ESC_CLEAR);
-		printf("\033[1;1H");
-		printf("\033[=9F\033[=1G%s\033[=15F\033[=1G", repeat("─", 40).c_str());
-		printf("\033[1;1H");
-		printf("\033[1A\033[7m%s\033[0m", host_name);
-		printf("\033[2;1H\r\033[%dC%s", (int)(80 - strlen(head.c_str())) / 2, head.c_str());
 		char pg[64];
 		snprintf(pg, sizeof(pg), "%d/%d (총 %d건)", page + 1, pages, (int)list.size());
-		printf("\r\033[%dC%s", (int)(79 - strlen(pg)), pg);
-		printf("\033[3;1H");
-		printf("\033[=0F\033[=1G%s\033[=15F\033[=1G", repeat("━", 40).c_str());
-		printf("\033[4;1H");
+		list_header(head, pg);
 		// 3 + 1 + 게시판 14 + 1 + 작성자 10 + 1 + 날짜 11 + 1 + 제목 35 = 77 칸
-		printf("%3s %-14s %-10s %-11s %s\r\n", "", "게시판", "작성자", "날짜", "제목");
+		printf("%3s %-14s %-10s %-11s %s\r\n", "", "게시판", "작성자", col_label.c_str(), "제목");
 		printf("%s\r\n", repeat("─", 40).c_str());
 		if ( list.empty() ) printf("%s\r\n", centered(empty_msg.c_str(), 80).c_str());
 		for ( unsigned int i = page * per; i < list.size() && i < (page + 1) * per; i++ ) {
 			const found_article &a = list[i];
-			std::string d = a.date_time.size() >= 16 ? a.date_time.substr(5, 11) : a.date_time;
+			std::string d = !a.col.empty() ? a.col : a.date_time.size() >= 16 ? a.date_time.substr(5, 11) : a.date_time;
 			int cc = comment_count(a.table.c_str(), a.no);
 			std::string cs = cc > 0 ? " [" + TO_STRING(cc) + "]" : "";
-			printf("%3d " X_C "%-14s" X_W " %-10s " X_G "%-11s" X_W " %s" X_C "%s" X_W "\r\n", i + 1,
+			printf("%3d " X_C "%-14s" X_W " %-10s " X_G "%-11s" X_W " " X_Y "%s" X_W "%s" X_C "%s" X_W "\r\n", i + 1,
 					string_truncate(a.board, 14, "").c_str(), string_truncate(nick_or_id(a.user_id), 10, "").c_str(),
-					d.c_str(), string_truncate(display_text(a.title), 35 - cs.size(), "").c_str(), cs.c_str());
+					d.c_str(), a.mark.c_str(),
+					string_truncate(display_text(a.title), 35 - cs.size() - a.mark.size(), "").c_str(), cs.c_str());
 		}
 		printf("%s\r\n", repeat("━", 40).c_str());
 
@@ -283,11 +332,9 @@ static void article_list(const std::string &head, const std::string &empty_msg, 
 // NEW : 지난번 접속 이후 새 글 (처음이면 최근 하루, 길어도 30 일)
 void show_new_articles(void)
 {
-	bool exist;
-	std::map<std::string, std::string> u = database::user_info(login_user_id, &exist);
-	std::string since = u["LASTLOGIN_DATETIME"];
+	std::string since = previous_login();
 	std::string where;
-	if ( since.size() >= 10 && since.compare(0, 4, "0000") != 0 ) {
+	if ( !since.empty() ) {
 		where = "DATE_TIME > GREATEST('" + database::escape(since.c_str()) + "', NOW() - INTERVAL 30 DAY)";
 	} else {
 		where = "DATE_TIME > NOW() - INTERVAL 1 DAY";
@@ -342,4 +389,342 @@ void search_all_boards(std::string word)
 	fflush(stdout);
 	std::vector<found_article> list = collect(where, 50);
 	article_list(head, "찾은 글이 없습니다.", list);
+}
+
+// BEST : 이번 주 인기 글,  BEST M : 이번 달
+void show_best(std::string arg)
+{
+	bool month = !strcasecmp(trim(arg).c_str(), "m");
+	std::string where = std::string("DATE_TIME > NOW() - INTERVAL ") + (month ? "30" : "7") +
+		" DAY AND (HIT > 0 OR RECOMMEND > 0)";
+	printf("\r\n인기 글을 모으는 중입니다...");
+	fflush(stdout);
+	std::vector<found_article> list = collect(where, 20, "RECOMMEND DESC, HIT DESC");
+	std::sort(list.begin(), list.end(), best_first);
+	if ( list.size() > 30 ) list.resize(30);
+	for ( unsigned int i = 0; i < list.size(); i++ ) {
+		char b[32];
+		snprintf(b, sizeof(b), "%4d / %4d", list[i].recommend, list[i].hit);
+		list[i].col = b;
+	}
+	article_list(month ? "이번 달 인기 글 (최근 30일, BEST: 이번 주)" : "이번 주 인기 글 (최근 7일, BEST M: 이번 달)",
+			"인기 글이 없습니다.", list, "추천 / 조회");
+}
+
+// 지난번 접속 이후 다른 사람이 단 꼬리말이 있으면 ◆
+static void mark_new_comments(std::vector<found_article> &list)
+{
+	std::string since = previous_login();
+	std::string after = since.empty() ? "NOW() - INTERVAL 1 DAY" : "'" + database::escape(since.c_str()) + "'";
+	for ( unsigned int i = 0; i < list.size(); i++ ) {
+		bool ok;
+		std::string q = "SELECT COUNT(*) FROM comments WHERE BOARD='" + database::escape(list[i].table.c_str()) +
+			"' AND ARTICLE=" + TO_STRING(list[i].no) + " AND USER_ID <> '" + database::escape(login_user_id) +
+			"' AND DATE_TIME > " + after;
+		if ( atoi(database::fetch((char*)q.c_str(), &ok).c_str()) > 0 ) list[i].mark = "◆ ";
+	}
+}
+
+// MY : 내가 쓴 글,  MY C : 내가 꼬리말을 단 글
+void show_my(std::string arg)
+{
+	std::vector<found_article> list;
+	printf("\r\n모으는 중입니다...");
+	fflush(stdout);
+	if ( !strcasecmp(trim(arg).c_str(), "c") ) {
+		std::string q = "SELECT BOARD, ARTICLE, MAX(NO) AS LAST FROM comments WHERE USER_ID='" +
+			database::escape(login_user_id) + "' GROUP BY BOARD, ARTICLE ORDER BY LAST DESC LIMIT 60";
+		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			pugi::xml_node node = board_node(r[i]["BOARD"]);
+			if ( !node ) continue;
+			std::string q2 = "SELECT NO, USER_ID, DATE_TIME, TITLE, HIT, RECOMMEND FROM " + r[i]["BOARD"] +
+				" WHERE NO=" + TO_STRING(atoi(r[i]["ARTICLE"].c_str()));
+			std::vector<std::map<std::string, std::string> > a = database::fetch_rows((char*)q2.c_str());
+			if ( a.size() > 0 ) list.push_back(to_found(r[i]["BOARD"], node, a[0]));
+		}
+		mark_new_comments(list);
+		article_list("내가 꼬리말을 단 글 (◆ 새 꼬리말, MY: 내 글)", "꼬리말을 단 글이 없습니다.", list);
+		return;
+	}
+	list = collect("USER_ID='" + database::escape(login_user_id) + "'", 50);
+	if ( list.size() > 100 ) list.resize(100);
+	mark_new_comments(list);
+	article_list("내가 쓴 글 (◆ 새 꼬리말, MY C: 꼬리말 단 글)", "쓴 글이 없습니다.", list);
+}
+
+// ------------------------------------------------------------------
+// 게시판 구독 : 게시판 안에서 SUB 로 구독/해지, 밖에서 SUB 는 구독 목록
+// 구독한 게시판에 새 글이 올라오면 접속해 있는 구독자에게 알린다
+// ------------------------------------------------------------------
+void subscribe_init(void)
+{
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS subscribe ( "
+			"USER_ID VARCHAR(50) NOT NULL, "
+			"BOARD VARCHAR(64) NOT NULL, "
+			"PRIMARY KEY (USER_ID, BOARD), "
+			"KEY IDX_BOARD (BOARD) )");
+}
+
+static bool is_subscribed(const std::string &board)
+{
+	bool ok;
+	std::string q = "SELECT COUNT(*) FROM subscribe WHERE USER_ID='" + database::escape(login_user_id) +
+		"' AND BOARD='" + database::escape(board.c_str()) + "'";
+	return atoi(database::fetch((char*)q.c_str(), &ok).c_str()) > 0;
+}
+
+void subscribe_command(void)
+{
+	std::string me = database::escape(login_user_id);
+
+	// 게시판 안: 구독 / 해지
+	if ( !current_board.empty() ) {
+		pugi::xml_node n = board_node(current_board);
+		std::string name = n ? board_name(n) : current_board;
+		std::string b = database::escape(current_board.c_str());
+		if ( is_subscribed(current_board) ) {
+			std::string q = "DELETE FROM subscribe WHERE USER_ID='" + me + "' AND BOARD='" + b + "'";
+			mysql_query(mysql, q.c_str());
+			printf("\r\n'%s' 구독을 그만둡니다.", name.c_str());
+		} else {
+			std::string q = "INSERT IGNORE INTO subscribe (USER_ID, BOARD) VALUES ('" + me + "', '" + b + "')";
+			mysql_query(mysql, q.c_str());
+			printf("\r\n'%s' 을(를) 구독합니다.\r\n접속해 있을 때 새 글이 올라오면 바로 알려 드립니다.", name.c_str());
+		}
+		printf("\r\n[Enter] 를 누르세요.");
+		press_enter();
+		return;
+	}
+
+	// 밖: 구독 목록, 번호로 해지
+	while ( 1 ) {
+		std::string q = "SELECT BOARD FROM subscribe WHERE USER_ID='" + me + "'";
+		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+		list_header("게시판 구독", "");
+		printf("\r\n");
+		if ( r.empty() ) printf("%s\r\n", centered("구독한 게시판이 없습니다.", 80).c_str());
+		for ( unsigned int i = 0; i < r.size() && i < 14; i++ ) {
+			pugi::xml_node n = board_node(r[i]["BOARD"]);
+			std::string go = n ? n.attribute("go").value() : "";
+			printf("  %3d. " X_C "%-20s" X_W " %s\r\n", i + 1,
+					string_truncate(n ? board_name(n) : r[i]["BOARD"], 20, "").c_str(),
+					go.empty() ? "" : (X_G "GO " + go + X_W).c_str());
+		}
+		printf("\r\n  " X_G "게시판 안에서 SUB 를 치면 구독 / 해지. 새 글이 올라오면 바로 알려 드려요." X_W "\r\n");
+		printf("%s\r\n", repeat("━", 40).c_str());
+		char cmd[16];
+		printf(ESC_ENG);
+		printf("해지(번호) 나가기(Enter/P) >> ");
+		line_input(cmd, 3);
+		std::string c = trim(cmd);
+		if ( c.empty() || !is_number(c) ) return;
+		int k = atoi(c.c_str());
+		if ( k < 1 || k > (int)r.size() ) continue;
+		std::string d = "DELETE FROM subscribe WHERE USER_ID='" + me + "' AND BOARD='" +
+			database::escape(r[k - 1]["BOARD"].c_str()) + "'";
+		mysql_query(mysql, d.c_str());
+	}
+}
+
+// 새 글이 올라왔을 때 (write_article 에서)
+void notify_subscribers(const char *table, int no)
+{
+	std::string q = "SELECT USER_ID FROM subscribe WHERE BOARD='" + database::escape(table) +
+		"' AND USER_ID <> '" + database::escape(login_user_id) + "'";
+	std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+	if ( r.empty() ) return;
+	bool ok;
+	std::string t = database::fetch((char*)("SELECT TITLE FROM " + std::string(table) + " WHERE NO=" + TO_STRING(no)).c_str(), &ok);
+	pugi::xml_node n = board_node(table);
+	std::string name = n ? board_name(n) : table;
+	std::string line = "◆ 새 글 ─ [" + name + "] " + nick_or_id(login_user_id) + ": " +
+		string_truncate(display_text(t), 34, "..");
+	for ( unsigned int i = 0; i < r.size(); i++ ) notify_online(r[i]["USER_ID"], line, true);
+}
+
+// ------------------------------------------------------------------
+// 투표 : 운영자가 질문과 보기를 올리고, 회원은 한 번씩 투표 (POLL)
+// ------------------------------------------------------------------
+void poll_init(void)
+{
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS poll ( "
+			"NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+			"USER_ID VARCHAR(50) NOT NULL, "
+			"QUESTION VARCHAR(255) NOT NULL, "
+			"OPTIONS TEXT NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL, "
+			"CLOSED INT NOT NULL DEFAULT 0 )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS poll_vote ( "
+			"POLL INT NOT NULL, "
+			"USER_ID VARCHAR(50) NOT NULL, "
+			"CHOICE INT NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL, "
+			"PRIMARY KEY (POLL, USER_ID) )");
+}
+
+static void new_poll(void)
+{
+	char buf[128];
+	printf(ESC_HAN);
+	printf("\r\n\r\n질문 (Enter: 취소) >> ");
+	line_input(buf, 60);
+	std::string question = trim(display_text(buf));
+	if ( question.empty() ) { printf(ESC_ENG); return; }
+
+	std::vector<std::string> opts;
+	printf("\r\n보기를 하나씩 넣으세요. (2~6개, 빈 줄이면 끝)");
+	while ( opts.size() < 6 ) {
+		printf("\r\n  %d. ", (int)opts.size() + 1);
+		line_input(buf, 24);
+		std::string o = trim(display_text(buf));
+		if ( o.empty() ) break;
+		opts.push_back(o);
+	}
+	printf(ESC_ENG);
+	if ( opts.size() < 2 ) {
+		printf("\r\n보기는 두 개 이상이어야 합니다.\r\n[Enter] 를 누르세요.");
+		press_enter();
+		return;
+	}
+	printf("\r\n이대로 올릴까요? (Y/n) ");
+	if ( yesno(YES) != YES ) return;
+
+	std::string all;
+	for ( unsigned int i = 0; i < opts.size(); i++ ) all += (i ? "\n" : "") + opts[i];
+	std::string q = "INSERT INTO poll (USER_ID, QUESTION, OPTIONS, DATE_TIME) VALUES ('" +
+		database::escape(login_user_id) + "', '" + database::escape(question.c_str()) + "', '" +
+		database::escape(all.c_str()) + "', NOW())";
+	mysql_query(mysql, q.c_str());
+}
+
+static void view_poll(int no)
+{
+	std::string message;
+	while ( 1 ) {
+		std::string q = "SELECT * FROM poll WHERE NO=" + TO_STRING(no);
+		std::vector<std::map<std::string, std::string> > p = database::fetch_rows((char*)q.c_str());
+		if ( p.empty() ) {
+			printf("\r\n그런 투표가 없습니다.\r\n[Enter] 를 누르세요.");
+			press_enter();
+			return;
+		}
+		std::vector<std::string> opts = split_string(p[0]["OPTIONS"], '\n');
+		bool closed = atoi(p[0]["CLOSED"].c_str()) != 0;
+
+		std::map<int, int> votes;
+		int total = 0;
+		q = "SELECT CHOICE, COUNT(*) AS N FROM poll_vote WHERE POLL=" + TO_STRING(no) + " GROUP BY CHOICE";
+		std::vector<std::map<std::string, std::string> > v = database::fetch_rows((char*)q.c_str());
+		for ( unsigned int i = 0; i < v.size(); i++ ) {
+			votes[atoi(v[i]["CHOICE"].c_str())] = atoi(v[i]["N"].c_str());
+			total += atoi(v[i]["N"].c_str());
+		}
+		bool ok;
+		q = "SELECT CHOICE FROM poll_vote WHERE POLL=" + TO_STRING(no) + " AND USER_ID='" + database::escape(login_user_id) + "'";
+		std::string mine_s = database::fetch((char*)q.c_str(), &ok);
+		int mine = mine_s.empty() ? 0 : atoi(mine_s.c_str());
+
+		list_header("투 표", closed ? X_G "마감" X_W : X_Y "진행 중" X_W);
+		printf("\r\n  " X_Y "Q. %s" X_W "\r\n", string_truncate(display_text(p[0]["QUESTION"]), 74, "").c_str());
+		std::string d = p[0]["DATE_TIME"].size() >= 16 ? p[0]["DATE_TIME"].substr(0, 16) : p[0]["DATE_TIME"];
+		printf("     " X_G "%s 님이 %s 에 올림 / 모두 %d표" X_W "\r\n\r\n",
+				nick_or_id(p[0]["USER_ID"]).c_str(), d.c_str(), total);
+		// 2 + 번호 3 + 보기 24 + 1 + 막대 30 + 1 + 표 5 + 1 + 4 + 3 = 74 칸
+		for ( unsigned int i = 0; i < opts.size(); i++ ) {
+			int n = votes[i + 1];
+			int pct = total ? (n * 100 + total / 2) / total : 0;
+			int cells = total ? (n * 15 + total / 2) / total : 0;
+			printf("  %d. %-24s " X_C "%s" X_G "%s" X_W " %3d표 %3d%%%s\r\n", i + 1,
+					string_truncate(display_text(opts[i]), 24, "").c_str(),
+					repeat("■", cells).c_str(), repeat("□", 15 - cells).c_str(), n, pct,
+					mine == (int)i + 1 ? X_Y " ◀" X_W : "");
+		}
+		printf("\r\n");
+		if ( mine ) printf("  " X_G "◀ 내가 고른 보기" X_W "\r\n");
+		if ( !message.empty() ) printf("  %s\r\n", message.c_str());
+		message.clear();
+		printf("%s\r\n", repeat("━", 40).c_str());
+
+		bool can_vote = !closed && !mine;
+		std::string pr;
+		if ( can_vote ) pr += "투표(보기 번호) ";
+		if ( login_user_is_admin ) pr += closed ? "다시 열기(END) 삭제(DD) " : "마감(END) 삭제(DD) ";
+		pr += "나가기(Enter/P) >> ";
+		char cmd[16];
+		printf(ESC_ENG);
+		printf("%s", pr.c_str());
+		line_input(cmd, 5);
+		std::string c = trim(cmd);
+		if ( c.empty() || !strcasecmp(c.c_str(), "p") ) return;
+
+		if ( is_number(c) ) {
+			int k = atoi(c.c_str());
+			if ( closed ) message = X_R "마감된 투표입니다." X_W;
+			else if ( mine ) message = X_R "이미 투표했습니다." X_W;
+			else if ( k < 1 || k > (int)opts.size() ) message = X_R "보기 번호를 넣으세요." X_W;
+			else {
+				q = "INSERT IGNORE INTO poll_vote (POLL, USER_ID, CHOICE, DATE_TIME) VALUES (" + TO_STRING(no) + ", '" +
+					database::escape(login_user_id) + "', " + TO_STRING(k) + ", NOW())";
+				mysql_query(mysql, q.c_str());
+				message = X_Y "투표했습니다. 고맙습니다!" X_W;
+			}
+		} else if ( login_user_is_admin && !strcasecmp(c.c_str(), "end") ) {
+			q = "UPDATE poll SET CLOSED=" + std::string(closed ? "0" : "1") + " WHERE NO=" + TO_STRING(no);
+			mysql_query(mysql, q.c_str());
+		} else if ( login_user_is_admin && !strcasecmp(c.c_str(), "dd") ) {
+			printf("\r\n이 투표를 지울까요? (y/N) ");
+			if ( yesno(NO) == YES ) {
+				q = "DELETE FROM poll_vote WHERE POLL=" + TO_STRING(no);
+				mysql_query(mysql, q.c_str());
+				q = "DELETE FROM poll WHERE NO=" + TO_STRING(no);
+				mysql_query(mysql, q.c_str());
+				return;
+			}
+		}
+	}
+}
+
+void show_polls(void)
+{
+	unsigned int page = 0;
+	const unsigned int per = 14;
+	while ( 1 ) {
+		std::string me = database::escape(login_user_id);
+		std::string q = "SELECT p.NO, p.QUESTION, p.CLOSED, "
+			"(SELECT COUNT(*) FROM poll_vote v WHERE v.POLL=p.NO) AS VOTES, "
+			"(SELECT COUNT(*) FROM poll_vote v WHERE v.POLL=p.NO AND v.USER_ID='" + me + "') AS MINE "
+			"FROM poll p ORDER BY p.CLOSED, p.NO DESC";
+		std::vector<std::map<std::string, std::string> > r = database::fetch_rows((char*)q.c_str());
+		unsigned int pages = r.empty() ? 1 : (r.size() + per - 1) / per;
+		if ( page >= pages ) page = pages - 1;
+
+		char pg[64];
+		snprintf(pg, sizeof(pg), "%d/%d (총 %d건)", page + 1, pages, (int)r.size());
+		list_header("투 표", pg);
+		// 번호 4 + 1 + 상태 6 + 1 + 질문 48 + 1 + 표 6 + 1 + 참여 4 = 72 칸
+		printf("%4s %-6s %-48s %6s %s\r\n", "번호", "상태", "질문", "투표수", "참여");
+		printf("%s\r\n", repeat("─", 40).c_str());
+		if ( r.empty() ) printf("%s\r\n", centered("아직 투표가 없습니다.", 80).c_str());
+		for ( unsigned int i = page * per; i < r.size() && i < (page + 1) * per; i++ ) {
+			bool closed = atoi(r[i]["CLOSED"].c_str()) != 0;
+			printf("%4s %s %-48s %4s표 %s\r\n", r[i]["NO"].c_str(),
+					closed ? X_G "마감  " X_W : X_Y "진행중" X_W,
+					string_truncate(display_text(r[i]["QUESTION"]), 48, "").c_str(), r[i]["VOTES"].c_str(),
+					atoi(r[i]["MINE"].c_str()) ? X_C " √" X_W : "");
+		}
+		printf("%s\r\n", repeat("━", 40).c_str());
+
+		char cmd[16];
+		printf(ESC_ENG);
+		printf("보기(번호) 다음(N) 이전(B) %s나가기(Enter/P) >> ", login_user_is_admin ? "새 투표(W) " : "");
+		line_input(cmd, 5);
+		std::string c = trim(cmd);
+		if ( c.empty() || !strcasecmp(c.c_str(), "p") ) return;
+		if ( !strcasecmp(c.c_str(), "n") ) { if ( page + 1 < pages ) page++; }
+		else if ( !strcasecmp(c.c_str(), "b") ) { if ( page > 0 ) page--; }
+		else if ( !strcasecmp(c.c_str(), "w") ) {
+			if ( login_user_is_admin ) new_poll();
+		} else if ( is_number(c) ) view_poll(atoi(c.c_str()));
+	}
 }

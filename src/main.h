@@ -204,6 +204,21 @@ void delete_comment(const char *table, int no, int index);
 void delete_comments_of(const char *table, int no);
 void show_new_articles(void);
 void search_all_boards(std::string word);
+void show_best(std::string arg);
+void show_my(std::string arg);
+// 게시판 구독: 들어가 있는 게시판 (board_scope 가 들어갈 때 정하고 나올 때 되돌린다)
+extern std::string current_board;
+struct board_scope {
+	std::string old;
+	board_scope(const char *id);
+	~board_scope();
+};
+void subscribe_init(void);
+void subscribe_command(void);
+void notify_subscribers(const char *table, int no);
+// 투표
+void poll_init(void);
+void show_polls(void);
 
 // 한줄 낙서장 (graffiti.cpp)
 void graffiti_login_info(void);

@@ -169,6 +169,9 @@ int write_article(char *table_name)
 		}
 	}
 
+	// 이 게시판을 구독한 회원에게 알림
+	if ( ret != -1 ) notify_subscribers(table_name, ret);
+
 	return ret;
 }
 

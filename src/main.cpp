@@ -252,6 +252,8 @@ int main(int argc, char **argv)
 
 	// 꼬리말 테이블, 새 글/검색에서 쓸 메뉴 뿌리
 	comments_init();
+	subscribe_init();
+	poll_init();
 	menu_root = doc.document_element();
 
 #if 0
@@ -274,6 +276,8 @@ int main(int argc, char **argv)
 
 void show_menu(pugi::xml_node node)
 {
+	// 메뉴 화면에서는 게시판 밖 (SUB 는 구독 목록)
+	board_scope scope("");
 	while (1) {
 		char *header = (char*)(node.child("header").child_value());
 		print_file(header);
@@ -395,6 +399,9 @@ void show_board(pugi::xml_node node)
 		press_enter();
 		return;
 	}
+
+	// 이 게시판 안에 있는 동안 (SUB 로 구독)
+	board_scope scope(table_name);
 
 	// 첨부 파일 업로드를 지원하는지의 여부
 	char *value = (char*)(node.child("attachment").child_value());
@@ -1239,15 +1246,26 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
 
 					} else {
 						printf(ESC_ENG);
-						printf("\r\n첨부 번호: ");
+						// 번호 없이 DN 이면 첨부 목록을 보여 주고 번호로 고른다
+						printf("\r\n");
+						for(unsigned int y=0; y<attach_rows.size(); y++) {
+							std::map<std::string, std::string> attach_row = attach_rows.at(y);
+							char tmp_filename[1024];
+							sprintf(tmp_filename, "%s/file/%s", getenv("HANULSO"), attach_row["FILENAME"].c_str());
+							printf("\r\n [%2d] %s (%s) (다운: %d)", y+1,
+								string_truncate(attach_row["ORIGINAL_FILENAME"], 43, "...").c_str(),
+								human_file_size(file_size(tmp_filename)).c_str(),
+								atoi(attach_row["DOWNLOAD"].c_str()));
+						}
+						printf("\r\n\r\n받을 첨부 번호 (1~%d, Enter: 취소): ", (int)attach_rows.size());
 						line_input(buf, 4);
                         if ( strlen(buf) == 0 ) {
                             cancel = true;
                         }
 
 						printf(ESC_ENG);
-						printf("\r\n수신 프로토콜(1:Xmodem, 2:Ymodem, 3:Zmodem, 4:Kermit): ");
-						line_input(buf2, 4);
+						if ( !cancel ) printf("\r\n수신 프로토콜(1:Xmodem, 2:Ymodem, 3:Zmodem, 4:Kermit): ");
+						if ( cancel ) buf2[0] = 0; else line_input(buf2, 4);
                         if ( strlen(buf2) == 0 ) {
                             cancel = true;
                         } else {
@@ -1711,6 +1729,22 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 			std::string c = cmd;
 			std::string::size_type sp = c.find(' ');
 			search_all_boards(sp == std::string::npos ? "" : c.substr(sp + 1));
+
+		// 인기 글 (BEST, BEST M)
+		} else if ( !strcasecmp(args[0].c_str(), "best") ) {
+			show_best(args.size() > 1 ? args[1] : "");
+
+		// 내 글 (MY), 꼬리말 단 글 (MY C)
+		} else if ( !strcasecmp(args[0].c_str(), "my") ) {
+			show_my(args.size() > 1 ? args[1] : "");
+
+		// 게시판 구독
+		} else if ( !strcasecmp(args[0].c_str(), "sub") ) {
+			subscribe_command();
+
+		// 투표
+		} else if ( !strcasecmp(args[0].c_str(), "poll") ) {
+			show_polls();
 
 		// 전보
 		} else if ( !strcasecmp(args[0].c_str(), "to") ) {
