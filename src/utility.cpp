@@ -540,6 +540,34 @@ bool read_tty_file(const std::string &path, std::string &user_id)
 	return true;
 }
 
+// 접속 중인 회원에게 알림 한 줄. 그 회원의 BBS 세션마다 tmp/<tty>.notice 에 덧붙인다.
+// (대화방처럼 프롬프트가 아닌 화면에서 보여 주려고. 프롬프트로 돌아오면 지운다)
+// signal_bbs 면 BBS 프로세스에 SIGUSR1 (프롬프트에서 전보를 바로 띄우게). 접속한 세션 수를 돌려준다.
+int notify_online(const std::string &user_id, const std::string &line, bool signal_bbs)
+{
+	char pattern[1024];
+	snprintf(pattern, sizeof(pattern), "%s/tmp/*.tty", getenv("HANULSO"));
+	std::vector<std::string> files = find_files(pattern);
+	int n = 0;
+	for ( unsigned int i = 0; i < files.size(); i++ ) {
+		std::string id;
+		if ( !read_tty_file(files[i], id) || id != user_id ) continue;
+		char sid[256] = "";
+		int pid = 0;
+		sscanf(trim(read_file(files[i].c_str())).c_str(), "%255s %d", sid, &pid);
+		if ( !is_bbs_process(pid) ) continue;
+		std::string notice = files[i].substr(0, files[i].size() - 4) + ".notice";	// .tty -> .notice
+		FILE *fp = fopen(notice.c_str(), "a");
+		if ( fp != NULL ) {
+			fprintf(fp, "%s\n", line.c_str());
+			fclose(fp);
+		}
+		if ( signal_bbs ) kill(pid, SIGUSR1);
+		n++;
+	}
+	return n;
+}
+
 // 화면에 보이는 글자만 남긴다: 일반 ASCII 와 완성형(KS X 1001) 2 바이트 글자.
 // 제어 문자, 완성형 밖의 글자(터미널에 안 보이고 칸만 어긋남), 짝 없는 바이트는 뺀다.
 std::string display_text(const std::string &s)

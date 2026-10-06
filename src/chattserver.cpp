@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <signal.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <vector>
@@ -57,10 +59,19 @@ struct client {
 	long last_ms;			// 마지막으로 말한 시각 (도배 막기)
 	std::string last_text;	// 마지막으로 한 말
 	int repeat;				// 같은 말을 연달아 한 횟수
+	int color;				// 닉네임 색 (들어온 순서대로)
+	bool time_on;			// 말한 시각 표시 (/TIME)
 };
 
 std::vector<client> clients;
 std::deque<std::string> history;	// 최근 대화 (들어온 사람에게 보여 줌)
+std::string room_title;				// 방장이 /TITLE 로 바꾼 주제 (없으면 처음 주제)
+std::map<std::string, time_t> banned;	// /KICK 당한 아이디 -> 다시 들어올 수 있는 시각
+static int next_color = 0;
+
+// 닉네임 색 (파랑 바탕에서 잘 보이는 것만)
+static const char *name_colors[] = { "\033[=14F", "\033[=11F", "\033[=10F", "\033[=13F", "\033[=12F", "\033[=15F" };
+#define NAME_COLORS	6
 
 int send_msg(int socket, const char *msg);
 int recv_msg(int socket, char *msg, int bufsize);
@@ -126,23 +137,102 @@ static std::string itos(long v)
 	return buf;
 }
 
-// 모두에게 보낸다 (keep 이면 최근 대화에도 남김)
+// 색 코드를 뺀 글 (대화 기록용)
+static std::string strip_codes(const std::string &s)
+{
+	std::string r;
+	for ( std::string::size_type i = 0; i < s.size(); i++ ) {
+		if ( s[i] == '\033' && i + 1 < s.size() && s[i + 1] == '[' ) {
+			i += 2;
+			while ( i < s.size() && !isalpha((unsigned char)s[i]) ) i++;
+			continue;
+		}
+		if ( s[i] == '\r' ) continue;
+		r += s[i];
+	}
+	return r;
+}
+
+// ------------------------------------------------------------------
+// 대화 기록: chatt/log/YYYY-MM-DD.log (7 일 보관, 귓속말은 남기지 않음)
+// ------------------------------------------------------------------
+static void log_line(const std::string &msg)
+{
+	char dir[1024], path[1100], day[16], hms[16];
+	snprintf(dir, sizeof(dir), "%s/chatt/log", getenv("HANULSO"));
+	mkdir(dir, 0755);
+	time_t t = time(NULL);
+	strftime(day, sizeof(day), "%Y-%m-%d", localtime(&t));
+	strftime(hms, sizeof(hms), "%H:%M:%S", localtime(&t));
+	snprintf(path, sizeof(path), "%s/%s.log", dir, day);
+	FILE *fp = fopen(path, "a");
+	if ( fp == NULL ) return;
+	std::vector<std::string> lines = split_string(strip_codes(msg), '\n');
+	for ( unsigned int i = 0; i < lines.size(); i++ ) {
+		if ( trim(lines[i]).empty() ) continue;
+		fprintf(fp, "[%s] [%d] %s\n", hms, server_port, lines[i].c_str());
+	}
+	fclose(fp);
+}
+
+// 7 일 지난 기록은 지운다 (서버를 켤 때와 하루에 한 번)
+static void clean_logs(void)
+{
+	char dir[1024];
+	snprintf(dir, sizeof(dir), "%s/chatt/log", getenv("HANULSO"));
+	DIR *d = opendir(dir);
+	if ( d == NULL ) return;
+	time_t limit = time(NULL) - 7 * 86400;
+	char oldest[16];
+	strftime(oldest, sizeof(oldest), "%Y-%m-%d", localtime(&limit));
+	struct dirent *e;
+	while ( (e = readdir(d)) != NULL ) {
+		std::string n = e->d_name;
+		// YYYY-MM-DD.log 이고 날짜가 7 일 전보다 앞이면
+		if ( n.size() == 14 && n.compare(10, 4, ".log") == 0 && n.substr(0, 10) < oldest ) {
+			unlink((std::string(dir) + "/" + n).c_str());
+		}
+	}
+	closedir(d);
+}
+
+// 말한 시각을 붙인다 (/TIME 을 켠 사람에게만). 메세지는 "\r\n..." 꼴
+static std::string stamp(const std::string &msg)
+{
+	char hm[16];
+	time_t t = time(NULL);
+	strftime(hm, sizeof(hm), "%H:%M", localtime(&t));
+	std::string s = std::string(C_GRAY "[") + hm + "]" C_WHITE " ";
+	if ( msg.compare(0, 2, "\r\n") == 0 ) return "\r\n" + s + msg.substr(2);
+	return s + msg;
+}
+
+// 모두에게 보낸다 (keep 이면 최근 대화에도, 대화 기록에도 남김)
 void broadcast(const std::string &msg, bool keep)
 {
+	std::string stamped = stamp(msg);
 	for (unsigned int i=0; i<clients.size(); i++) {
-		send_msg(clients[i].socket, msg.c_str());
+		send_msg(clients[i].socket, (clients[i].time_on ? stamped : msg).c_str());
 	}
 	if ( keep ) {
 		history.push_back(msg);
 		while ( history.size() > HISTORY ) history.pop_front();
+		log_line(msg);
 	}
 }
 
-// 80 칸 화면에 맞게 79 칸에서 줄을 나눈다 (띄어쓰기에서 나누고 다음 줄은 두 칸 들여서).
+// 닉네임 표 (사람마다 색, 반전)
+static std::string name_tag(const client &c)
+{
+	return std::string(name_colors[c.color % NAME_COLORS]) + "\033[7m" + c.nickname + "(" + c.userid + ")\033[0m" C_WHITE;
+}
+
+// 화면에 맞게 줄을 나눈다 (띄어쓰기에서 나누고 다음 줄은 두 칸 들여서).
 // 색 코드가 없는 글에 쓴다. 완성형 한글은 두 바이트가 두 칸.
+// 시각 표시 "[21:30] " (8 칸) 가 붙어도 80 칸을 넘지 않게 71 칸에서 나눈다.
 std::string wrap79(const std::string &text)
 {
-	const unsigned int W = 79;
+	const unsigned int W = 71;
 	std::string out, line;
 	std::string::size_type i = 0;
 	while ( i < text.size() ) {
@@ -196,6 +286,8 @@ client push_client(int socket, char *userid, char* nickname, char* ip, int port)
 	c.joined = time(NULL);
 	c.last_ms = 0;
 	c.repeat = 0;
+	c.color = next_color++ % NAME_COLORS;
+	c.time_on = false;
 	clients.push_back(c);
 	return c;
 }
@@ -251,6 +343,7 @@ void quit_func(client c)
 			}
 		}
 	}
+	log_line(buf1);
 
 	for(unsigned int i=0; i<clients.size(); i++) {
 		client c2 = clients[i];
@@ -600,12 +693,85 @@ static void help_func(const client &c)
 		"/주사위 [N]          주사위 (1~6, 또는 1~N)   /DICE",
 		"/끝말잇기            끝말잇기 시작 (/끝말잇기 그만)   /WORD",
 		"/퀴즈                퀴즈 다섯 문제 (/퀴즈 그만)   /QUIZ",
+		"/INVITE 아이디       대화방 밖의 접속자에게 이 방으로 오라는 전보",
+		"/TIME                말한 시각 표시 켜기/끄기",
 		"/BYE                 나가기",
+		"── 방장만 ──",
+		"/TITLE 주제          방 주제 바꾸기",
+		"/KICK 아이디         내보내기 (10분 동안 다시 못 들어옴)",
+		"/MAX 인원            허용 인원 바꾸기 (2~50)",
+		"/OWNER 아이디        방장 넘기기",
 		NULL
 	};
 	std::string s = "\r\n";
 	for ( int i = 0; lines[i]; i++ ) s += std::string(C_GRAY) + lines[i] + C_WHITE "\r\n";
 	send_msg(c.socket, s.c_str());
+}
+
+static client *find_client(const std::string &id)
+{
+	for ( unsigned int i = 0; i < clients.size(); i++ ) {
+		if ( id == clients[i].userid ) return &clients[i];
+	}
+	return NULL;
+}
+
+void remove_client(client c);
+
+// 방장 명령. 처리했으면 true
+static bool owner_command(client &c, const std::string &cmd, const std::string &rest)
+{
+	if ( cmd != "/title" && cmd != "/kick" && cmd != "/max" && cmd != "/owner" ) return false;
+	if ( permanent ) {
+		tell(c, "[알림] 만남의 광장에는 방장이 없어서 이 명령을 쓸 수 없습니다.");
+		return true;
+	}
+	if ( !c.author ) {
+		tell(c, "[알림] 방장만 쓸 수 있는 명령입니다.");
+		return true;
+	}
+	if ( cmd == "/title" ) {
+		std::string t = rest;
+		if ( t.empty() ) { tell(c, "[알림] /TITLE 새 주제"); return true; }
+		// 40 바이트까지 (한글이 반으로 잘리지 않게)
+		unsigned int k = 0;
+		while ( k < t.size() ) {
+			unsigned int w = ((unsigned char)t[k] >= 0x80 && k + 1 < t.size()) ? 2 : 1;
+			if ( k + w > 40 ) break;
+			k += w;
+		}
+		room_title = t.substr(0, k);
+		write_room_info();
+		notice(std::string("[알림] 방장 ") + c.nickname + " 님이 주제를 '" + room_title + "'(으)로 바꾸었습니다.");
+	} else if ( cmd == "/max" ) {
+		int n = atoi(rest.c_str());
+		if ( n < 2 || n > 50 ) { tell(c, "[알림] /MAX 인원 (2~50)"); return true; }
+		if ( n < (int)clients.size() ) { tell(c, "[알림] 지금 들어와 있는 사람보다 적게 할 수 없습니다."); return true; }
+		max_user = n;
+		write_room_info();
+		notice("[알림] 허용 인원을 " + itos(n) + "명으로 바꾸었습니다.");
+	} else {
+		client *t = find_client(rest);
+		if ( rest.empty() || t == NULL ) { tell(c, "[알림] 이 방에 '" + rest + "' 아이디가 없습니다. (/LIST)"); return true; }
+		if ( t->socket == c.socket ) { tell(c, "[알림] 자기 자신에게는 쓸 수 없습니다."); return true; }
+		if ( cmd == "/owner" ) {
+			c.author = false;
+			for ( unsigned int i = 0; i < clients.size(); i++ ) {
+				if ( clients[i].socket == c.socket ) clients[i].author = false;
+			}
+			t->author = true;
+			write_room_info();
+			notice(std::string("[알림] ") + c.nickname + " 님이 " + t->nickname + " 님에게 방장을 넘겼습니다.");
+		} else {
+			client kicked = *t;
+			banned[kicked.userid] = time(NULL) + 600;
+			send_msg(kicked.socket, "\r\n" C_YELLOW "[알림] 방장이 이 방에서 내보냈습니다. 10분 동안 다시 들어올 수 없습니다." C_WHITE "\r\n");
+			send_msg(kicked.socket, "/quit");
+			notice(std::string("[알림] 방장 ") + c.nickname + " 님이 " + kicked.nickname + " 님을 내보냈습니다.");
+			remove_client(kicked);
+		}
+	}
+	return true;
 }
 
 // '/' 로 시작하는 명령. 처리했으면 true
@@ -619,8 +785,13 @@ bool command(client &c, const std::string &line)
 	std::string::size_type sp = trim(line).find(' ');
 	if ( sp != std::string::npos ) rest = trim(strip_control(trim(line).substr(sp + 1)));
 
-	if ( cmd == "/help" || cmd == "/도움말" ) {
+	if ( owner_command(c, cmd, rest) ) {
+		return true;
+	} else if ( cmd == "/help" || cmd == "/도움말" ) {
 		help_func(c);
+	} else if ( cmd == "/time" || cmd == "/시각" ) {
+		c.time_on = !c.time_on;
+		tell(c, c.time_on ? "[알림] 말한 시각을 보여 줍니다. (/TIME 으로 끄기)" : "[알림] 말한 시각을 보여 주지 않습니다.");
 	} else if ( cmd == "/me" ) {
 		if ( rest.empty() || !flood_check(c, line) ) return true;
 		broadcast("\r\n" C_MAGENTA + wrap79(std::string("* ") + c.nickname + " 님이 " + rest) + C_WHITE "\r\n", true);
@@ -746,7 +917,9 @@ void write_room_info()
 	FILE *fp = fopen(buf, "w");
 	if (fp == NULL) return;
 	// 방장,접속인원수
-	fprintf(fp, "%s,%d", author.c_str(), (int)clients.size());
+	// 방장,접속인원수,허용인원 (그리고 /TITLE 로 바꾼 주제가 있으면 다음 줄에)
+	fprintf(fp, "%s,%d,%d", author.c_str(), (int)clients.size(), max_user);
+	if ( !room_title.empty() ) fprintf(fp, "\n%s", room_title.c_str());
 	fclose(fp);
 }
 
@@ -805,6 +978,18 @@ void accept_client(void)
 	strcpy(userid, strip_control(userid).c_str());
 	strcpy(nickname, strip_control(nickname).c_str());
 
+	// 방장이 내보낸 사람은 10 분 동안 못 들어온다
+	std::map<std::string, time_t>::iterator ban = banned.find(userid);
+	if (ban != banned.end()) {
+		if (time(NULL) < ban->second) {
+			send_msg(client_fd, "\r\n\033[7m방장이 내보내서 잠시 이 방에 들어올 수 없습니다.\033[0m\r\n");
+			send_msg(client_fd, "/quit");
+			close(client_fd);
+			return;
+		}
+		banned.erase(ban);
+	}
+
 	// 허용 인원 초과
 	if (max_user > 0 && (int)clients.size() >= max_user) {
 		send_msg(client_fd, "\r\n\033[7m대화방 허용 인원이 꽉 찼습니다.\033[0m\r\n");
@@ -860,6 +1045,7 @@ void accept_client(void)
 			constr_func(c2, c);
 		}
 	}
+	log_line(std::string(c.nickname) + "(" + c.userid + ") 님이 입장 하셨습니다.");
 }
 
 int main(int argc,char *argv[])
@@ -915,6 +1101,8 @@ int main(int argc,char *argv[])
 
 	// 늘 열린 방은 아무도 없어도 목록에 0 명으로 보이게
 	write_room_info();
+	clean_logs();
+	time_t last_clean = time(NULL);
 
 	char buf1[MAX_LINE];
 
@@ -954,6 +1142,10 @@ int main(int argc,char *argv[])
 		}
 
 		game_tick();
+		if (time(NULL) - last_clean > 86400) {
+			clean_logs();
+			last_clean = time(NULL);
+		}
 		if (ready == 0) continue;
 
 		// 클라이언트 접속 감지
@@ -1075,9 +1267,8 @@ int main(int argc,char *argv[])
 					// 도배 막기
 					if (!flood_check(clients[i], text)) continue;
 
-					char out[MAX_LINE];
-					snprintf(out, sizeof(out), "\r\n\033[7m%s(%s)\033[0m %s\r\n",
-							c.nickname, c.userid, text.c_str());
+					// 사람마다 다른 색의 닉네임 + 말
+					std::string out = "\r\n" + name_tag(c) + " " + text + "\r\n";
 
 					// 모든 접속자에게 메세지 전달 (최근 대화에도 남김)
 					broadcast(out, true);

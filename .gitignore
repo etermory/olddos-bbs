@@ -14,3 +14,7 @@ dump/
 ref/
 # 쥬라기공원 머드 라이브러리 원본 (권리 미확인, 서버에서 jp2_v15.tgz 를 풀어 둠)
 src/jurassic/lib/
+
+# 대화방 서버가 만드는 방 정보와 대화 기록
+chatt/*.room
+chatt/log/

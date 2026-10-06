@@ -839,7 +839,7 @@ static std::string invite(const std::string &who, int no)
 	std::string q = "INSERT INTO telegram (FROM_USER_ID, TO_USER_ID, TEXT, DATE_TIME) VALUES ('" +
 		database::escape(user_id.c_str()) + "', '" + database::escape(to.c_str()) + "', '" + database::escape(text) + "', NOW())";
 	if ( mysql_query(mysql, q.c_str()) != 0 ) return "초대를 보내지 못했습니다.";
-	for ( unsigned int i = 0; i < pids.size(); i++ ) kill(pids[i], SIGUSR1);
+	notify_online(to, "★ 전보 ─ " + user_nick + ": " + text, true);
 	return nick_of(to) + " 님께 초대를 보냈습니다.";
 }
 

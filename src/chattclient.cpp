@@ -27,6 +27,8 @@ int cursor_pos = 0;
 
 char userid[256];
 char nickname[256];
+char room_no[16] = "";		// ¹æ ¹øÈ£ (/INVITE Àüº¸¿¡ ¾¸)
+char notice_path[1024] = "";	// Àüº¸/ÂÊÁö ¾Ë¸² ÆÄÀÏ (tmp/<tty>.notice)
 
 int sock_fd;
 int max_fd;
@@ -301,6 +303,71 @@ int send_msg(int socket, const char *msg)
 	return 0;
 }
 
+// ¼Ğ ¸í·É ÀÎÀÚ¸¦ ÀÛÀºµû¿ÈÇ¥·Î °¨½Ñ´Ù
+std::string shell_quote(const std::string &s)
+{
+	std::string r = "'";
+	for (unsigned int i=0; i<s.size(); i++) {
+		if (s[i] == '\'') r += "'\\''";
+		else r += s[i];
+	}
+	return r + "'";
+}
+
+// 79 Ä­ ¾ÈÀ¸·Î (ÇÑ±ÛÀÌ ¹İÀ¸·Î Àß¸®Áö ¾Ê°Ô)
+std::string cut79(const std::string &s)
+{
+	unsigned int k = 0;
+	while (k < s.size()) {
+		unsigned int w = ((unsigned char)s[k] >= 0x80 && k + 1 < s.size()) ? 2 : 1;
+		if (k + w > 79) break;
+		k += w;
+	}
+	return s.substr(0, k);
+}
+
+// ´ëÈ­¹æ¿¡ ÀÖ´Â µ¿¾È ¿Â Àüº¸/ÂÊÁö ¾Ë¸² (´Ù¸¥ È¸¿øÀÌ tmp/<tty>.notice ¿¡ ³²±ä´Ù)
+void show_notices(void)
+{
+	if (notice_path[0] == 0) return;
+	FILE *fp = fopen(notice_path, "r");
+	if (fp == NULL) return;
+	char line[1024];
+	std::string out;
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		std::string l = line;
+		while (!l.empty() && (l[l.size()-1] == '\n' || l[l.size()-1] == '\r')) l.erase(l.size()-1);
+		if (!l.empty()) out += "\r\n\033[=14F" + cut79(l) + "\033[=15F";
+	}
+	fclose(fp);
+	unlink(notice_path);
+	if (!out.empty()) {
+		out += "\r\n";
+		print_message((char*)out.c_str());
+	}
+}
+
+// /INVITE ¾ÆÀÌµğ : ´ëÈ­¹æ ¹ÛÀÇ Á¢¼ÓÀÚ¿¡°Ô ÀÌ ¹æÀ¸·Î ¿À¶ó´Â Àüº¸ (bin/tgsend °¡ DB ¿¡ ³Ö´Â´Ù)
+void invite(const std::string &who)
+{
+	std::string text = std::string(room_no) == "0" ?
+		"¸¸³²ÀÇ ±¤Àå(0¹ø ´ëÈ­¹æ)À¸·Î ¿À¼¼¿ä! GO CHAT ¿¡¼­ 0¹ø" :
+		std::string(room_no) + "¹ø ´ëÈ­¹æÀ¸·Î ¿À¼¼¿ä! GO CHAT ¿¡¼­ " + room_no + "¹ø";
+	std::string cmd = std::string(getenv("HANULSO")) + "/bin/tgsend " + shell_quote(userid) + " "
+		+ shell_quote(who) + " " + shell_quote(text) + " 2>/dev/null";
+	FILE *fp = popen(cmd.c_str(), "r");
+	char line[512] = "";
+	if (fp != NULL) {
+		if (fgets(line, sizeof(line), fp) == NULL) line[0] = 0;
+		pclose(fp);
+	}
+	std::string l = line;
+	while (!l.empty() && (l[l.size()-1] == '\n' || l[l.size()-1] == '\r')) l.erase(l.size()-1);
+	if (l.empty()) l = "ÃÊ´ë¸¦ º¸³»Áö ¸øÇß½À´Ï´Ù.";
+	std::string out = "\r\n\033[=7F[ÃÊ´ë] " + l + "\033[=15F\r\n";
+	print_message((char*)out.c_str());
+}
+
 void *chatt_message(void *arg)
 {
 	char msg[CHATDATA];
@@ -309,11 +376,17 @@ void *chatt_message(void *arg)
 		FD_ZERO(&read_fds);
 		FD_SET(0, &read_fds);
 		FD_SET(sock_fd, &read_fds);
-	
-		if(select(max_fd, &read_fds, (fd_set *)0, (fd_set *)0, (struct timeval *)0) <0) {
+
+		// 2 ÃÊ¸¶´Ù ±ú¾î³ª Àüº¸/ÂÊÁö ¾Ë¸²À» º»´Ù
+		struct timeval tv;
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+		if(select(max_fd, &read_fds, (fd_set *)0, (fd_set *)0, &tv) <0) {
+			if (errno == EINTR) continue;
 			printf("select error\n");
 			exit(1);
 		}
+		show_notices();
 
 		if (FD_ISSET(sock_fd, &read_fds)) {
 			// ¼­¹ö ¿¬°áÀÌ ²÷¾îÁ³°Å³ª Àß¸øµÈ ¸Ş¼¼Áö
@@ -395,6 +468,13 @@ int main(int argc,char *argv[])
 
 	snprintf(userid, sizeof(userid), "%s", argv[3]);
 	snprintf(nickname, sizeof(nickname), "%s", argv[4]);
+	if (argc > 5) snprintf(room_no, sizeof(room_no), "%s", argv[5]);
+
+	// Àüº¸/ÂÊÁö ¾Ë¸² ÆÄÀÏ: BBS °¡ ¾²´Â tty ÀÌ¸§ (/dev/pts/3 -> 3)
+	const char *tn = ttyname(0);
+	if (tn != NULL && strlen(tn) > 9 && getenv("HANULSO") != NULL) {
+		snprintf(notice_path, sizeof(notice_path), "%s/tmp/%s.notice", getenv("HANULSO"), tn + 9);
+	}
 
 	// Á¢¼Ó »ç¿ëÀÚID º¸³¿
 	send_msg(sock_fd, userid);
@@ -408,13 +488,14 @@ int main(int argc,char *argv[])
 	
 	while (1) {
 		char input[1024];
-		printf("[%d;1H±Ó¼Ó¸»(/SAY) Á¢¼ÓÀÚ(/LIST) Çàµ¿(/ME) ³îÀÌ¡¤µµ¿ò¸»(/HELP) ÅğÀå(/BYE)[K", scroll_endy+1);
+		printf("[%d;1H±Ó¼Ó¸»(/SAY) Á¢¼ÓÀÚ(/LIST) Çàµ¿(/ME) ÃÊ´ë(/INVITE) µµ¿ò¸»(/HELP) ÅğÀå(/BYE)[K", scroll_endy+1);
 		printf("[%d;1H´ëÈ­ >> [K",scroll_endy+2);
 
 		char user[9072];
 		snprintf(user, sizeof(user), "%s(%s)", nickname, userid);
 
-		int maxlen = 75 - (int)strlen(user);
+		// ¸»ÇÑ ½Ã°¢ "[21:30] " (8 Ä­) ÀÌ ºÙ¾îµµ 80 Ä­À» ³ÑÁö ¾Ê°Ô
+		int maxlen = 67 - (int)strlen(user);
 		if (maxlen < 1) maxlen = 1;
 		line_input(input, maxlen);
 		if (strlen(input) <= 0 ) continue;
@@ -453,6 +534,12 @@ int main(int argc,char *argv[])
 			if ( args.size() >= 3 ) {
 				send_msg(sock_fd, input);
 			}
+			continue;
+		}
+
+		if (!strcasecmp(args[0].c_str(), "/invite")) {
+			if ( args.size() >= 2 ) invite(args[1]);
+			else print_message((char*)"\r\n\033[=7F[ÃÊ´ë] /INVITE ¾ÆÀÌµğ\033[=15F\r\n");
 			continue;
 		}
 

@@ -85,6 +85,11 @@ static void print_telegrams(std::vector<std::map<std::string, std::string> > &ro
 // 프롬프트를 띄우기 전: 다른 화면에 있는 동안 온 전보
 void telegram_show_pending(void)
 {
+	// 대화방 같은 다른 화면용 알림은 프롬프트로 돌아왔으니 지운다 (전보/쪽지는 여기서 다시 보여 줌)
+	char notice[1024];
+	snprintf(notice, sizeof(notice), "%s/tmp/%s.notice", getenv("HANULSO"), tty);
+	unlink(notice);
+
 	telegram_signal = 0;
 	last_poll = time(NULL);
 	std::vector<std::map<std::string, std::string> > rows = fetch_telegrams();
@@ -255,8 +260,11 @@ void telegram_command(const std::string &cmd)
 		done();
 		return;
 	}
-	for ( unsigned int i = 0; i < pids.size(); i++ ) {
-		kill(pids[i], SIGUSR1);
-	}
+	// 받는 사람 화면에 바로 (프롬프트에서는 전보로, 대화방 안이면 대화창에)
+	bool exist2;
+	std::map<std::string, std::string> mu = database::user_info(login_user_id, &exist2);
+	std::string my_nick = display_text(mu["NICK_NAME"]);
+	if ( my_nick.empty() ) my_nick = display_text(me);
+	notify_online(to, "★ 전보 ─ " + my_nick + ": " + display_text(text), true);
 	printf("\r\n" T_CYAN "%s" T_WHITE " 님께 전보를 보냈습니다.\r\n", nick.c_str());
 }

@@ -4,9 +4,9 @@ bool create_chatt_room(char *table_name);
 void clean_chatt_room(char *table_name);
 
 bool open_chatt_room(int port, int max_user, char *greeting);
-bool connect_chatt_room(int port);
+bool connect_chatt_room(int port, int room_no);
 
-void state_chatt_room(int port, std::string &author, int &user_count);
+void state_chatt_room(int port, std::string &author, int &user_count, int *max_user = NULL, std::string *title = NULL);
 
 // 늘 열려 있는 '만남의 광장' (0 번 방). 아무도 없어도 닫히지 않고 방장이 없다.
 #define PLAZA_PORT		5999
@@ -125,8 +125,15 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 				title << string_truncate((char*)row[std::string("TITLE")].c_str(), 33, "...");
 
 				int user_count = 0;
-				std::string author;
-				state_chatt_room(port_no, author, user_count);
+				std::string author, room_title;
+				int room_max = 0;
+				state_chatt_room(port_no, author, user_count, &room_max, &room_title);
+				// 방장이 /MAX, /TITLE 로 바꾼 것
+				if ( room_max > 0 ) max_user = room_max;
+				if ( !room_title.empty() ) {
+					title.str("");
+					title << string_truncate((char*)room_title.c_str(), 33, "...");
+				}
 
 				char buf[1024];
 				sprintf(buf, "%2d/%2d", user_count, max_user);
@@ -177,7 +184,9 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 
 					int user_count = 0;
 					std::string author;
-					state_chatt_room(port, author, user_count);
+					int room_max = 0;
+					state_chatt_room(port, author, user_count, &room_max);
+					if ( room_max > 0 ) max_user = room_max;		// 방장이 /MAX 로 바꾼 것
 
 					if ( user_count+1 > max_user ) {
 						printf("\r\n대화방 허용 인원이 꽉 찼습니다.");
@@ -212,7 +221,7 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 
 						if ( connect == true ) {
 							// 대화방 접속
-							if ( connect_chatt_room(port) == false ) {
+							if ( connect_chatt_room(port, room_no) == false ) {
 								printf("\r\n대화방 접속에 실패 하였습니다.");
 								printf("\r\n[Enter] 를 누르세요.");
 								press_enter();
@@ -266,8 +275,8 @@ void clean_chatt_room(char *table_name)
 	}
 }
 
-// 대화방의 상태
-void state_chatt_room(int port, std::string &author, int &user_count)
+// 대화방의 상태 (chatt/<포트>.room : "방장,인원,허용인원" 그리고 다음 줄에 /TITLE 로 바꾼 주제)
+void state_chatt_room(int port, std::string &author, int &user_count, int *max_user, std::string *title)
 {
 	char buf[1024];
 	sprintf(buf, "%s/chatt/%d.room", getenv("HANULSO"), port);
@@ -275,12 +284,17 @@ void state_chatt_room(int port, std::string &author, int &user_count)
 	// .room 파일이 없거나 비어 있으면 0명
 	author = "";
 	user_count = 0;
+	if ( max_user ) *max_user = 0;
+	if ( title ) *title = "";
 
 	std::string txt = read_file(buf);
 	if ( txt.length() > 0 ) {
-		std::vector<std::string> info = split_string(txt, ',');
+		std::vector<std::string> lines = split_string(txt, '\n');
+		std::vector<std::string> info = split_string(lines[0], ',');
 		if ( info.size() >= 1 ) author = info[0];
 		if ( info.size() >= 2 ) user_count = atoi(info[1].c_str());
+		if ( info.size() >= 3 && max_user ) *max_user = atoi(info[2].c_str());
+		if ( lines.size() >= 2 && title ) *title = display_text(lines[1]);
 	}
 }
 
@@ -365,7 +379,7 @@ bool create_chatt_room(char *table_name)
 		ret = open_chatt_room(port, atoi(max_user), greeting);
 		if ( ret ) {
 			// 대화방 접속
-			ret = connect_chatt_room(port);
+			ret = connect_chatt_room(port, room_no);
 			if ( ret == false ) {
 				printf("\r\n대화방 접속에 실패 하였습니다.");
 				printf("\r\n[Enter] 를 누르세요.");
@@ -408,7 +422,7 @@ bool open_chatt_room(int port, int max_user, char *greeting)
 	return true;
 }
 
-bool connect_chatt_room(int port)
+bool connect_chatt_room(int port, int room_no)
 {
 	// 대화방 서버에 접속
 	bool exist;
@@ -416,8 +430,9 @@ bool connect_chatt_room(int port)
 	const char *nick_name = user["NICK_NAME"].c_str();
 
 	char cmd[1024];
-	snprintf(cmd, sizeof(cmd), "%s/bin/chattclient \"127.0.0.1\" \"%d\" %s %s",
-			getenv("HANULSO"), port, shell_quote(login_user_id).c_str(), shell_quote(nick_name).c_str());
+	// 방 번호는 /INVITE 전보에 쓴다
+	snprintf(cmd, sizeof(cmd), "%s/bin/chattclient \"127.0.0.1\" \"%d\" %s %s \"%d\"",
+			getenv("HANULSO"), port, shell_quote(login_user_id).c_str(), shell_quote(nick_name).c_str(), room_no);
 	int a = system(cmd);
 
 	// 대화방 클라이언트가 비정상 종료돼도 스크롤 영역이 남지 않도록 해제

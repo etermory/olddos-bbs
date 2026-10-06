@@ -217,6 +217,8 @@ void write_memo(std::string to, std::string title)
 		printf("\r\n\r\n   \033[=12F쪽지를 보내지 못했습니다. (%s)\033[=15F", mysql_error(mysql));
 	} else {
 		printf("\r\n\r\n   \033[=14F%s\033[=15F 님에게 쪽지를 보냈습니다.", nick_of(to).c_str());
+		// 받는 사람이 대화방 같은 곳에 있으면 거기서 알린다 (프롬프트에서는 새 쪽지 알림이 따로 나옴)
+		notify_online(to, "◆ 새 쪽지 ─ " + nick_of(user_id) + " 님이 쪽지를 보냈습니다. (MEMO 로 읽기)", false);
 	}
 	wait_enter();
 }
