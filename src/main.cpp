@@ -275,6 +275,7 @@ void show_menu(pugi::xml_node node)
 		print_file(header);
 
 		std::string text = node.attribute("text").value();
+		current_menu = node;		// [articles_번호] 태그용
 		print_file(text.c_str());
 
 		char *footer = (char*)(node.child("footer").child_value());

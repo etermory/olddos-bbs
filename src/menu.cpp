@@ -3,6 +3,9 @@
 std::vector<std::map<std::string, pugi::xml_node> > go_menus;
 std::vector<std::string> table_names;
 
+// 지금 보여 주는 메뉴 (화면 파일의 [articles_번호] 태그가 이 메뉴의 번호를 찾는다)
+pugi::xml_node current_menu;
+
 // go 메뉴가 정의되어 있는 xml 노드를 파싱한다.
 void read_go_menus(pugi::xml_node node, 
 		std::vector<std::map<std::string, pugi::xml_node> > &list)

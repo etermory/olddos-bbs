@@ -163,6 +163,7 @@ void read_settings(std::string cfg_path);
 // ----------------------------------------------------------
 // 메뉴 파일 정보 읽음
 extern std::vector<std::map<std::string, pugi::xml_node> > go_menus;
+extern pugi::xml_node current_menu;
 extern std::vector<std::string> table_names;
 
 void read_go_menus(pugi::xml_node node, std::vector<std::map<std::string, pugi::xml_node> > &list);

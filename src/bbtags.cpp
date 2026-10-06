@@ -376,12 +376,71 @@ static std::string random_tip(void)
 	return tip;
 }
 
+// 게시판 글 수 (60 초 동안 기억)
+static long board_count(const std::string &table)
+{
+	static std::map<std::string, std::pair<time_t, long> > cache;
+	std::map<std::string, std::pair<time_t, long> >::iterator it = cache.find(table);
+	if ( it != cache.end() && time(NULL) - it->second.first < 60 ) return it->second.second;
+	bool ok;
+	std::string v = database::fetch((char*)("SELECT COUNT(*) FROM " + table).c_str(), &ok);
+	long n = ok ? atol(v.c_str()) : 0;
+	cache[table] = std::make_pair(time(NULL), n);
+	return n;
+}
+
+// 메뉴 안의 게시판 글 수를 모두 더한다 (boards: 게시판 수)
+static long menu_articles(pugi::xml_node node, int *boards)
+{
+	long total = 0;
+	for ( pugi::xml_node c = node.first_child(); c; c = c.next_sibling() ) {
+		if ( strcmp(c.name(), "item") ) continue;
+		if ( !strcmp(c.attribute("type").value(), "board") && !c.attribute("id").empty() ) {
+			total += board_count(c.attribute("id").value());
+			(*boards)++;
+		} else if ( !strcmp(c.attribute("type").value(), "menu") ) {
+			total += menu_articles(c, boards);
+		}
+	}
+	return total;
+}
+
+// 3 칸 안으로: 999 까지는 그대로, 그보다 많으면 1k, 12k ...
+static std::string compact_count(long n)
+{
+	char buf[32];
+	if ( n < 1000 ) snprintf(buf, sizeof(buf), "%ld", n);
+	else snprintf(buf, sizeof(buf), "%ldk", n / 1000 > 999 ? 999 : n / 1000);
+	return buf;
+}
+
+// [articles_번호] : 지금 메뉴에서 그 번호 게시판의 글 수 (하위 메뉴면 그 안의 게시판을 모두 더함)
+// 게시판이 없는 메뉴/프로그램이면 빈칸
+static std::string articles_of(const std::string &door)
+{
+	if ( !current_menu ) return "";
+	for ( pugi::xml_node c = current_menu.first_child(); c; c = c.next_sibling() ) {
+		if ( strcmp(c.name(), "item") || door != c.attribute("door").value() ) continue;
+		int boards = 0;
+		long n = 0;
+		if ( !strcmp(c.attribute("type").value(), "board") && !c.attribute("id").empty() ) {
+			n = board_count(c.attribute("id").value());
+			boards = 1;
+		} else if ( !strcmp(c.attribute("type").value(), "menu") ) {
+			n = menu_articles(c, &boards);
+		}
+		return boards > 0 ? compact_count(n) : "";
+	}
+	return "";
+}
+
 // replace_bbcode 가 모르는 태그. 모르는 이름이면 found = false (태그를 그대로 둔다)
 std::string bbtag_value(const std::string &name, bool *found)
 {
 	std::string out;
 	*found = true;
 	if ( user_value(name, out) ) return out;
+	if ( name.compare(0, 9, "articles_") == 0 ) return articles_of(name.substr(9));
 
 	if ( name == "since_days" ) return since_days();
 	if ( name == "random_tip" ) return random_tip();
