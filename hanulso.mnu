@@ -101,6 +101,11 @@
 			<item type="program" prog="rain" go="rain" door="4" access_level="1">
 				<name>산성비 (rain)</name>
 			</item>
+
+			<!-- 오목 (사람끼리 / 컴퓨터와) -->
+			<item type="program" prog="omok" go="omok" door="5" access_level="1">
+				<name>오목 (omok)</name>
+			</item>
 		</item>
 
 		
