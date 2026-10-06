@@ -1,2 +1,4 @@
 #!/bin/bash
-$HANULSO/bin/chattserver "$1" "$2" "$3" &
+# bin/startchattserver <port> <max_user> <greeting> [permanent]
+# setsid: 방을 만든 사람이 통신을 끊어도 (SIGHUP) 방이 닫히지 않게
+setsid $HANULSO/bin/chattserver "$1" "$2" "$3" $4 < /dev/null > /dev/null 2>&1 &

@@ -408,7 +408,7 @@ int main(int argc,char *argv[])
 	
 	while (1) {
 		char input[1024];
-		printf("[%d;1H±Ó¼Ó¸»(/SAY) Á¢¼ÓÀÚÁ¶È¸(/LIST) ÅğÀå(/BYE) ´ëÈ­¹æÁ¾·á(/QUIT)[K", scroll_endy+1);
+		printf("[%d;1H±Ó¼Ó¸»(/SAY) Á¢¼ÓÀÚ(/LIST) Çàµ¿(/ME) ³îÀÌ¡¤µµ¿ò¸»(/HELP) ÅğÀå(/BYE)[K", scroll_endy+1);
 		printf("[%d;1H´ëÈ­ >> [K",scroll_endy+2);
 
 		char user[9072];
@@ -453,6 +453,12 @@ int main(int argc,char *argv[])
 			if ( args.size() >= 3 ) {
 				send_msg(sock_fd, input);
 			}
+			continue;
+		}
+
+		// ±× ¹ÛÀÇ '/' ¸í·É (/ME, /ÁÖ»çÀ§, /³¡¸»ÀÕ±â, /ÄûÁî, /HELP ...) Àº ¼­¹ö°¡ Ã³¸®
+		if (input[0] == '/') {
+			send_msg(sock_fd, input);
 			continue;
 		}
 

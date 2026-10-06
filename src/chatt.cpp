@@ -8,6 +8,27 @@ bool connect_chatt_room(int port);
 
 void state_chatt_room(int port, std::string &author, int &user_count);
 
+// 늘 열려 있는 '만남의 광장' (0 번 방). 아무도 없어도 닫히지 않고 방장이 없다.
+#define PLAZA_PORT		5999
+#define PLAZA_MAX_USER	100
+
+static void ensure_plaza(char *table_name)
+{
+	if ( !check_used_port(PLAZA_PORT) ) {
+		char buf[1024];
+		snprintf(buf, sizeof(buf), "%s/bin/startchattserver %d %d %s permanent > /dev/null",
+				getenv("HANULSO"), PLAZA_PORT, PLAZA_MAX_USER,
+				shell_quote("만남의 광장에 오신 것을 환영합니다.").c_str());
+		system(buf);
+		// 서버가 포트를 열 때까지 잠깐
+		for ( int i = 0; i < 10 && !check_used_port(PLAZA_PORT); i++ ) usleep(100000);
+	}
+	if ( !database::exist_chatt_room(table_name, 0) ) {
+		database::add_chatt_room(table_name, 0, PLAZA_PORT, (char*)"", (char*)"", PLAZA_MAX_USER,
+				(char*)"만남의 광장 - 누구나 들어와서 이야기해요");
+	}
+}
+
 void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 {
 	char *table_name = (char*)(node.attribute("id").value());
@@ -28,6 +49,9 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 		return;
 	
 	int offset = 0;
+
+	// 만남의 광장은 늘 열어 둔다
+	ensure_plaza(table_name);
 
 	// 사용되지 않는 포트의 대화방은 삭제
 	clean_chatt_room(table_name);
@@ -76,7 +100,8 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 		
 		char sql[1024];
 		// 대화방 개설 순서의 내림차순으로 보여줌
-		sprintf(sql, "SELECT * FROM %s ORDER BY ROOM_NO DESC LIMIT %d, %d", 
+		// (0 번 만남의 광장은 맨 위)
+		sprintf(sql, "SELECT * FROM %s ORDER BY ROOM_NO = 0 DESC, ROOM_NO DESC LIMIT %d, %d",  
 				table_name, offset, show_max_line);
 		
 		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows(sql);
@@ -110,6 +135,7 @@ void show_chatt_rooms(pugi::xml_node node, bool *goto_top)
 				std::map<std::string, std::string> user = 
 					database::user_info((char*)author.c_str(), &exist);
 				const char *nick_name = user["NICK_NAME"].c_str();
+				if ( author.empty() ) nick_name = "누구나";		// 방장이 없는 방 (만남의 광장)
 
 				printf("%5s %s %s %s %s",
 					room_no,
