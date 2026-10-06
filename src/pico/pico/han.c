@@ -10,8 +10,58 @@
  */
 
 #include	"headers.h"
+#include	<sys/types.h>
+#include	<sys/time.h>
+#include	<unistd.h>
 
 #define	HAN_LEAD(c)	((c) >= 0x81 && (c) <= 0xFE)
+
+/*
+ * 미리 읽었다가 돌려놓은 입력 한 바이트 (없으면 -1).
+ * osdep 의 read_one_char / simple_ttgetc / input_ready 가 먼저 이것을 본다.
+ */
+int han_pushback = -1;
+
+
+/*
+ * 이야기 같은 한글 통신 프로그램은 커서 왼쪽이 한글이면 백스페이스를 두 번
+ * (한글 바이트 수만큼) 보낸다. 여기서는 백스페이스 한 번에 한글 한 글자를 지우므로,
+ * 한글을 지운 바로 뒤(0.2 초 안)에 따라온 백스페이스 하나는 버린다.
+ * 이야기는 두 바이트를 9600bps 직렬 포트 흉내로 틱(55ms) 마다 내보내 사이가 벌어진다.
+ *
+ * xterm 같은 단말기는 한 번만 보내고, 누르고 있으면 30ms 마다 되풀이하므로
+ * 이야기처럼 TERM 이 ansi 인 접속에서만 한다 (PICO_HANBS=1/0 으로 켜고 끌 수도).
+ */
+static void
+han_eat_twin_bs()
+{
+    static int	   twin = -1;
+    fd_set	   r;
+    struct timeval tv;
+    unsigned char  c;
+
+    if(twin < 0){
+	char *e = getenv("PICO_HANBS"), *t = getenv("TERM");
+
+	if(e)
+	  twin = (*e == '1');
+	else
+	  twin = (t && (t[0] == 'a' || t[0] == 'A') && (t[1] == 'n' || t[1] == 'N')
+		  && (t[2] == 's' || t[2] == 'S') && (t[3] == 'i' || t[3] == 'I'));
+    }
+
+    if(!twin || han_pushback >= 0)
+      return;
+
+    FD_ZERO(&r);
+    FD_SET(0, &r);
+    tv.tv_sec  = 0;
+    tv.tv_usec = 200000;
+    if(select(1, &r, NULL, NULL, &tv) > 0 && read(0, &c, 1) == 1){
+	if(c != 0x08 && c != 0x7F)
+	  han_pushback = c;		/* 다른 글자면 돌려놓는다 */
+    }
+}
 
 
 /* 줄 lp 의 o 번째 바이트가 두 바이트 글자의 둘째 바이트인가 */
@@ -246,6 +296,9 @@ int f, n;
 
 	if(backdel(f, k) == FALSE)
 	  return(FALSE);
+
+	if(k == 2)
+	  han_eat_twin_bs();
     }
 
     return(TRUE);

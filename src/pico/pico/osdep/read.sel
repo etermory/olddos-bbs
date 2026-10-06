@@ -21,6 +21,9 @@ input_ready(time_out)
 
      fflush(stdout);
 
+     if(han_pushback >= 0)		/* 돌려놓은 바이트가 있다 (han.c) */
+       return(READY_TO_READ);
+
      if(time_out > 0){
          /* Check to see if there are bytes to read with a timeout */
 	 FD_ZERO(&readfds);
@@ -69,6 +72,12 @@ read_one_char()
 {
      int	    res;
      unsigned char  c;
+
+     if(han_pushback >= 0){		/* 돌려놓은 바이트 (han.c) */
+	 c = han_pushback;
+	 han_pushback = -1;
+	 return((int)c);
+     }
 
      res = read(STDIN_FD, &c, 1);
 

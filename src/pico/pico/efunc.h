@@ -346,6 +346,7 @@ extern	int forwhchar PROTO((int, int));
 extern	int backhchar PROTO((int, int));
 extern	int forwhdel PROTO((int, int));
 extern	int backhdel PROTO((int, int));
+extern	int han_pushback;
 extern	int backword PROTO((int, int));
 extern	int forwword PROTO((int, int));
 extern	int fillpara PROTO((int, int));
