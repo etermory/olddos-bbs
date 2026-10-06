@@ -250,6 +250,10 @@ int main(int argc, char **argv)
 	// ÀÎµ¦½º°¡ ¾øÀ¸¸é ¸¸µç´Ù (Ã³À½ ÇÑ ¹ø¸¸)
 	database::ensure_indexes(table_names);
 
+	// ²¿¸®¸» Å×ÀÌºí, »õ ±Û/°Ë»ö¿¡¼­ ¾µ ¸Þ´º »Ñ¸®
+	comments_init();
+	menu_root = doc.document_element();
+
 #if 0
 	// °øÁö º¸¿©ÁÖ±â
 	pugi::xml_node notice = find_node_by_id(root_node, "notice");
@@ -588,7 +592,10 @@ void show_board(pugi::xml_node node)
 				title << row[std::string("TITLE")];
 
 				// ³¯Â¥¸¦ YY-MM-DD ·Î ´Ã¸° ¸¸Å­ Á¦¸ñÀ» ÁÙÀÓ (ÇÑ ÁÙ 79 ÀÚ)
-				std::string title2 = string_truncate(title.str(), 36, "");
+				// ²¿¸®¸»ÀÌ ÀÖÀ¸¸é Á¦¸ñ µÚ¿¡ [¼ö]
+				int ccount = comment_count(table_name, atoi(no));
+				std::string csuffix = ccount > 0 ? " [" + TO_STRING(ccount) + "]" : "";
+				std::string title2 = string_truncate(title.str(), 36 - csuffix.size(), "");
 				
 				printf("%5s ", no);
                 if (exist == false) printf("[=1G[=7F");
@@ -624,6 +631,7 @@ void show_board(pugi::xml_node node)
 				printf("%s", title2.c_str());
 				// ´ä±ÛÀÌ³ª Á¶È¸¼ö°¡ 20ÀÌ ³ÑÀ»°æ¿ì Èò»öÀ¸·Î º¹±¸
 				if(color_changed) printf("[=1G[=15F");
+				if(!csuffix.empty()) printf("[=11F%s[=15F", csuffix.c_str());
 				printf("\r\n");
 			}
 		}
@@ -900,6 +908,7 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
 	// ÇöÀç ÆäÀÌÁö
 	int page_no = 1;
 	int show_max_attach = 2;
+	bool jump_last = false;		// ²¿¸®¸»À» ´Þ¾ÒÀ¸¸é ¸¶Áö¸· ÂÊÀ¸·Î
 
 	while (1) {
 		printf(ESC_CLEAR);
@@ -924,6 +933,14 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
         std::string txt = std::string(row[std::string("CONTENT")].c_str());
         txt = trim(txt);
         std::vector<std::string> lines = split_string_with_width(txt, '\n', 80);
+        // º»¹® µÚ¿¡ ²¿¸®¸»
+        std::vector<std::string> clines = comment_lines(table_name, no);
+        lines.insert(lines.end(), clines.begin(), clines.end());
+        if ( jump_last && lines.size() > 0 ) {
+            offset = ((lines.size() - 1) / show_max_line) * show_max_line;
+            page_no = offset / show_max_line + 1;
+            jump_last = false;
+        }
 
 
 		// ÀüÃ¼ ÆäÀÌÁö ¼ö
@@ -1379,6 +1396,28 @@ void show_article(char *table_name, int board_page_count, int board_page_no,
 				return;
 			}
 
+			// ²¿¸®¸» ´Þ±â (CO ³»¿ë, CO ¸¸ Ä¡¸é ¹¯´Â´Ù)
+			if ( !strcasecmp(args[0].c_str(), "co") ) {
+				std::string c = cmd;
+				std::string::size_type sp = c.find(' ');
+				if ( add_comment(table_name, no, sp == std::string::npos ? "" : c.substr(sp + 1)) ) {
+					jump_last = true;
+				}
+			}
+
+			// ²¿¸®¸» Áö¿ì±â (CD ¹øÈ£)
+			if ( !strcasecmp(args[0].c_str(), "cd") ) {
+				if ( args.size() > 1 && is_number(args[1]) ) {
+					delete_comment(table_name, no, atoi(args[1].c_str()));
+				} else {
+					printf("\r\nÁö¿ï ²¿¸®¸» ¹øÈ£ >> ");
+					char buf[10];
+					line_input(buf, 3);
+					if ( strlen(buf) > 0 && is_number(buf) ) delete_comment(table_name, no, atoi(buf));
+				}
+				jump_last = true;
+			}
+
 			// ÃßÃµ ÇÏ±â
 			if ( !strcasecmp(args[0].c_str(), "ok") ) {
 				if ( database::check_same_author(table_name, no, login_user_id) ) {
@@ -1595,7 +1634,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 	printf("¼±ÅÃ(µµ¿ò¸»[H]) >> ");
 	// ÀÔ·ÂÀ» ±â´Ù¸®´Â µ¿¾È Àüº¸°¡ ¿À¸é ¹Ù·Î ¶ç¿î´Ù
 	telegram_live_begin("¼±ÅÃ(µµ¿ò¸»[H]) >> ");
-	line_input(cmd, 30);
+	line_input(cmd, 60);	// CO {²¿¸®¸»} µµ ÇÑ ¹ø¿¡
 	telegram_live_end();
 		
 	std::vector<std::string> args = split_string(std::string(cmd), ' ');
@@ -1662,6 +1701,16 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 				printf("\r\n[Enter] ¸¦ ´©¸£¼¼¿ä.");
 				press_enter();
 			}
+
+		// »õ ±Û ¸ð¾Æº¸±â
+		} else if ( !strcasecmp(args[0].c_str(), "new") ) {
+			show_new_articles();
+
+		// ÀüÃ¼ °Ô½ÃÆÇ °Ë»ö (FIND ´Ü¾î, FIND @´Ð³×ÀÓ)
+		} else if ( !strcasecmp(args[0].c_str(), "find") ) {
+			std::string c = cmd;
+			std::string::size_type sp = c.find(' ');
+			search_all_boards(sp == std::string::npos ? "" : c.substr(sp + 1));
 
 		// Àüº¸
 		} else if ( !strcasecmp(args[0].c_str(), "to") ) {
@@ -1853,8 +1902,9 @@ bool delete_article(char *table_name, int no)
 	// Ã·ºÎ ÆÄÀÏ »èÁ¦
 	delete_attachment_all(table_name, no);
 
-	// ±Û »èÁ¦
+	// ±Û »èÁ¦ (²¿¸®¸»µµ)
 	database::delete_article(table_name, no);
+	delete_comments_of(table_name, no);
 
 	return true;
 }

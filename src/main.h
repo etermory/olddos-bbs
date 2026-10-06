@@ -194,6 +194,17 @@ void telegram_live_begin(const char *prompt_text);
 void telegram_live_end(void);
 void telegram_command(const std::string &cmd);
 
+// 꼬리말, 새 글 모아보기, 전체 게시판 검색 (board_extra.cpp)
+extern pugi::xml_node menu_root;
+void comments_init(void);
+int comment_count(const char *table, int no);
+std::vector<std::string> comment_lines(const char *table, int no);
+bool add_comment(const char *table, int no, std::string text);
+void delete_comment(const char *table, int no, int index);
+void delete_comments_of(const char *table, int no);
+void show_new_articles(void);
+void search_all_boards(std::string word);
+
 // 한줄 낙서장 (graffiti.cpp)
 void graffiti_login_info(void);
 void show_graffiti(const char *user_id, bool is_admin);
