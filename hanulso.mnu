@@ -80,6 +80,18 @@
 			<item type="program" prog="today" go="today" door="8" access_level="1">
 				<name>오늘은 무슨 날 (today)</name>
 			</item>
+
+			<item type="program" prog="lotto" go="lotto" door="9" access_level="1">
+				<name>로또 당첨번호 (lotto)</name>
+			</item>
+
+			<item type="program" prog="coin" go="coin" door="10" access_level="1">
+				<name>코인 시세 (coin)</name>
+			</item>
+
+			<item type="program" prog="sun" go="sun" door="11" access_level="1">
+				<name>해와 달 (sun)</name>
+			</item>
 		</item>
 
 		<item type="menu" text="txt/game_info.txt" go="game" door="7">
