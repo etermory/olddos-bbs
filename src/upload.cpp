@@ -15,6 +15,8 @@ static std::string safe_name(const char *s)
 	}
 	if ( r.empty() || r == "." || r == ".." )
 		r = "xmodem.bin";
+	if ( r[0] == '-' )                  // sz / gkermit 가 옵션으로 읽지 않게
+		r[0] = '_';
 	return r;
 }
 

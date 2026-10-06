@@ -58,7 +58,8 @@ bool file_download(int protocol, char *tmp_filename, char *filename)
 	fflush(stdout);
 
 	// zmodem 프로토콜 실행
-    std::string qname = shell_quote(filename);
+    // "./" 를 붙여 '-' 로 시작하는 이름도 옵션이 아닌 파일로 (sz / gkermit 은 경로를 떼고 이름만 알린다)
+    std::string qname = shell_quote(std::string("./") + filename);
     if (protocol == 1) {
         snprintf(buf, sizeof(buf), "sz --xmodem -e %s", qname.c_str());
     } else if(protocol == 2) {

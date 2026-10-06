@@ -332,7 +332,7 @@ void show_menu(pugi::xml_node node)
 							}
 #else
                             char buf[1024];
-                            sprintf(buf, "%s/bin/weather \"%s\"", getenv("HANULSO"), host_name);
+                            snprintf(buf, sizeof(buf), "%s/bin/weather %s", getenv("HANULSO"), shell_quote(host_name).c_str());
                             fflush(stdout);
                             system(buf);
 #endif
@@ -1582,7 +1582,7 @@ bool jump_go(std::string go)
 				}
 #else
 				char buf[1024];
-                sprintf(buf, "%s/bin/weather \"%s\"", getenv("HANULSO"), host_name);
+                snprintf(buf, sizeof(buf), "%s/bin/weather %s", getenv("HANULSO"), shell_quote(host_name).c_str());
 				fflush(stdout);
 				system(buf);
 #endif
@@ -1710,7 +1710,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 		} else if ( !strcasecmp(args[0].c_str(), "sysop") ) {
 			if ( login_user_is_admin ) {
 				char buf[1024];
-				sprintf(buf, "%s/bin/sysop \"%s\"", getenv("HANULSO"), tty);
+				snprintf(buf, sizeof(buf), "%s/bin/sysop %s", getenv("HANULSO"), shell_quote(tty).c_str());
 				fflush(stdout);
 				system(buf);
 
