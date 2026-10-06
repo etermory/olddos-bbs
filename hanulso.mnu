@@ -92,6 +92,14 @@
 			<item type="program" prog="sun" go="sun" door="11" access_level="1">
 				<name>해와 달 (sun)</name>
 			</item>
+
+			<item type="program" prog="worldtime" go="worldtime" door="12" access_level="1">
+				<name>세계 시각 (worldtime)</name>
+			</item>
+
+			<item type="program" prog="english" go="english" door="13" access_level="1">
+				<name>오늘의 영어 한 문장 (english)</name>
+			</item>
 		</item>
 
 		<item type="menu" text="txt/game_info.txt" go="game" door="7">
