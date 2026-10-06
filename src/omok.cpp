@@ -43,6 +43,11 @@ static int board[N][N];
 static int last_x = -1, last_y = -1;
 static std::string moves;		// 둔 수들: 한 수에 두 글자 ('a'+x, 'a'+y)
 static int cur_x = 7, cur_y = 7;	// 커서
+// 커서는 교차점에 직접 그린다 (빈 칸은 노란 ╋, 돌은 반전). 터미널 커서는 아래 입력 줄에 둔다.
+// (판의 한 칸이 두 글자 폭이라 터미널 커서로는 교차점의 왼쪽 반에만 걸린다)
+static bool cursor_on = false;			// 내가 두는 판에서만
+static int shown_x = -1, shown_y = -1;	// 지금 커서가 그려진 곳
+static int park_col = 2;				// 터미널 커서를 둘 입력 줄의 칸
 
 // 지금 하는 대국 (사람끼리). host_close 에서 기다리던 방을 닫으려고
 static int current_game = 0;
@@ -399,7 +404,11 @@ static void draw_cell(int x, int y)
 {
 	at(cell_row(y), cell_col(x));
 	int s = board[y][x];
-	if ( s == NONE ) {
+	bool cursor = cursor_on && x == cur_x && y == cur_y;
+	if ( cursor ) {
+		if ( s == NONE ) printf(O_YELLOW "╋");
+		else printf("\033[7m%s%s\033[0m", s == STONE_B ? O_BLACK : O_WHITE, (x == last_x && y == last_y) ? "◎" : "●");
+	} else if ( s == NONE ) {
 		const char *g;
 		if ( y == 0 ) g = (x == 0) ? "┌" : (x == N - 1) ? "┐" : "┬";
 		else if ( y == N - 1 ) g = (x == 0) ? "└" : (x == N - 1) ? "┘" : "┴";
@@ -423,6 +432,10 @@ static void draw_board(void)
 		for ( int x = 0; x < N; x++ ) draw_cell(x, y);
 	}
 	printf(O_WHITE);
+	if ( cursor_on ) {
+		shown_x = cur_x;
+		shown_y = cur_y;
+	}
 }
 
 // 오른쪽 안내 칸의 한 줄 (지우고 쓴다)
@@ -437,10 +450,26 @@ static void panel(int row, const char *fmt, ...)
 	printf("\033[K%s" O_WHITE, buf);
 }
 
+// 커서가 옮겨졌으면 다시 그리고, 터미널 커서는 입력 줄로
 static void place_cursor(void)
 {
-	at(cell_row(cur_y), cell_col(cur_x));
+	if ( cursor_on && (shown_x != cur_x || shown_y != cur_y) ) {
+		int ox = shown_x, oy = shown_y;
+		shown_x = cur_x;
+		shown_y = cur_y;
+		if ( ox >= 0 ) draw_cell(ox, oy);
+		draw_cell(cur_x, cur_y);
+	}
+	at(INPUT_ROW, park_col);
 	fflush(stdout);
+}
+
+// 커서를 보이거나 감춘다 (구경, 기다리는 방에서는 감춤)
+static void show_cursor(bool on)
+{
+	cursor_on = on;
+	shown_x = shown_y = -1;
+	park_col = 2;
 }
 
 // ------------------------------------------------------------------
@@ -466,7 +495,11 @@ static void draw_input(keyreader &k)
 		return;
 	}
 	printf("\033[K");
-	if ( !k.coord.empty() ) printf(" " O_YELLOW "좌표 >>" O_WHITE " %s", k.coord.c_str());
+	park_col = 2;
+	if ( !k.coord.empty() ) {
+		printf(" " O_YELLOW "좌표 >>" O_WHITE " %s", k.coord.c_str());
+		park_col = 1 + (int)strlen(" 좌표 >> ") + k.coord.size();
+	}
 	place_cursor();
 }
 
@@ -591,6 +624,7 @@ static void play_ai(int level, int me)
 	int ai = (me == STONE_B) ? STONE_W : STONE_B;
 	reset_board();
 	cur_x = cur_y = 7;
+	show_cursor(true);
 	keyreader k;
 	k.esc = 0; k.han_lead = -1; k.chatting = false; k.line_mode = false;
 
@@ -667,7 +701,8 @@ static void play_ai(int level, int me)
 		}
 	}
 
-	place_cursor();
+	show_cursor(false);
+	draw_cell(cur_x, cur_y);
 	if ( winner == me ) add_stat(user_id, "AI_WIN");
 	else if ( winner == ai ) add_stat(user_id, "AI_LOSE");
 	panel(9, "");
@@ -816,6 +851,7 @@ static void play_online(int no, int me)
 	chat_lines.clear();
 	chat_last = 0;
 	cur_x = cur_y = 7;
+	show_cursor(me != NONE);
 	keyreader k;
 	k.esc = 0; k.han_lead = -1; k.chatting = false; k.line_mode = false;
 
@@ -936,6 +972,7 @@ static void play_online(int no, int me)
 
 	// 결과
 	current_game = 0;
+	show_cursor(false);
 	g = load_game(no);
 	if ( g.ok && g.status == 2 ) {
 		apply_moves(g.moves);
@@ -965,6 +1002,7 @@ static void make_room(void)
 	current_game = no;
 	waiting_room = true;
 	reset_board();
+	show_cursor(false);
 
 	keyreader k;
 	k.esc = 0; k.han_lead = -1; k.chatting = false; k.line_mode = false;
