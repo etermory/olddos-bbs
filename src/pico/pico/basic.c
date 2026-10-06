@@ -425,7 +425,7 @@ register LINE   *dlp;
 	++dbo;
     }
 
-    return (dbo);
+    return (han_align(dlp, dbo));	/* 한글 가운데면 글자 처음으로 */
 }
 
 
@@ -738,13 +738,13 @@ int f, n;
     if(!curwp->w_markp){
         curwp->w_markp = curwp->w_dotp;
         curwp->w_marko = curwp->w_doto;
-	emlwrite("Mark Set", NULL);
+	emlwrite("블록 시작을 표시했습니다. 커서를 옮긴 뒤 ^K 로 잘라내기", NULL);
     }
     else{
 	/* clear inverse chars between here and dot */
 	markregion(0);
 	curwp->w_markp = NULL;
-	emlwrite("Mark UNset", NULL);
+	emlwrite("블록 표시를 풀었습니다", NULL);
     }
 
 #ifdef	_WINDOWS

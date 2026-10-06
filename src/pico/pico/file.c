@@ -73,7 +73,7 @@ int f, n;
 	}
 
 	if((gmode & MDTREE) && !in_oper_tree(fname)){
-	  emlwrite("Can't read file from outside of %s", opertree);
+	  emlwrite("%s 밖의 파일은 읽을 수 없습니다", opertree);
 	  return(0);
 	}
 
@@ -461,22 +461,24 @@ int     rename;         /* don't rename if reading from, say, alt speller */
 	  strcpy(curbp->b_fname, fname);
 	if ((s=ffropen(fname)) != FIOSUC){	/* Hard file open.      */
 	    if(s == FIOFNF)                     /* File not found.      */
-	      emlwrite("New file", NULL);
+	      emlwrite("새 파일", NULL);
 	    else
 	      fioperr(s, fname);
 	}
 	else{
 	    int charsread = 0;
 
-	    emlwrite("Reading file", NULL);
+	    emlwrite("파일을 읽는 중", NULL);
 	    nline = 0L;
 	    done  = newline = 0;
 	    while(!done)
 	      if((s = ffgetline(line, NLINE, &charsread, 1)) == FIOEOF){
 		  curbp->b_flag &= ~(BFTEMP|BFCHG);
 		  gotobob(FALSE, 1);
-		  sprintf(line,"Read %d line%s",
-			  nline, (nline > 1) ? "s" : "");
+		  if(nline == 0)
+		    strcpy(line, "글을 쓰세요. 도움말은 ^G, 저장하고 끝내기는 ^X");
+		  else
+		    sprintf(line, "%d 줄을 불러왔습니다. 도움말은 ^G", nline);
 		  emlwrite(line, NULL);
 		  break;
 	      }
@@ -701,7 +703,7 @@ int f, n;
 		return(ABORT);
 	    }
 	}
-	emlwrite("Writing...", NULL);
+	emlwrite("저장하는 중...", NULL);
 
         if ((s=writeout(fname, 0)) != -1) {
 	        if(!(gmode&MDTOOL)){
@@ -718,9 +720,9 @@ int f, n;
 		}
 
 		if(s > 1)
-		  emlwrite("Wrote %d lines", (void *)s);
+		  emlwrite("%d 줄을 저장했습니다", (void *)s);
 		else
-		  emlwrite("Wrote 1 line", NULL);
+		  emlwrite("1 줄을 저장했습니다", NULL);
         }
         return ((s == -1) ? FALSE : TRUE);
 }
@@ -751,7 +753,7 @@ int f, n;
                 return (FALSE);
         }
 
-	emlwrite("Writing...", NULL);
+	emlwrite("저장하는 중...", NULL);
         if ((s=writeout(curbp->b_fname, 0)) != -1) {
                 curbp->b_flag &= ~BFCHG;
                 wp = wheadp;                    /* Update mode lines.   */
@@ -762,10 +764,10 @@ int f, n;
                         wp = wp->w_wndp;
                 }
 		if(s > 1){
-		    emlwrite("Wrote %d lines", (void *)s);
+		    emlwrite("%d 줄을 저장했습니다", (void *)s);
 		}
 		else
-		  emlwrite("Wrote 1 line", NULL);
+		  emlwrite("1 줄을 저장했습니다", NULL);
         }
         return (s);
 }

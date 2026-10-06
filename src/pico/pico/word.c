@@ -49,6 +49,7 @@ wrapword()
     register int bp;			/* index to wrap on */
     register int first = -1;
     register int i;
+    int hard = 0;			/* 글자 단위로 나눴는지 */
 
     if(curwp->w_doto <= 0)		/* no line to wrap? */
       return(FALSE);
@@ -67,8 +68,28 @@ wrapword()
 	  bp = first;
     }
 
-    if(!bp)
-      return(FALSE);
+    /*
+     * 공백 없이 fillcol 을 넘는 긴 낱말 (=====, 주소, 띄어 쓰지 않은 한글) 은
+     * 낱말 사이에서 나눌 수 없으니 fillcol 칸에서 글자 단위로 나눈다.
+     * 한글은 반으로 자르지 않는다.
+     */
+    if(bp){
+	int e = bp;
+
+	while(e > 0 && isspace((unsigned char) lgetc(curwp->w_dotp, e - 1).c))
+	  e--;
+
+	if(han_col(curwp->w_dotp, e) > fillcol)
+	  bp = 0;
+    }
+
+    if(!bp){
+	bp = han_hardbreak(curwp->w_dotp);
+	if(bp <= 0 || bp >= llength(curwp->w_dotp))
+	  return(FALSE);
+
+	hard = 1;
+    }
 
     /* bp now points to the first character of the next line */
     cnt = curwp->w_doto - bp;
@@ -81,7 +102,7 @@ wrapword()
      * if there's a line below, it doesn't start with whitespace 
      * and there's room for this line...
      */
-    if(!(curbp->b_flag & BFWRAPOPEN)
+    if(!hard && !(curbp->b_flag & BFWRAPOPEN)
        && lforw(curwp->w_dotp) != curbp->b_linep 
        && llength(lforw(curwp->w_dotp)) 
        && !isspace((unsigned char) lgetc(lforw(curwp->w_dotp), 0).c)

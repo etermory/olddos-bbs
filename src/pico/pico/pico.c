@@ -156,7 +156,7 @@ PICO *pm;
     if(pico_anchor)
       strcpy(pico_anchor, Pmaster->pine_anchor);
 
-    bindtokey(DEL, (gmode & P_DELRUBS) ? forwdel : backdel);
+    bindtokey(DEL, (gmode & P_DELRUBS) ? forwhdel : backhdel);
 
     if(pm->msgtext)
       breplace(pm->msgtext);
@@ -322,7 +322,7 @@ PICO *pm;
 	c = GetKey();
         if (term.t_nrow < 6 && c != NODATA){
             (*term.t_beep)();
-            emlwrite("Please make the screen bigger.", NULL);
+            emlwrite("화면을 더 크게 해 주세요.", NULL);
             continue;
         }
 
@@ -568,9 +568,9 @@ int c, f, n;
     }
     
     if(c&CTRL)
-      emlwrite("\007Unknown Command: ^%c", (void *)(c&0xff));
+      emlwrite("\007모르는 명령입니다: ^%c  (^G 도움말)", (void *)(c&0xff));
     else
-      emlwrite("\007Unknown Command", NULL);
+      emlwrite("\007모르는 명령입니다  (^G 도움말)", NULL);
 
     lastflag = 0;                           /* Fake last flags.     */
     return (FALSE);
@@ -722,7 +722,7 @@ int f, n;
         if (f != FALSE                          /* Argument forces it.  */
         || anycb() == FALSE                     /* All buffers clean.   */
 						/* User says it's OK.   */
-        || (s=mlyesno("Save modified buffer (ANSWERING \"No\" WILL DESTROY CHANGES)", -1)) == FALSE) {
+        || (s=mlyesno("고친 내용을 저장할까요? (N: 저장하지 않고 끝내기)", -1)) == FALSE) {
                 vttidy();
 #if     defined(USE_TERMCAP) || defined(USE_TERMINFO) || defined(VMS)
 		kbdestroy(kbesc);
@@ -735,7 +735,7 @@ int f, n;
 	      wquit(1, 0);
 	}
 	else if(s == ABORT){
-	    emlwrite("Exit cancelled", NULL);
+	    emlwrite("끝내기를 취소했습니다", NULL);
 	    if(term.t_mrow == 0)
 	      curwp->w_flag |= WFHARD;	/* cause bottom 3 lines to paint */
 	}
@@ -898,7 +898,7 @@ stripwhitespace()
 ctrlg(f, n)
 int f, n;
 {
-    emlwrite("Cancelled", NULL);
+    emlwrite("취소했습니다", NULL);
     return (ABORT);
 }
 
@@ -909,7 +909,7 @@ int f, n;
 rdonly()
 {
     (*term.t_beep)();
-    emlwrite("Key illegal in VIEW mode", NULL);
+    emlwrite("읽기 전용이라 쓸 수 없는 키입니다", NULL);
     return(FALSE);
 }
 

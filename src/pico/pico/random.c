@@ -81,7 +81,7 @@ int f, n;
 	++nch;
     }
 
-    sprintf(buffer,"line %d of %d (%d%%%%), character %ld of %ld (%d%%%%)",
+    sprintf(buffer,"%d / %d 줄 (%d%%%%), %ld / %ld 바이트 (%d%%%%)",
 	    thisline+1, lines+1, (int)((100L*(thisline+1))/(lines+1)),
 	    nbc, nch, (nch) ? (int)((100L*nbc)/nch) : 0);
 

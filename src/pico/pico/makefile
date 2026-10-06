@@ -53,7 +53,7 @@ LIBS=		$(EXTRALDFLAGS) -lncurses
 OFILES=		attach.o basic.o bind.o browse.o buffer.o \
 		composer.o display.o file.o fileio.o line.o pico_os.o \
 		pico.o random.o region.o search.o \
-		window.o word.o
+		window.o word.o han.o
 
 HFILES=		headers.h estruct.h edef.h efunc.h pico.h os.h
 

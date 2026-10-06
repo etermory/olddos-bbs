@@ -75,29 +75,38 @@ static char rcsid[] = "$Id: display.c,v 4.109 2004/05/07 21:38:21 jpf Exp $";
 static KEYMENU menu_pico[] = {
 #ifndef HANULSO_BBS
     {"^G", "Get Help", KS_SCREENHELP},	{"^O", "WriteOut", KS_SAVEFILE},
-#else
-    {"^G", "도움말", KS_SCREENHELP},	//{"^O", "WriteOut", KS_SAVEFILE},
-#endif
-#ifndef HANULSO_BBS
     {"^R", "Read File", KS_READFILE},	{"^Y", "Prev Pg", KS_PREVPAGE},
-#endif
     {"^K", "Cut Text", KS_NONE},	{"^C", "Cur Pos", KS_CURPOSITION},
-#ifndef HANULSO_BBS
     {"^X", "Exit", KS_EXIT},		{"^J", "Justify", KS_JUSTIFY},
-#else
-    {"^X", "저장&종료", KS_EXIT},		{"^J", "Justify", KS_JUSTIFY},
-#endif
     {"^W", "Where is", KS_WHEREIS},	{"^V", "Next Pg", KS_NEXTPAGE},
     {"^U", NULL, KS_NONE},
 #ifdef	SPELLER
-#ifndef HANULSO_BBS
     {"^T", "To Spell", KS_SPELLCHK}
-#endif
 #else
     {"^D", "Del Char", KS_NONE}
 #endif
+#else
+    /*
+     * 도스박물관 BBS: 앞 6 개가 윗줄, 뒤 6 개가 아랫줄 (반드시 12 개).
+     * 칸마다 이름은 10 바이트(한글 5 자)까지.
+     */
+    {"^G", "도움말", KS_SCREENHELP},	{"^X", "저장&종료", KS_EXIT},
+    {"^K", "잘라내기", KS_NONE},	{"^U", NULL, KS_NONE},
+    {"^J", "문단정리", KS_JUSTIFY},	{"^W", "찾기", KS_WHEREIS},
+    {"^Y", "앞 쪽", KS_PREVPAGE},	{"^V", "뒤 쪽", KS_NEXTPAGE},
+    {"^A", "줄 처음", KS_NONE},	{"^E", "줄 끝", KS_NONE},
+    {"^C", "현재위치", KS_CURPOSITION},	{"^D", "글자삭제", KS_NONE}
+#endif
 };
+#ifndef HANULSO_BBS
 #define	UNCUT_KEY	10
+#define	LABEL_UNJUSTIFY	"UnJustify"
+#define	LABEL_UNCUT	"UnCut Text"
+#else
+#define	UNCUT_KEY	3
+#define	LABEL_UNJUSTIFY	"정리취소"
+#define	LABEL_UNCUT	"붙여넣기"
+#endif
 
 
 static KEYMENU menu_compose[] = {
@@ -122,8 +131,13 @@ static KEYMENU menu_compose[] = {
  * Definition's for pico's modeline
  */
 #define	PICO_TITLE	"  UW PICO(tm) %s  "
+#ifndef HANULSO_BBS
 #define	PICO_MOD_MSG	"Modified  "
 #define	PICO_NEWBUF_MSG	" New Buffer "
+#else
+#define	PICO_MOD_MSG	"고친 내용 있음  "
+#define	PICO_NEWBUF_MSG	" 새 글 "
+#endif
 
 #define WFDEBUG 0                       /* Window flag debug. */
 
@@ -769,21 +783,21 @@ out:
 	    }
 
 	    if(lastflag&CFFILL){
-		menu_pico[UNCUT_KEY].label = "UnJustify";
+		menu_pico[UNCUT_KEY].label = LABEL_UNJUSTIFY;
 		if(!(lastflag&CFFLBF)){
-		    emlwrite("Can now UnJustify!", NULL);
+		    emlwrite("^U 로 문단 정리를 되돌릴 수 있습니다", NULL);
 		    mpresf = FARAWAY;	/* remove this after next keystroke! */
 		}
 	    }
 	    else
-	      menu_pico[UNCUT_KEY].label = "UnCut Text";
+	      menu_pico[UNCUT_KEY].label = LABEL_UNCUT;
 
 	    wkeyhelp(menu_pico);
 	    sgarbk = FALSE;
         }
     }
     if(lastflag&CFFLBF){
-	emlwrite("Can now UnJustify!", NULL);
+	emlwrite("^U 로 문단 정리를 되돌릴 수 있습니다", NULL);
 	mpresf = FARAWAY;  /* remove this after next keystroke! */
     }
 
@@ -842,6 +856,27 @@ updext()
  * row and column variables. It does try an exploit erase to end of line. The
  * RAINBOW version of this routine uses fast video.
  */
+void updateline();
+
+/* 화면 줄 v 의 i 번째 칸이 한글(두 바이트) 의 둘째 바이트인가 */
+static int
+vtrail(v, i)
+CELL *v;
+int   i;
+{
+    int k = 0;
+
+    while(k < i){
+	if(v[k].c >= 0x81 && v[k].c <= 0xFE && k + 1 < term.t_ncol)
+	  k += 2;
+	else
+	  k++;
+    }
+
+    return(k > i);
+}
+
+
 void
 updateline(row, vline, pline, flags)
 int  row;
@@ -883,6 +918,12 @@ short *flags;				/* and how we want it that way  */
 	return;
     }
 
+    /* 한글 둘째 바이트부터 그리면 글자가 깨지므로 글자 처음부터 */
+    if (cp1 != &vline[0] && vtrail(vline, cp1 - &vline[0])){
+	--cp1;
+	--cp2;
+    }
+
     /* find out if there is a match on the right */
     nbflag = FALSE;
     cp3 = &vline[term.t_ncol];
@@ -893,6 +934,12 @@ short *flags;				/* and how we want it that way  */
 	--cp4;
 	if (cp3[0].c != ' ' || cp3[0].a != 0)/* Note if any nonblank */
 	  nbflag = TRUE;		/* in right match. */
+    }
+
+    /* 오른쪽 같은 부분이 한글 둘째 바이트에서 시작하면 그 글자까지 그린다 */
+    if (cp3 != &vline[term.t_ncol] && vtrail(vline, cp3 - &vline[0])){
+	++cp3;
+	++cp4;
     }
 
     cp5 = cp3;
@@ -907,7 +954,7 @@ short *flags;				/* and how we want it that way  */
 
     movecursor(row, cp1-&vline[0]);		/* Go to start of line. */
 
-    if (!nbflag) {				/* use insert or del char? */
+    if (!nbflag && cp1->c < 0x80 && cp2->c < 0x80) {	/* use insert or del char? */
 	cp6 = cp3;
 	cp7 = cp4;
 
@@ -1195,11 +1242,11 @@ int   dflt;
     }
 
     menu_yesno[1].name  = "Y";
-    menu_yesno[1].label = (dflt == TRUE) ? "[Yes]" : "Yes";
+    menu_yesno[1].label = (dflt == TRUE) ? "[예]" : "예";
     menu_yesno[6].name  = "^C";
-    menu_yesno[6].label = "Cancel";
+    menu_yesno[6].label = "취소";
     menu_yesno[7].name  = "N";
-    menu_yesno[7].label = (dflt == FALSE) ? "[No]" : "No";
+    menu_yesno[7].label = (dflt == FALSE) ? "[아니오]" : "아니오";
     wkeyhelp(menu_yesno);		/* paint generic menu */
     sgarbk = TRUE;			/* mark menu dirty */
     if(Pmaster && curwp)
@@ -1213,7 +1260,7 @@ int   dflt;
 	switch(GetKey()){
 	  case (CTRL|'M') :		/* default */
 	    if(dflt >= 0){
-		pputs((dflt) ? "Yes" : "No", 1);
+		pputs((dflt) ? "예" : "아니오", 1);
 		rv = dflt;
 	    }
 	    else
@@ -1223,21 +1270,21 @@ int   dflt;
 
 	  case (CTRL|'C') :		/* Bail out! */
 	  case F2         :
-	    pputs("ABORT", 1);
+	    pputs("취소", 1);
 	    rv = ABORT;
 	    break;
 
 	  case 'y' :
 	  case 'Y' :
 	  case F3  :
-	    pputs("Yes", 1);
+	    pputs("예", 1);
 	    rv = TRUE;
 	    break;
 
 	  case 'n' :
 	  case 'N' :
 	  case F4  :
-	    pputs("No", 1);
+	    pputs("아니오", 1);
 	    rv = FALSE;
 	    break;
 
@@ -1365,7 +1412,7 @@ EXTRAKEYS *extras;
 #endif
 
     menu_mlreply[0].name = "^G";
-    menu_mlreply[0].label = "Get Help";
+    menu_mlreply[0].label = "도움말";
     KS_OSDATASET(&menu_mlreply[0], KS_SCREENHELP);
     for(j = 0, i = 1; i < 6; i++){	/* insert odd extras */
 	menu_mlreply[i].name = NULL;
@@ -1385,7 +1432,7 @@ EXTRAKEYS *extras;
     }
 
     menu_mlreply[6].name = "^C";
-    menu_mlreply[6].label = "Cancel";
+    menu_mlreply[6].label = "취소";
     KS_OSDATASET(&menu_mlreply[6], KS_NONE);
     for(j = 0, i = 7; i < 12; i++){	/* insert even extras */
 	menu_mlreply[i].name = NULL;
@@ -1454,12 +1501,12 @@ EXTRAKEYS *extras;
 	    continue;
 
 	  case (CTRL|'B') :			/* CTRL-B back a char   */
-	    if(ttcol > plen)
-		b--;
+	    if(ttcol > plen && b > buf)
+		b -= han_str_before(buf, b - buf);
 	    continue;
 
 	  case (CTRL|'C') :			/* CTRL-C abort		*/
-	    pputs("ABORT", 1);
+	    pputs("취소", 1);
 	    ctrlg(FALSE, 0);
 	    (*term.t_rev)(0);
 	    (*term.t_flush)();
@@ -1473,7 +1520,7 @@ EXTRAKEYS *extras;
 
 	  case (CTRL|'F') :			/* CTRL-F forward a char*/
 	    if(*b != '\0')
-		b++;
+		b += han_str_at(buf, b - buf);
 	    continue;
 
 	  case (CTRL|'G') :			/* CTRL-G help		*/
@@ -1491,7 +1538,7 @@ EXTRAKEYS *extras;
 		break;
 	    }
 
-	    pputs("HELP", 1);
+	    pputs("도움말", 1);
 	    (*term.t_rev)(0);
 	    (*term.t_flush)();
 	    return_val = HELPCH;
@@ -1501,17 +1548,30 @@ EXTRAKEYS *extras;
 	  case 0x7f :				/*        rubout	*/
 	    if (b <= buf)
 	      break;
-	    b--;
-	    ttcol--;				/* cheating!  no pputc */
-	    (*term.t_putchar)('\b');
+	    {
+		int hk = han_str_before(buf, b - buf);	/* 한글이면 두 바이트 */
+
+		while(hk-- > 0){
+		    b--;
+		    ttcol--;			/* cheating!  no pputc */
+		    (*term.t_putchar)('\b');
+		}
+	    }
 
 	  case (CTRL|'D') :			/* CTRL-D delete char   */
 	  case KEY_DEL :
+	    if(*b == '\0')			/* 줄 끝: 지울 글자 없음 */
+	      break;
+
 	    changed=TRUE;
-	    i = 0;
-	    do					/* blat out left char   */
-	      b[i] = b[i+1];
-	    while(b[i++] != '\0');
+	    {
+		int hk = han_str_at(buf, b - buf);
+
+		i = 0;
+		do				/* blat out left char   */
+		  b[i] = b[i+hk];
+		while(b[i++] != '\0');
+	    }
 	    break;
 
 	  case (CTRL|'L') :			/* CTRL-L redraw	*/
@@ -1527,13 +1587,13 @@ EXTRAKEYS *extras;
 	    break;
 
 	  case KEY_LEFT:
-	    if(ttcol > plen)
-	      b--;
+	    if(ttcol > plen && b > buf)
+	      b -= han_str_before(buf, b - buf);
 	    continue;
 
 	  case KEY_RIGHT:
 	    if(*b != '\0')
-	      b++;
+	      b += han_str_at(buf, b - buf);
 	    continue;
 
 	  case F1 :				/* sort of same thing */

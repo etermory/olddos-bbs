@@ -65,27 +65,21 @@ void	get_pat_cases PROTO((char *, char *));
 
 
 static char *SearchHelpText[] = {
-"Help for Search Command",
+"찾기 도움말",
 " ",
-"\tEnter the words or characters you would like to search",
-"~\tfor, then press ~R~e~t~u~r~n.  The search then takes place.",
-"\tWhen the characters or words that you entered ",
-"\tare found, the buffer will be redisplayed with the cursor ",
-"\tat the beginning of the selected text.",
+"~\t찾을 낱말이나 글자를 넣고 ~E~n~t~e~r 를 누르세요.",
+"\t찾으면 그 자리로 커서가 옮겨 갑니다.",
+"\t영문 대문자와 소문자는 가리지 않습니다.",
 " ",
-"\tThe most recent string for which a search was made is",
-"\tdisplayed in the \"Search\" prompt between the square",
-"\tbrackets.  This string is the default search prompt.",
-"~        Hitting only ~R~e~t~u~r~n or at the prompt will cause the",
-"\tsearch to be made with the default value.",
-"  ",
-"\tThe text search is not case sensitive, and will examine the",
-"\tentire message.",
-"  ",
-"\tShould the search fail, a message will be displayed.",
-"  ",
-"End of Search Help.",
-"  ",
+"\t[ ] 안에는 지난번에 찾은 말이 보입니다.",
+"~\t아무것도 넣지 않고 ~E~n~t~e~r 를 누르면 그 말을 다시 찾습니다.",
+"\t끝까지 찾으면 처음으로 돌아가 이어서 찾습니다.",
+" ",
+"~\t~^~Y  첫 줄로      ~^~V  끝 줄로      ~^~T  줄 번호로 가기",
+"~\t~^~W  문단 처음    ~^~O  문단 끝      ~^~C  찾기 취소",
+" ",
+"찾기 도움말 끝.",
+" ",
 NULL
 };
 
@@ -98,6 +92,9 @@ eq(bc, pc)
 int bc;
 int pc;
 {
+    bc &= 0xff;				/* 한글: char 는 부호가 있어 음수가 된다 */
+    pc &= 0xff;
+
     if ((curwp->w_bufp->b_mode & MDEXACT) == 0){
 	if (bc>='a' && bc<='z')
 	  bc -= 0x20;
@@ -132,9 +129,9 @@ forwsearch(f, n)
     while(1){
 
 	if (gmode & MDREPLACE)
-	  status = srpat("Search", defpat, repl_mode);
+	  status = srpat("찾기", defpat, repl_mode);
 	else
-	  status = readpattern("Search", TRUE);
+	  status = readpattern("찾기", TRUE);
 
 	switch(status){
 	  case TRUE:                         /* user typed something */
@@ -147,14 +144,14 @@ forwsearch(f, n)
 
 		saved_state = save_pico_state();
 		(*Pmaster->helper)(Pmaster->search_help,
-				   "Help for Searching", 1);
+				   "찾기 도움말", 1);
 		if(saved_state){
 		    restore_pico_state(saved_state);
 		    free_pico_state(saved_state);
 		}
 	    }
 	    else
-	      pico_help(SearchHelpText, "Help for Searching", 1);
+	      pico_help(SearchHelpText, "찾기 도움말", 1);
 
 	  case (CTRL|'L'):			/* redraw requested */
 	    pico_refresh(FALSE, 1);
@@ -172,17 +169,17 @@ forwsearch(f, n)
 	    FWS_RETURN(TRUE); 
 
 	  case (CTRL|'T') :
-	    switch(status = readnumpat("Search to Line Number : ")){
+	    switch(status = readnumpat("갈 줄 번호 : ")){
 	      case -1 :
-		emlwrite("Search to Line Number Cancelled", NULL);
+		emlwrite("줄 이동을 취소했습니다", NULL);
 		FWS_RETURN(FALSE);
 
 	      case  0 :
-		emlwrite("Line number must be greater than zero", NULL);
+		emlwrite("줄 번호는 1 이상이어야 합니다", NULL);
 		FWS_RETURN(FALSE);
 
 	      case -2 :
-		emlwrite("Line number must contain only digits", NULL);
+		emlwrite("줄 번호는 숫자로 넣으세요", NULL);
 		FWS_RETURN(FALSE);
 		
 	      case -3 :
@@ -241,7 +238,7 @@ forwsearch(f, n)
 
 	  default:
 	    if(status == ABORT)
-	      emlwrite("Search Cancelled", NULL);
+	      emlwrite("찾기를 취소했습니다", NULL);
 	    else
 	      mlerase();
 
@@ -289,7 +286,7 @@ forwsearch(f, n)
 
     /* and complain if not there */
     if (status == FALSE){
-      emlwrite("\"%s\" not found", defpat);
+      emlwrite("\"%s\" 을(를) 찾지 못했습니다", defpat);
     }
     else if((gmode & MDREPLACE) && repl_mode == TRUE){
         status = replace_pat(defpat, &wrapt2);    /* replace pattern */
@@ -298,7 +295,7 @@ forwsearch(f, n)
 		   (status == ABORT) ? "cancelled but w" : "W");
     }
     else if(wrapt == TRUE){
-	emlwrite("Search Wrapped", NULL);
+	emlwrite("끝까지 찾아서 처음부터 다시 찾았습니다", NULL);
     }
     else if(status == TRUE){
 	emlwrite("", NULL);
@@ -384,14 +381,14 @@ int  *wrapt;
 
 		saved_state = save_pico_state();
 		(*Pmaster->helper)(Pmaster->search_help,
-				   "Help for Searching", 1);
+				   "찾기 도움말", 1);
 		if(saved_state){
 		    restore_pico_state(saved_state);
 		    free_pico_state(saved_state);
 		}
 	    }
 	    else
-	      pico_help(SearchHelpText, "Help for Searching", 1);
+	      pico_help(SearchHelpText, "찾기 도움말", 1);
 
 	  case (CTRL|'L'):			/* redraw requested */
 	    pico_refresh(FALSE, 1);
@@ -502,12 +499,12 @@ int   repl_mode;
 	EXTRAKEYS    menu_pat[8];
 
 	menu_pat[i = 0].name = "^Y";
-	menu_pat[i].label    = "FirstLine";
+	menu_pat[i].label    = "첫 줄";
 	menu_pat[i].key	     = (CTRL|'Y');
 	KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	menu_pat[++i].name = "^V";
-	menu_pat[i].label  = "LastLine";
+	menu_pat[i].label  = "끝 줄";
 	menu_pat[i].key	   = (CTRL|'V');
 	KS_OSDATASET(&menu_pat[i], KS_NONE);
 
@@ -518,22 +515,22 @@ int   repl_mode;
 
 	if(!repl_mode){
 	    menu_pat[++i].name = "^T";
-	    menu_pat[i].label  = "LineNumber";
+	    menu_pat[i].label  = "줄 번호";
 	    menu_pat[i].key    = (CTRL|'T');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^W";
-	    menu_pat[i].label  = "Start of Para";
+	    menu_pat[i].label  = "문단 처음";
 	    menu_pat[i].key    = (CTRL|'W');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^O";
-	    menu_pat[i].label  = "End of Para";
+	    menu_pat[i].label  = "문단 끝";
 	    menu_pat[i].key    = (CTRL|'O');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^U";
-	    menu_pat[i].label  = "FullJustify";
+	    menu_pat[i].label  = "전체정리";
 	    menu_pat[i].key    = (CTRL|'U');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 	}
@@ -588,7 +585,7 @@ char *prompt;
     EXTRAKEYS    menu_pat[2];
 
     menu_pat[i = 0].name  = "^T";
-    menu_pat[i].label	  = "No Line Number";
+    menu_pat[i].label	  = "줄번호취소";
     menu_pat[i].key	  = (CTRL|'T');
     KS_OSDATASET(&menu_pat[i++], KS_NONE);
 
@@ -633,33 +630,33 @@ int   text_mode;
 	EXTRAKEYS    menu_pat[7];
 
 	menu_pat[i = 0].name = "^Y";
-	menu_pat[i].label    = "FirstLine";
+	menu_pat[i].label    = "첫 줄";
 	menu_pat[i].key	     = (CTRL|'Y');
 	KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	menu_pat[++i].name = "^V";
-	menu_pat[i].label  = "LastLine";
+	menu_pat[i].label  = "끝 줄";
 	menu_pat[i].key	   = (CTRL|'V');
 	KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	if(text_mode){
 	    menu_pat[++i].name = "^T";
-	    menu_pat[i].label  = "LineNumber";
+	    menu_pat[i].label  = "줄 번호";
 	    menu_pat[i].key    = (CTRL|'T');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^W";
-	    menu_pat[i].label  = "Start of Para";
+	    menu_pat[i].label  = "문단 처음";
 	    menu_pat[i].key    = (CTRL|'W');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^O";
-	    menu_pat[i].label  = "End of Para";
+	    menu_pat[i].label  = "문단 끝";
 	    menu_pat[i].key    = (CTRL|'O');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 
 	    menu_pat[++i].name = "^U";
-	    menu_pat[i].label  = "FullJustify";
+	    menu_pat[i].label  = "전체정리";
 	    menu_pat[i].key    = (CTRL|'U');
 	    KS_OSDATASET(&menu_pat[i], KS_NONE);
 	}

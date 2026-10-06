@@ -453,7 +453,7 @@ Loop:
 	    gmode ^= MDREPLACE;  /* -b for replace string in where is command */
 	    break;
 	  case 'd':			/* -d for rebind delete key */
-	    bindtokey(0x7f, forwdel);
+	    bindtokey(0x7f, forwhdel);
 	    break;
 	  case 'e':			/* file name completion */
 	    gmode ^= MDCMPLT;

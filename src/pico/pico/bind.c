@@ -50,66 +50,39 @@ static char rcsid[] = "$Id: bind.c,v 4.23 2000/11/09 21:53:43 hubert Exp $";
 
 
 static char *helptext[] = {
-    "\tPico Help Text",
+    "\t스크린 편집기 (pico) 도움말",
     " ",
-    "\tPico is designed to be a simple, easy-to-use text editor with a",
-    "\tlayout very similar to the pine mailer.  The status line at the",
-    "\ttop of the display shows pico's version, the current file being",
-    "\tedited and whether or not there are outstanding modifications",
-    "\tthat have not been saved.  The third line from the bottom is used",
-    "\tto report informational messages and for additional command input.",
-    "\tThe bottom two lines list the available editing commands.",
+    "\t글자를 치면 커서 자리에 들어갑니다. 줄이 76 칸을 넘으면 저절로",
+    "\t다음 줄로 넘어갑니다 (공백 없는 긴 줄도 나눕니다).",
+    "~\t명령은 컨트롤(~C~t~r~l) 키와 함께 누릅니다. ~^~X 는 Ctrl 을 누른 채 X.",
     " ",
-    "\tEach character typed is automatically inserted into the buffer",
-    "\tat the current cursor position.  Editing commands and cursor",
-    "\tmovement (besides arrow keys) are given to pico by typing",
-    "\tspecial control-key sequences.  A caret, '^', is used to denote",
-    "~\tthe control key, sometimes marked \"CTRL\", so the ~C~T~R~L~-~q key",
-    "~\tcombination is written as ~^~Q.",
+    "\t[ 옮기기 ]",
+    "~\t~^~F  ~^~B      한 글자 오른쪽 / 왼쪽 (화살표 키도 됩니다)",
+    "~\t~^~N  ~^~P      아랫줄 / 윗줄",
+    "~\t~^~A  ~^~E      줄 처음 / 줄 끝",
+    "~\t~^~V  ~^~Y      다음 쪽 / 앞 쪽",
+    "~\t~^~W          글 찾기 (영문 대소문자는 가리지 않음)",
+    "~\t~^~C          커서가 몇째 줄에 있는지 보기",
+    "~\t~^~L          화면 다시 그리기",
     " ",
-    "\tThe following functions are available in pico (where applicable,",
-    "\tcorresponding function key commands are in parentheses).",
+    "\t[ 고치기 ]",
+    "~\t~^~D          커서 자리 글자 지우기",
+    "\t백스페이스  커서 앞 글자 지우기",
+    "~\t~^~K          한 줄 잘라내기 (블록을 표시했으면 그 블록)",
+    "~\t~^~U          잘라낸 글을 커서 자리에 붙여넣기",
+    "~\t~^~^          블록 시작 표시 (다시 누르면 풀림)",
+    "\t\t  표시한 뒤 커서를 옮기면 반전되어 보이고, ^K 로 잘라냅니다.",
+    "~\t~^~J          문단을 76 칸에 맞춰 다시 정리 (바로 ^U 하면 되돌림)",
+    "\t\t  문단은 빈 줄이나 들여쓰기로 나뉩니다.",
+    "~\t~^~I          탭 넣기",
     " ",
-    "~\t~^~G (~F~1)   Display this help text.",
+    "\t[ 마치기 ]",
+    "~\t~^~X          저장하고 끝내기 (Y: 저장, N: 저장하지 않음)",
     " ",
-    "~\t~^~F        move Forward a character.",
-    "~\t~^~B        move Backward a character.",
-    "~\t~^~P        move to the Previous line.",
-    "~\t~^~N        move to the Next line.",
-    "~\t~^~A        move to the beginning of the current line.",
-    "~\t~^~E        move to the End of the current line.",
-    "~\t~^~V (~F~8)   move forward a page of text.",
-    "~\t~^~Y (~F~7)   move backward a page of text.",
+    "\tPine 과 Pico 는 워싱턴 대학교(University of Washington)의",
+    "\t상표입니다.",
     " ",
-    "~\t~^~W (~F~6)   Search for (where is) text, neglecting case.",
-    "~\t~^~L        Refresh the display.",
-    " ",
-    "~\t~^~D        Delete the character at the cursor position.",
-    "~\t~^~^        Mark cursor position as beginning of selected text.",
-    "\t\t  Note: Setting mark when already set unselects text.",
-    "~\t~^~K (~F~9)   Cut selected text (displayed in inverse characters).",
-    "\t\t  Note: The selected text's boundary on the cursor side",
-    "\t\t        ends at the left edge of the cursor.  So, with ",
-    "\t\t        selected text to the left of the cursor, the ",
-    "\t\t        character under the cursor is not selected.",
-    "~\t~^~U (~F~1~0)  Uncut (paste) last cut text inserting it at the",
-    "\t\t  current cursor position.",
-    "~\t~^~I        Insert a tab at the current cursor position.",
-    " ",
-    "~\t~^~J (~F~4)   Format (justify) the current paragraph.",
-    "\t\t  Note: paragraphs delimited by blank lines or indentation.",
-    "~\t~^~T (~F~1~2)  To invoke the spelling checker",
-    "~\t~^~C (~F~1~1)  Report current cursor position",
-    " ",
-    "~\t~^~R (~F~5)   Insert an external file at the current cursor position.",
-    "~\t~^~O (~F~3)   Output the current buffer to a file, saving it.",
-    "~\t~^~X (~F~2)   Exit pico, saving buffer.",
-    "    ",
-    "\tPine and Pico are trademarks of the University of Washington.",
-    "\tNo commercial use of these trademarks may be made without prior",
-    "\twritten permission of the University of Washington.",
-    "    ",
-    "    End of Help.",
+    "    도움말 끝.",
     " ",
     NULL
 };
@@ -174,7 +147,7 @@ whelp(f, n)
 	    term.t_mrow = 2;
 	}
 
-	pico_help(helptext, "Help for Pico", 1);
+	pico_help(helptext, "스크린 편집기 도움말", 1);
 	/* put it back the way it was */
 	if(mrow_was_zero)
 	  term.t_mrow = 0;
@@ -188,7 +161,7 @@ static KEYMENU menu_scroll[] = {
     {NULL, NULL, KS_NONE},		{NULL, NULL, KS_NONE},
     {NULL, NULL, KS_NONE},		{NULL, NULL, KS_NONE},
     {NULL, NULL, KS_NONE},		{NULL, NULL, KS_NONE},
-    {"^X", "Exit Help", KS_NONE},	{NULL, NULL, KS_NONE},
+    {"^X", "도움말 끝", KS_NONE},	{NULL, NULL, KS_NONE},
     {NULL, NULL, KS_NONE},		{NULL, NULL, KS_NONE},
     {NULL, NULL, KS_NONE},		{NULL, NULL, KS_NONE}
 };
@@ -248,14 +221,14 @@ int	textlen;
             cont = (loffset+dlines < textlen);
             if(cont){                               /* continue ? */
 		menu_scroll[NEXT_KEY].name  = "^V";
-		menu_scroll[NEXT_KEY].label = "Next Pg";
+		menu_scroll[NEXT_KEY].label = "뒤 쪽";
 	    }
 	    else
 	      menu_scroll[NEXT_KEY].name = NULL;
 
 	    if(loffset){
 		menu_scroll[PREV_KEY].name  = "^Y";
-		menu_scroll[PREV_KEY].label = "Prev Pg";
+		menu_scroll[PREV_KEY].label = "앞 쪽";
 	    }
 	    else
 	      menu_scroll[PREV_KEY].name = NULL;
@@ -320,7 +293,7 @@ int	textlen;
 	    case  NODATA :
 	        break;
 	    default :
-		emlwrite("Unknown Command.", NULL);
+		emlwrite("모르는 명령입니다.", NULL);
 		(*term.t_beep)();
 		break;
 	}

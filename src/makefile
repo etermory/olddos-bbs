@@ -22,6 +22,12 @@ endif
 
 all: ctime main guest pass sysop weather exchange lunar hero rain omok tgsend lotto coin sun worldtime english today fortune mudlink memo biorhythm chattclient chattserver mbti_gs   
 
+# 글쓰기 화면 편집기 pico (src/pico/pico, 한글 고침). ncurses-devel 이 필요하다.
+# all 에는 넣지 않는다 (서버에 ncurses-devel 이 없으면 BBS 업데이트가 통째로 실패하므로).
+.PHONY: pico
+pico:
+	cd pico/pico && $(MAKE)
+
 main: utility.o textutil.o database.o lineeditor.o fileeditor.o main.o \
 	base64.o pugixml.o upload.o download.o write.o edit.o hangul.o \
 	settings.o menu.o chatt.o news.o profile.o re.o attendance.o telegram.o graffiti.o stats.o bbtags.o board_extra.o

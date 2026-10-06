@@ -63,24 +63,24 @@
 KEYTAB  keytab[NBINDS] = {
 	{KEY_UP,		backline},
 	{KEY_DOWN,		forwline},
-	{KEY_RIGHT,		forwchar},
-	{KEY_LEFT,		backchar},
+	{KEY_RIGHT,		forwhchar},
+	{KEY_LEFT,		backhchar},
 	{KEY_PGUP,		backpage},
 	{KEY_PGDN,		forwpage},
 	{KEY_HOME,		gotobol},
 	{KEY_END,		gotoeol},
-	{KEY_DEL,		forwdel},
+	{KEY_DEL,		forwhdel},
 #ifdef	MOUSE
 	{KEY_MOUSE,		mousepress},
 #endif
 	{CTRL|'A',		gotobol},
-	{CTRL|'B',		backchar},
+	{CTRL|'B',		backhchar},
 	{CTRL|'C',		abort_composer},
-	{CTRL|'D',		forwdel},
+	{CTRL|'D',		forwhdel},
 	{CTRL|'E',		gotoeol},
-	{CTRL|'F',		forwchar},
+	{CTRL|'F',		forwhchar},
 	{CTRL|'G',		whelp},
-	{CTRL|'H',		backdel},
+	{CTRL|'H',		backhdel},
 	{CTRL|'I',		tab},
 	{CTRL|'J',		fillpara},
 	{CTRL|'K',		killregion},
@@ -104,7 +104,7 @@ KEYTAB  keytab[NBINDS] = {
 	{CTRL|'@',		forwword},
 	{CTRL|'^',		setmark},
 	{CTRL|'_',		alt_editor},
-	{0x7F,			backdel},
+	{0x7F,			backhdel},
 	{0,			NULL}
 };
 
@@ -118,24 +118,24 @@ KEYTAB  keytab[NBINDS] = {
 KEYTAB  pkeytab[NBINDS] = {
 	{KEY_UP,		backline},
 	{KEY_DOWN,		forwline},
-	{KEY_RIGHT,		forwchar},
-	{KEY_LEFT,		backchar},
+	{KEY_RIGHT,		forwhchar},
+	{KEY_LEFT,		backhchar},
 	{KEY_PGUP,		backpage},
 	{KEY_PGDN,		forwpage},
 	{KEY_HOME,		gotobol},
 	{KEY_END,		gotoeol},
-	{KEY_DEL,		forwdel},
+	{KEY_DEL,		forwhdel},
 #ifdef	MOUSE
 	{KEY_MOUSE,		mousepress},
 #endif
 	{CTRL|'A',		gotobol},
-	{CTRL|'B',		backchar},
+	{CTRL|'B',		backhchar},
 	{CTRL|'C',		showcpos},
-	{CTRL|'D',		forwdel},
+	{CTRL|'D',		forwhdel},
 	{CTRL|'E',		gotoeol},
-	{CTRL|'F',		forwchar},
+	{CTRL|'F',		forwhchar},
 	{CTRL|'G',		whelp},
-	{CTRL|'H',		backdel},
+	{CTRL|'H',		backhdel},
 	{CTRL|'I',		tab},
 	{CTRL|'J',		fillpara},
 	{CTRL|'K',		killregion},
@@ -149,7 +149,7 @@ KEYTAB  pkeytab[NBINDS] = {
 #ifndef HANULSO_BBS
 	{CTRL|'R',		insfile},
 #endif
-#ifdef	SPELLER
+#if defined(SPELLER) && !defined(HANULSO_BBS)
 	{CTRL|'T',		spell},
 #endif	/* SPELLER */
 	{CTRL|'U',		yank},
@@ -157,12 +157,12 @@ KEYTAB  pkeytab[NBINDS] = {
 	{CTRL|'W',		forwsearch},
 	{CTRL|'X',		wquit},
 	{CTRL|'Y',		backpage},
-#ifdef	JOB_CONTROL
+#if defined(JOB_CONTROL) && !defined(HANULSO_BBS)
 	{CTRL|'Z',		bktoshell},
 #endif
 	{CTRL|'@',		forwword},
 	{CTRL|'^',		setmark},
-	{0x7F,			backdel},
+	{0x7F,			backhdel},
 	{0,			NULL}
 };
 

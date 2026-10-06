@@ -332,6 +332,20 @@ extern	void redraw_pico_for_callback();
 
 /* word.c */
 extern	int wrapword PROTO((void));
+
+/* han.c : 완성형 한글 (두 바이트) 을 한 글자로 */
+extern	int han_is_trail PROTO((LINE *, int));
+extern	int han_len_at PROTO((LINE *, int));
+extern	int han_len_before PROTO((LINE *, int));
+extern	int han_align PROTO((LINE *, int));
+extern	int han_hardbreak PROTO((LINE *));
+extern	int han_col PROTO((LINE *, int));
+extern	int han_str_at PROTO((char *, int));
+extern	int han_str_before PROTO((char *, int));
+extern	int forwhchar PROTO((int, int));
+extern	int backhchar PROTO((int, int));
+extern	int forwhdel PROTO((int, int));
+extern	int backhdel PROTO((int, int));
 extern	int backword PROTO((int, int));
 extern	int forwword PROTO((int, int));
 extern	int fillpara PROTO((int, int));

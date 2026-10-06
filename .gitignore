@@ -18,3 +18,11 @@ src/jurassic/lib/
 # 대화방 서버가 만드는 방 정보와 대화 기록
 chatt/*.room
 chatt/log/
+
+# pico 빌드 부산물 (cd src && make pico)
+src/pico/pico/*.o
+src/pico/pico/libpico.a
+src/pico/pico/os.h
+src/pico/pico/pico_os.c
+src/pico/pico/osdep/os-lnx.c
+src/pico/pico/osdep/includer

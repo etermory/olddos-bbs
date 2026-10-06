@@ -132,16 +132,16 @@
 | 파일 올리기/받기 | `lrzsz` (Zmodem/Ymodem/Xmodem), `gkermit` (소스로 빌드) |
 | 생활정보 (날씨/뉴스/환율 등) | `curl` `wget` `lynx` |
 | 글자 변환, 시스템 정보 | `iconv` (glibc-common, 기본 설치), `dos2unix` `unix2dos`, `redhat-lsb-core` |
-| 화면 편집기 | `nano` (소스로 빌드) |
+| 화면 편집기 (pico) | `ncurses-devel` |
 | 머드 게임 (쥬라기공원 2) | `gcc` `bison` |
 
 ```bash
-yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel mysql-devel lrzsz curl wget lynx dos2unix unix2dos redhat-lsb-core
+yum install xinetd telnet-server gcc-c++ gcc make bison zlib-devel openssl-devel mysql-devel lrzsz curl wget lynx dos2unix unix2dos redhat-lsb-core ncurses-devel
 ```
 
 - 한글 로캘 `ko_KR.eucKR` 이 필요합니다 (`LANG=ko_KR.eucKR`).
 - `bin/mailsend` (비밀번호 찾기 메일) 는 `src/mailsend/` 의 소스를 빌드해 넣습니다 (`BUILD.TXT` 참고).
-- 글쓰기 화면 편집기는 `bin/pico` 를 실행합니다. 빌드한 nano 를 `bin/pico` 로 두세요.
+- 글쓰기 화면 편집기는 `bin/pico` 를 실행합니다. `src/pico/pico` 의 pico (한글 고침, 한글 메뉴) 를 `cd src && make pico` 로 빌드하면 `bin/pico` 가 만들어집니다. `make all` (update.sh) 에는 들어 있지 않으니 pico 를 고쳤을 때만 따로 빌드하세요.
 
 업데이트
 -

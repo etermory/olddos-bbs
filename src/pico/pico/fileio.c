@@ -79,7 +79,7 @@ ffputline(buf, nbuf)
       fputc('\n', g_pico_fio.fp);
 
     if (ferror(g_pico_fio.fp)) {
-        emlwrite("\007Write error: %s", errstr(errno));
+        emlwrite("\007저장 오류: %s", errstr(errno));
 	sleep(5);
         return (FIOERR);
     }
@@ -137,14 +137,14 @@ ffgetline(buf, nbuf, charsreturned, msg)
 
     if (c == EOF) {
         if (ferror(g_pico_fio.fp)) {
-            emlwrite("File read error", NULL);
+            emlwrite("파일을 읽지 못했습니다", NULL);
 	    if(charsreturned)
 	      *charsreturned = i;
             return (FIOERR);
         }
 
         if (i != 0)
-	  emlwrite("File doesn't end with newline.  Adding one.", NULL);
+	  emlwrite("파일 끝에 줄바꿈이 없어 붙였습니다", NULL);
 	else{
 	    if(charsreturned)
 	      *charsreturned = i;
