@@ -138,16 +138,49 @@ void broadcast(const std::string &msg, bool keep)
 	}
 }
 
+// 80 칸 화면에 맞게 79 칸에서 줄을 나눈다 (띄어쓰기에서 나누고 다음 줄은 두 칸 들여서).
+// 색 코드가 없는 글에 쓴다. 완성형 한글은 두 바이트가 두 칸.
+std::string wrap79(const std::string &text)
+{
+	const unsigned int W = 79;
+	std::string out, line;
+	std::string::size_type i = 0;
+	while ( i < text.size() ) {
+		// 다음 낱말 (띄어쓰기 포함)
+		std::string::size_type j = text.find(' ', i);
+		std::string word = (j == std::string::npos) ? text.substr(i) : text.substr(i, j - i + 1);
+		i = (j == std::string::npos) ? text.size() : j + 1;
+		if ( !line.empty() && line.size() + rtrim(word).size() > W ) {
+			out += rtrim(line) + "\r\n";
+			line = "  ";
+		}
+		// 낱말 하나가 한 줄보다 길면 글자 단위로 자른다
+		while ( line.size() + word.size() > W && word.size() > 1 ) {
+			unsigned int k = 0, room = W - line.size();
+			while ( k < word.size() ) {
+				unsigned int w = ((unsigned char)word[k] >= 0x80 && k + 1 < word.size()) ? 2 : 1;
+				if ( k + w > room ) break;
+				k += w;
+			}
+			out += line + word.substr(0, k) + "\r\n";
+			word = word.substr(k);
+			line = "  ";
+		}
+		line += word;
+	}
+	return out + rtrim(line);
+}
+
 // 안내 (노란 글씨, 모두에게)
 void notice(const std::string &text)
 {
-	broadcast("\r\n" C_YELLOW + text + C_WHITE "\r\n", true);
+	broadcast("\r\n" C_YELLOW + wrap79(text) + C_WHITE "\r\n", true);
 }
 
 // 한 사람에게만
 void tell(const client &c, const std::string &text)
 {
-	send_msg(c.socket, ("\r\n" C_GRAY + text + C_WHITE "\r\n").c_str());
+	send_msg(c.socket, ("\r\n" C_GRAY + wrap79(text) + C_WHITE "\r\n").c_str());
 }
 
 client push_client(int socket, char *userid, char* nickname, char* ip, int port)
@@ -238,7 +271,8 @@ void list_func(client c)
 	for(unsigned int i=0; i<clients.size(); i++) {
 		client c2 = clients[i];
 		long min = (time(NULL) - c2.joined) / 60;
-		snprintf(buf1, sizeof(buf1), "  %s(%s)%s  " C_GRAY "%s" C_WHITE "\r\n", c2.nickname, c2.userid,
+		// 메세지마다 앞의 \r\n 으로 새 줄을 연다 (없으면 클라이언트가 앞 줄을 덮어쓴다)
+		snprintf(buf1, sizeof(buf1), "\r\n  %s(%s)%s  " C_GRAY "%s" C_WHITE "\r\n", c2.nickname, c2.userid,
 				c2.author ? C_YELLOW "  방장" C_WHITE : "",
 				min < 1 ? "방금 들어옴" : (itos(min) + "분째").c_str());
 		send_msg(c.socket, buf1);
@@ -454,7 +488,7 @@ static void start_word(const client &c)
 	word_used.push_back(word_last);
 	game_deadline = time(NULL) + WORD_SEC;
 	notice(std::string("[끝말잇기] ") + c.nickname + " 님이 시작했습니다. 첫 낱말은 '" + word_last + "'!");
-	notice("[끝말잇기] " + next_syllable() + " (으)로 시작하는 낱말을 말하세요. (30초, 두음법칙 됨, /끝말잇기 그만)");
+	notice("[끝말잇기] " + next_syllable() + "(으)로 시작하는 낱말을 30초 안에 말하세요. 두음법칙 됨, 그만두려면 /끝말잇기 그만");
 }
 
 // 끝말잇기 중에 한 말. 낱말이면 처리
@@ -589,7 +623,7 @@ bool command(client &c, const std::string &line)
 		help_func(c);
 	} else if ( cmd == "/me" ) {
 		if ( rest.empty() || !flood_check(c, line) ) return true;
-		broadcast(std::string("\r\n" C_MAGENTA "* ") + c.nickname + " 님이 " + rest + C_WHITE "\r\n", true);
+		broadcast("\r\n" C_MAGENTA + wrap79(std::string("* ") + c.nickname + " 님이 " + rest) + C_WHITE "\r\n", true);
 	} else if ( cmd == "/dice" || cmd == "/주사위" ) {
 		if ( !flood_check(c, line) ) return true;
 		int n = atoi(rest.c_str());
@@ -787,6 +821,17 @@ void accept_client(void)
 	client c = push_client(client_fd, userid, nickname, ip, port);
 	printf("%s is connected from %s\r\n", c.userid, c.ip);
 
+	// 같은 아이디로 이미 들어와 있으면 (다른 창, 끊긴 줄 모르고 남은 접속) 예전 접속을 끊는다
+	for (int i=0; i<(int)clients.size(); i++) {
+		client old = clients[i];
+		if (old.socket != c.socket && !strcmp(old.userid, c.userid)) {
+			send_msg(old.socket, "\r\n" C_YELLOW "[알림] 같은 아이디로 다른 곳에서 들어와서 이 접속은 끊습니다." C_WHITE "\r\n");
+			send_msg(old.socket, "/quit");
+			remove_client(old);
+			i--;
+		}
+	}
+
 	// 대화방 접속 인원수 파일 업데이트
 	write_room_info();
 
@@ -795,8 +840,13 @@ void accept_client(void)
 
 	// 최근 대화 (무슨 얘기 중이었는지)
 	if ( history.size() > 0 ) {
+		// 남겨 둔 메세지는 앞뒤에 \r\n 이 있으므로 끝의 \r\n 을 떼고 이어 붙인다 (빈 줄이 끼지 않게)
 		std::string h = "\r\n" C_GRAY "─── 최근 대화 ───" C_WHITE;
-		for ( unsigned int i = 0; i < history.size(); i++ ) h += history[i];
+		for ( unsigned int i = 0; i < history.size(); i++ ) {
+			std::string m = history[i];
+			while ( m.size() >= 2 && m.compare(m.size() - 2, 2, "\r\n") == 0 ) m.erase(m.size() - 2);
+			h += m;
+		}
 		h += "\r\n" C_GRAY "─────────────────" C_WHITE "\r\n";
 		send_msg(client_fd, h.c_str());
 	}
