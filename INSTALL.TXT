@@ -392,6 +392,10 @@ src/muhan 구성
     이미 올라간 글/첨부도 그 회원 것으로 옮긴다.
     M: 예전 restore 프로그램으로 가져온 juya**** 같은 회원의 글을 BBS 회원으로 옮기기.
 
+  - 운영자 메뉴 14 -> 5 "올린 글 고치기": 이미 올린 글의 본문을 카페에서 다시 받아 덮어쓴다.
+    글 번호/조회수/첨부는 그대로. 예전 받기(서버 lynx)로 본문 한글이 깨진 글을 고칠 때 쓴다.
+    번호를 비우면 data/cafe/imported.log 의 글 모두.
+
 4) 기록 (data/cafe/, git 에 올라가지 않음)
   download/      받아 두고 아직 올리지 않은 글
   imported.log   BBS 에 올린 카페 글 번호 (hanulso.cfg 옆의 restore.log 도 함께 읽어 다시 가져오지 않음)

@@ -1128,6 +1128,33 @@ static void cafe_import(void)
 	wait_enter();
 }
 
+// 이미 올린 글의 본문을 카페에서 다시 받아 고치기 (예전 받기에서 본문 한글이 깨진 글)
+static void cafe_redo(void)
+{
+	print_header(S_CYAN "올린 카페 글 본문 다시 받기" S_WHITE);
+	printf("\r\n  BBS 에 올린 카페 글의 본문을 카페에서 다시 받아 그 자리에서 고칩니다.");
+	printf("\r\n  글 번호, 조회수, 첨부 파일은 그대로입니다. 깨진 첨부 이름(%%EB%%8B..)도 풀어 줍니다.");
+	printf("\r\n  " S_GRAY "번호를 비우면 올린 글 모두 (data/cafe/imported.log)" S_WHITE "\r\n");
+	std::string r = ask("글 번호 (예: 90500-90600, 비우면 모두) >> ", 120);
+	for (unsigned int i=0; i<r.size(); i++) {
+		if ( !isdigit((unsigned char)r[i]) && r[i] != '-' && r[i] != ' ' ) {
+			msg(S_RED, "숫자와 '-' 만 쓸 수 있습니다.");
+			wait_enter();
+			return;
+		}
+	}
+	if ( !confirm("고칠까요?") ) return;
+	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty) + " redo";
+	std::vector<std::string> parts = split_string(r, ' ');
+	for (unsigned int i=0; i<parts.size(); i++) {
+		if ( !trim(parts[i]).empty() ) cmd += " " + shell_quote(trim(parts[i]));
+	}
+	printf("\r\n\r\n");
+	fflush(stdout);
+	system(cmd.c_str());
+	wait_enter();
+}
+
 static void cafeimport_run(const std::string &args)
 {
 	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty) + " " + args;
@@ -1186,11 +1213,13 @@ static void cafe_menu(void)
 		printf("       2. 받은 글 확인     " S_GRAY "(보기, 빼기)" S_WHITE "\r\n");
 		printf("       3. BBS 에 올리기    " S_GRAY "(받아 둔 글을 게시판에)" S_WHITE "\r\n");
 		printf("       4. 카페 회원 연결   " S_GRAY "(카페 회원 = BBS 회원)" S_WHITE "\r\n");
+		printf("       5. 올린 글 고치기   " S_GRAY "(본문을 카페에서 다시 받아 덮어씀)" S_WHITE "\r\n");
 		std::string c = ask("번호 (끝: Enter) >> ", 2);
 		if ( c == "1" ) cafe_import();
 		else if ( c == "2" ) cafe_review();
 		else if ( c == "3" ) cafe_apply();
 		else if ( c == "4" ) cafe_link();
+		else if ( c == "5" ) cafe_redo();
 		else return;
 	}
 }

@@ -294,7 +294,7 @@ static void mark_done(int num)
 }
 
 // ------------------------------------------------------------------
-// 본문: 그림 태그를 [그림 n: 이름] 으로 바꾸고 lynx 로 텍스트(EUC-KR)로
+// 본문: 그림 태그를 [그림 n: 이름] 으로 바꾸고 텍스트(EUC-KR)로
 // ------------------------------------------------------------------
 struct remote_file { std::string url, name; bool cookie; };
 
@@ -312,12 +312,45 @@ static bool has_tag(const std::string &t)
 		|| t.find("</") != std::string::npos;
 }
 
-// 태그를 지우고 (문단/줄바꿈 태그는 줄바꿈으로) 문자 참조를 푼다.
+// 주소 모양의 이름 (%EB%8B%A4...) 을 푼다
+static std::string url_decode(const std::string &s)
+{
+	std::string o;
+	for (size_t i=0; i<s.size(); i++) {
+		if ( s[i] == '%' && i + 2 < s.size() && isxdigit((unsigned char)s[i+1]) && isxdigit((unsigned char)s[i+2]) ) {
+			o += (char)strtol(s.substr(i + 1, 2).c_str(), NULL, 16);
+			i += 2;
+		} else o += s[i];
+	}
+	return o;
+}
+
+// 글자 코드 c 를 UTF-8 로
+static void put_utf8(std::string &o, unsigned long c)
+{
+	if ( c < 0x80 ) o += (char)c;
+	else if ( c < 0x800 ) { o += (char)(0xC0 | (c >> 6)); o += (char)(0x80 | (c & 0x3F)); }
+	else if ( c < 0x10000 ) { o += (char)(0xE0 | (c >> 12)); o += (char)(0x80 | ((c >> 6) & 0x3F)); o += (char)(0x80 | (c & 0x3F)); }
+	else if ( c < 0x110000 ) {
+		o += (char)(0xF0 | (c >> 18)); o += (char)(0x80 | ((c >> 12) & 0x3F));
+		o += (char)(0x80 | ((c >> 6) & 0x3F)); o += (char)(0x80 | (c & 0x3F));
+	}
+}
+
+static void repl_all(std::string &t, const std::string &a, const std::string &b)
+{
+	size_t q = 0;
+	while ( (q = t.find(a, q)) != std::string::npos ) { t.replace(q, a.size(), b); q += b.size(); }
+}
+
+// 태그를 지우고 (문단/줄바꿈 태그는 줄바꿈으로) 문자 참조를 푼다. 입력과 출력은 UTF-8.
 // 한 번 더 감싸진 HTML 은 참조를 풀면 태그가 다시 드러나므로 태그가 없어질 때까지 되풀이한다.
 static std::string strip_html(std::string t)
 {
 	static const char *ents[][2] = { {"&nbsp;", " "}, {"&lt;", "<"}, {"&gt;", ">"}, {"&quot;", "\""},
-		{"&#39;", "'"}, {"&amp;", "&"}, {NULL, NULL} };
+		{"&#39;", "'"}, {"&apos;", "'"}, {"&middot;", "\xC2\xB7"}, {"&hellip;", "\xE2\x80\xA6"}, {NULL, NULL} };
+	static const char *blocks[] = { "br", "/p", "/div", "/li", "/tr", "/h1", "/h2", "/h3", "/h4", "/h5", "/h6",
+		"/blockquote", "/table", "hr", NULL };
 	for (int round = 0; round < 3; round++) {
 		if ( has_tag(t) ) {
 			std::string o;
@@ -327,11 +360,11 @@ static std::string strip_html(std::string t)
 					if ( e == std::string::npos ) { o += t.substr(i); break; }
 					// 태그 이름 (소문자). 맨 앞의 '/' 는 닫는 태그 표시, 공백이나 '/' 에서 멈춘다
 					std::string nm;
-					for (size_t k=i+1; k<e && nm.size() < 8; k++) {
+					for (size_t k=i+1; k<e && nm.size() < 12; k++) {
 						if ( t[k] == ' ' || (t[k] == '/' && k > i + 1) ) break;
 						nm += (char)tolower((unsigned char)t[k]);
 					}
-					if ( nm == "br" || nm == "/p" || nm == "/div" || nm == "/li" ) o += "\n";
+					for (int b=0; blocks[b]; b++) if ( nm == blocks[b] ) { o += "\n"; break; }
 					i = e;
 					continue;
 				}
@@ -340,29 +373,54 @@ static std::string strip_html(std::string t)
 			t = o;
 		}
 		bool had_ent = false;
-		for (int k=0; ents[k][0]; k++) {
-			size_t q = 0;
-			while ( (q = t.find(ents[k][0], q)) != std::string::npos ) {
-				t.replace(q, strlen(ents[k][0]), ents[k][1]);
-				q += strlen(ents[k][1]);
-				had_ent = true;
+		// &#44536; &#xAC00; 같은 숫자 참조
+		std::string o;
+		for (size_t i=0; i<t.size(); i++) {
+			if ( t[i] == '&' && i + 2 < t.size() && t[i+1] == '#' ) {
+				size_t e = t.find(';', i);
+				if ( e != std::string::npos && e - i <= 9 ) {
+					bool hex = (t[i+2] == 'x' || t[i+2] == 'X');
+					std::string d = t.substr(i + (hex ? 3 : 2), e - i - (hex ? 3 : 2));
+					char *end = NULL;
+					unsigned long c = strtoul(d.c_str(), &end, hex ? 16 : 10);
+					if ( !d.empty() && end && *end == 0 && c > 0 ) {
+						put_utf8(o, c);
+						i = e;
+						had_ent = true;
+						continue;
+					}
+				}
 			}
+			o += t[i];
 		}
+		t = o;
+		for (int k=0; ents[k][0]; k++) {
+			if ( t.find(ents[k][0]) != std::string::npos ) { repl_all(t, ents[k][0], ents[k][1]); had_ent = true; }
+		}
+		if ( t.find("&amp;") != std::string::npos ) { repl_all(t, "&amp;", "&"); had_ent = true; }
 		if ( !had_ent || !has_tag(t) ) break;
 	}
 	return t;
 }
 
+// 본문 HTML (UTF-8) -> BBS 본문 (EUC-KR, 76 칸).
+// 예전에는 lynx 를 썼지만 서버(CentOS 6)의 lynx 는 EUC-KR 로 바꾸지 않아 한글이 깨졌다. 직접 바꾼다.
 static std::string html_to_text(std::string html, std::vector<remote_file> &images)
 {
-	// <script> 덩어리 빼기
+	// <script>, <style> 덩어리 빼기
+	static const char *drop[][2] = { {"<script", "</script>"}, {"<style", "</style>"}, {NULL, NULL} };
 	size_t p;
-	while ( (p = html.find("<script")) != std::string::npos ) {
-		size_t e = html.find("</script>", p);
-		if ( e == std::string::npos ) break;
-		html.erase(p, e + 9 - p);
+	for (int k=0; drop[k][0]; k++) {
+		while ( (p = html.find(drop[k][0])) != std::string::npos ) {
+			size_t e = html.find(drop[k][1], p);
+			if ( e == std::string::npos ) break;
+			html.erase(p, e + strlen(drop[k][1]) - p);
+		}
 	}
-	// 그림
+	// HTML 안의 줄바꿈/탭은 공백일 뿐이다 (줄은 <br>, <p> 로 나뉜다)
+	for (size_t i=0; i<html.size(); i++)
+		if ( html[i] == '\n' || html[i] == '\r' || html[i] == '\t' ) html[i] = ' ';
+	// 그림: [그림 n: 이름] 자리를 \x01 n: 이름 \x02 로 표시해 두고 EUC-KR 로 바꾼 뒤에 채운다
 	p = 0;
 	while ( (p = html.find("<img", p)) != std::string::npos ) {
 		size_t e = html.find('>', p);
@@ -374,40 +432,50 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 			s += 5;
 			src = tag.substr(s, tag.find('"', s) - s);
 		}
+		repl_all(src, "&amp;", "&");
 		std::string repl;
 		// 스티커/아이콘이 아닌 카페 그림만
 		if ( src.find("pstatic.net") != std::string::npos && src.find("sticker") == std::string::npos
 		     && src.find("storep-phinf") == std::string::npos ) {
-			remote_file f; f.url = src; f.name = url_file_name(src); f.cookie = false;
+			remote_file f; f.url = src; f.name = url_decode(url_file_name(src)); f.cookie = false;
 			images.push_back(f);
 			char b[32]; snprintf(b, sizeof(b), "%d", (int)images.size());
-			// 본문 HTML 은 UTF-8, 이 소스는 EUC-KR 이라 "그림" 은 문자 참조로
-			repl = "<p>[&#44536;&#47548; " + std::string(b) + ": " + f.name + "]</p>";
+			repl = "<p>\x01" + std::string(b) + ": " + f.name + "\x02</p>";
 		}
 		html.replace(p, e + 1 - p, repl);
 		p += repl.size();
 	}
 
-	std::string in = state_dir + "/tmp/body.html", txt = state_dir + "/tmp/body.txt";
-	FILE *fp = fopen(in.c_str(), "w");
-	if ( !fp ) return "";
-	fprintf(fp, "<html><head><meta charset=\"utf-8\"></head><body>%s</body></html>", html.c_str());
-	fclose(fp);
-	std::string cmd = "lynx -dump -nolist -nomargins -width=76 -assume_charset=utf-8 -display_charset=euc-kr "
-		+ shell_quote(in) + " > " + shell_quote(txt) + " 2>/dev/null";
-	system(cmd.c_str());
-	std::string t = read_file(txt.c_str());
-	unlink(in.c_str()); unlink(txt.c_str());
-	// lynx 가 없거나 실패하면 원래 HTML 에서 직접 태그를 지운다
-	if ( trim(t).empty() && !trim(html).empty() ) t = u2c(html);
-	// 안전장치: 태그가 남았으면 (lynx 가 없거나, 본문이 &lt;span&gt; 처럼 한 번 더 감싸진 글) 직접 지운다
-	t = strip_html(t);
-	// 빈 줄이 셋 이상 이어지면 둘로
-	size_t q;
-	while ( (q = t.find("\n\n\n\n")) != std::string::npos ) t.erase(q, 1);
-	// 끝의 빈 줄 정리
-	while ( !t.empty() && (t[t.size()-1] == '\n' || t[t.size()-1] == ' ') ) t.erase(t.size()-1);
-	return t + "\n";
+	std::string t = strip_html(html);
+	repl_all(t, "\xC2\xA0", " ");		// 줄바꿈 없는 공백
+	repl_all(t, "\xE2\x80\x8B", "");		// 폭 없는 공백 (네이버 편집기가 많이 넣는다)
+	repl_all(t, "\xEF\xBB\xBF", "");
+	t = u2c(t);
+	repl_all(t, "\x01", "[그림 ");
+	repl_all(t, "\x02", "]");
+
+	// 줄마다: 공백 정리, 76 칸으로 나누기, 빈 줄은 하나까지
+	std::vector<std::string> lines = split_string(t, '\n');
+	std::string o;
+	int blank = 0;
+	for (unsigned int i=0; i<lines.size(); i++) {
+		std::string l;
+		for (size_t k=0; k<lines[i].size(); k++) {
+			if ( lines[i][k] == ' ' && (l.empty() || l[l.size()-1] == ' ') ) continue;
+			l += lines[i][k];
+		}
+		l = trim(l);
+		if ( l.empty() ) {
+			if ( !o.empty() && blank == 0 ) o += "\n";
+			blank++;
+			continue;
+		}
+		blank = 0;
+		std::vector<std::string> parts = wrap_words(l, 76);
+		for (unsigned int k=0; k<parts.size(); k++) o += parts[k] + "\n";
+	}
+	while ( !o.empty() && (o[o.size()-1] == '\n' || o[o.size()-1] == ' ') ) o.erase(o.size()-1);
+	return o + "\n";
 }
 
 // 첨부: 이름/주소가 들어 있을 만한 항목을 차례로 찾는다
@@ -423,6 +491,7 @@ static void collect_attaches(const picojson::value &result, std::vector<remote_f
 		for (int k=0; names[k] && f.name.empty(); k++) f.name = jstr(a[i], names[k]);
 		for (int k=0; urls[k] && f.url.empty(); k++) f.url = jstr(a[i], urls[k]);
 		if ( f.name.empty() && !f.url.empty() ) f.name = url_file_name(f.url);
+		f.name = url_decode(f.name);
 		// 그림("type":"I")은 주소 없이 이름만 온다. 본문의 <img> 에서 이미 받으므로 건너뛴다
 		if ( f.url.empty() && jstr(a[i], "type") == "I" ) continue;
 		if ( f.url.empty() && jstr(a[i], "type") == "M" ) { videos++; continue; }
@@ -435,6 +504,23 @@ static void collect_attaches(const picojson::value &result, std::vector<remote_f
 		}
 		files.push_back(f);
 	}
+}
+
+// BBS 에 들어갈 본문 (EUC-KR). files 에 받을 그림/첨부를 모은다
+static std::string build_content(const picojson::value &result, const picojson::value &a, int num,
+	std::vector<remote_file> &files, bool show)
+{
+	std::string content = html_to_text(jstr(a, "contentHtml"), files);
+	int videos = 0;
+	collect_attaches(result, files, num, videos);
+	if ( videos ) {
+		char vb[96]; snprintf(vb, sizeof(vb), "\n[동영상 %d 개: 네이버 카페 원문에서 보세요]\n", videos);
+		content += vb;
+		if ( show ) out("    " + trim(std::string(vb)));
+	}
+	char nb[32]; snprintf(nb, sizeof(nb), "%d", num);
+	content += "\n" "(네이버 카페 원문: https://cafe.naver.com/olddos/" + std::string(nb) + ")\n";
+	return content;
 }
 
 // 카페 회원을 BBS 회원으로 (로그인할 수 없는 비밀번호)
@@ -552,15 +638,7 @@ static bool fetch_one(int num, std::set<int> &done)
 	strftime(tim, sizeof(tim), "%H:%M:%S", &tmv);
 
 	std::vector<remote_file> files;
-	std::string content = html_to_text(jstr(a, "contentHtml"), files);
-	int videos = 0;
-	collect_attaches(result, files, num, videos);
-	if ( videos ) {
-		char vb[96]; snprintf(vb, sizeof(vb), "\n[동영상 %d 개: 네이버 카페 원문에서 보세요]\n", videos);
-		content += vb;
-		out("    " + trim(std::string(vb)));
-	}
-	content += "\n" "(네이버 카페 원문: https://cafe.naver.com/olddos/" + std::string(nb) + ")\n";
+	std::string content = build_content(result, a, num, files, true);
 
 	// 받기
 	std::string dir = stage_dir(num);
@@ -678,6 +756,67 @@ static bool apply_one(int num, std::set<int> &done)
 	return true;
 }
 
+// ------------------------------------------------------------------
+// 다시 쓰기: 이미 BBS 에 올린 글의 본문을 카페에서 다시 받아 그 자리에서 고친다.
+// 글 번호, 조회수, 추천, 첨부 파일은 그대로. 첨부 이름이 %EB%8B.. 모양이면 풀어 준다.
+// (예전 받기는 서버의 lynx 때문에 본문 한글이 깨졌다)
+// ------------------------------------------------------------------
+static bool redo_one(int num)
+{
+	char nb[32]; snprintf(nb, sizeof(nb), "%d", num);
+	std::string head = std::string("[") + nb + "] ";
+
+	// BBS 에서 찾기: 본문 끝의 "(네이버 카페 원문: https://cafe.naver.com/olddos/번호)"
+	std::string mark = "cafe.naver.com/olddos/" + std::string(nb) + ")";
+	std::set<std::string> boards;
+	for (std::map<int, std::string>::const_iterator it = table.begin(); it != table.end(); ++it) boards.insert(it->second);
+	std::string board;
+	int no = -1;
+	for (std::set<std::string>::iterator b = boards.begin(); b != boards.end() && no < 0; ++b) {
+		if ( !table_exists(*b) ) continue;
+		std::string q = "SELECT NO FROM " + *b + " WHERE CONTENT LIKE '%" + database::escape(mark.c_str()) + "%'";
+		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows((char*)q.c_str());
+		if ( !rows.empty() ) { board = *b; no = atoi(rows[0]["NO"].c_str()); }
+	}
+	if ( no < 0 ) { n_fail++; out(head + "BBS 에서 찾지 못함 (table.txt 의 게시판들에서)"); return true; }
+
+	picojson::value v; std::string err;
+	std::string url = api_base + "/cafe-web/cafe-articleapi/v2.1/cafes/" + cafe_id
+		+ "/articles/" + nb + "?useCafeId=true";
+	if ( !get_json(url, v, err) ) {
+		if ( err == "LOGIN" ) return false;
+		n_fail++; out(head + "건너뜀: " + err);
+		return true;
+	}
+	const picojson::value &result = v.get("result");
+	const picojson::value &a = result.get("article");
+	std::vector<remote_file> files;
+	std::string content = build_content(result, a, num, files, false);
+
+	char nob[32]; snprintf(nob, sizeof(nob), "%d", no);
+	std::string q = "UPDATE " + board + " SET CONTENT = '" + database::escape(content.c_str()) + "' WHERE NO = " + nob;
+	if ( mysql_query(mysql, q.c_str()) != 0 ) {
+		n_fail++; out(head + "고치지 못함: " + mysql_error(mysql));
+		return true;
+	}
+	// 첨부 이름
+	q = "SELECT NO, ORIGINAL_FILENAME FROM attachment WHERE FAMILY_TABLE = '" + database::escape(board.c_str())
+		+ "' AND FAMILY_ID = " + nob;
+	std::vector<std::map<std::string, std::string> > rows = database::fetch_rows((char*)q.c_str());
+	for (unsigned int i=0; i<rows.size(); i++) {
+		std::string name = rows[i]["ORIGINAL_FILENAME"];
+		if ( name.find('%') == std::string::npos ) continue;
+		std::string nn = one_line(u2c(url_decode(name)));
+		if ( nn.empty() || nn == name ) continue;
+		q = "UPDATE attachment SET ORIGINAL_FILENAME = '" + database::escape(nn.c_str()) + "' WHERE NO = " + rows[i]["NO"];
+		mysql_query(mysql, q.c_str());
+		n_files++;
+	}
+	n_ok++;
+	out(head + "고침 -> " + board + " " + nob + "번: " + string_truncate(u2c(jstr(a, "subject")), 40, "..."));
+	return true;
+}
+
 // 받은 글 목록
 static void list_staged(void)
 {
@@ -751,7 +890,7 @@ static std::vector<int> parse_ranges(int argc, char **argv, int from, int *open_
 int main(int argc, char **argv)
 {
 	if ( argc < 3 ) {
-		printf("사용법: %s <tty> fetch <범위...> | list | show <번호> | drop <번호> | apply\n", argv[0]);
+		printf("사용법: %s <tty> fetch <범위...> | list | show <번호> | drop <번호> | apply | redo [범위...]\n", argv[0]);
 		printf("  예) %s - fetch 103001-103050 103100\n", argv[0]);
 		printf("      %s - fetch 103001-   (103001 번부터 최근 글까지)\n", argv[0]);
 		return 1;
@@ -779,7 +918,7 @@ int main(int argc, char **argv)
 		out("  " + std::string(argv[3]) + " 번 글을 뺐습니다.");
 		return 0;
 	}
-	if ( mode != "fetch" && mode != "apply" ) { out("모르는 명령: " + mode); return 1; }
+	if ( mode != "fetch" && mode != "apply" && mode != "redo" ) { out("모르는 명령: " + mode); return 1; }
 
 	read_settings("hanulso.cfg");
 	pugi::xml_document doc;
@@ -788,7 +927,7 @@ int main(int argc, char **argv)
 	cookie = trim(doc.child("hanulso").child("naver").child("cookie").child_value());
 	if ( cafe_id.empty() ) cafe_id = "28655511";
 	// 쿠키는 받기에 필요하다 (올리기는 작성자 아이디를 아직 모를 때만)
-	if ( mode == "fetch" && (cookie.empty() || cookie.find('"') != std::string::npos) ) {
+	if ( (mode == "fetch" || mode == "redo") && (cookie.empty() || cookie.find('"') != std::string::npos) ) {
 		out("hanulso.cfg 에 <naver><cookie>NID_AUT=...; NID_SES=...</cookie></naver> 를 넣으세요.");
 		return 1;
 	}
@@ -856,6 +995,27 @@ int main(int argc, char **argv)
 			}
 		}
 		snprintf(b, sizeof(b), "받음 %d, 이미 있음 %d, 실패 %d, 첨부 파일 %d", n_ok, n_skip_done, n_fail, n_files);
+	} else if ( mode == "redo" ) {
+		// 이 프로그램으로 올린 글만 (imported.log). 범위를 주면 그 안에서
+		std::set<int> mine;
+		load_done(state_dir + "/imported.log", mine);
+		std::vector<int> nums;
+		if ( argc > 3 ) {
+			std::vector<int> r = parse_ranges(argc, argv, 3);
+			for (unsigned int i=0; i<r.size(); i++) if ( mine.count(r[i]) ) nums.push_back(r[i]);
+		} else nums.assign(mine.begin(), mine.end());
+		snprintf(b, sizeof(b), "BBS 에 올린 카페 글 %d 개의 본문을 카페에서 다시 받아 고칩니다.", (int)nums.size());
+		out(b);
+		out("  (멈추려면 Q: 지금 고치는 글을 마치고 멈춥니다)");
+		for (unsigned int i=0; i<nums.size(); i++) {
+			if ( !redo_one(nums[i]) ) { login_ok = false; break; }
+			if ( i + 1 < nums.size() && user_stop(1) ) {
+				char r[96]; snprintf(r, sizeof(r), "  멈췄습니다. 이어 고치려면: %d-%d", nums[i + 1], nums.back());
+				out(r);
+				break;
+			}
+		}
+		snprintf(b, sizeof(b), "고침 %d, 실패 %d, 첨부 이름 고침 %d", n_ok, n_fail, n_files);
 	} else {
 		std::vector<int> nums = (argc > 3) ? parse_ranges(argc, argv, 3) : staged_nums();
 		snprintf(b, sizeof(b), "받아 둔 글 %d 개를 BBS 에 올립니다.", (int)nums.size());
