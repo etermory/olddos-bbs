@@ -151,6 +151,11 @@
 			<item type="program" prog="blackjack" go="blackjack" door="8" access_level="1">
 				<name>블랙잭 (blackjack)</name>
 			</item>
+
+			<!-- 타자 연습 (긴 글 따라 치기, 타수 / 정확도, 오늘의 도전) -->
+			<item type="program" prog="typing" go="typing" door="9" access_level="1">
+				<name>타자 연습 (typing)</name>
+			</item>
 		</item>
 
 		
