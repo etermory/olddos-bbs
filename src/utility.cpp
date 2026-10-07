@@ -732,11 +732,14 @@ static void li_put(const char *str, int a, int b, int echo)
 	}
 }
 
-// 커서를 왼쪽으로 n 칸
+// 커서를 왼쪽으로 n 칸.  백스페이스 (\b) 는 이야기 같은 터미널에서 글자를 지우며 옮기므로
+// 커서만 옮기는 ESC [ n D 를 쓴다
 static void li_back(int n, int echo)
 {
-	if ( echo == 0 ) return;
-	while ( n-- > 0 ) putchar('\b');
+	if ( echo == 0 || n <= 0 ) return;
+	char seq[16];
+	snprintf(seq, sizeof(seq), "\033[%dD", n);
+	for ( const char *q = seq; *q; q++ ) putchar(*q);
 }
 
 // cur 바로 앞 글자의 바이트 수 (완성형 한글은 2)
