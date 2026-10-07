@@ -1,9 +1,11 @@
 // ------------------------------------------------------------------
 // 네이버 카페 글 가져오기
-//   cafeimport <tty> <글 번호 범위...>     예) cafeimport 3 103001-103050 103100
+//   cafeimport <tty> fetch <글 번호 범위...>   받기 (BBS 는 그대로)  예) fetch 103001-103050 103100
+//   cafeimport <tty> list | show <번호> | drop <번호>   받은 글 보기/빼기
+//   cafeimport <tty> apply [번호...]            받아 둔 글을 BBS 에 올림 (올린 글은 받은 폴더에서 지움)
 //
-// 카페 글 JSON(로그인 쿠키 필요)을 받아 제목/작성자/본문/그림/첨부를
-// src/restore/table.txt 의 메뉴 대응표에 따라 BBS 게시판에 올린다.
+// 카페 글 JSON(로그인 쿠키 필요)을 받아 제목/작성자/본문/그림/첨부를 data/cafe/download/ 에 받아 두고,
+// 확인한 뒤 src/restore/table.txt 의 메뉴 대응표에 따라 BBS 게시판에 올린다.
 //
 // hanulso.cfg:
 //   <naver>
@@ -110,7 +112,7 @@ static std::string jstr(const picojson::value &v, const char *key)
 // BBS 회원의 닉네임은 카페 닉네임과 같게 쓰고 있다 (BBS 는 닉네임이 겹치지 않게 가입받는다).
 // 닉네임이 같은 BBS 회원이 딱 한 명이면 그 회원으로 자동 연결한다.
 // 가려진 아이디(coma****)의 앞부분은 확인용: 다르면 link_check.log 에 남긴다.
-// 닉네임이 맞는 회원이 없으면 아이디 앞부분이 같은 회원을 후보로 남긴다 (sysop 14 -> 2 에서 연결).
+// 닉네임이 맞는 회원이 없으면 아이디 앞부분이 같은 회원을 후보로 남긴다 (sysop 14 -> 4 에서 연결).
 static std::string auto_link(const std::string &member_key, const std::string &masked, const std::string &nick)
 {
 	size_t star = masked.find('*');
@@ -325,33 +327,6 @@ static void collect_attaches(const picojson::value &result, std::vector<remote_f
 	}
 }
 
-// 받은 파일을 BBS file/ 에 넣고 첨부로 등록
-static void attach_files(const std::string &table, int no, const std::string &uid,
-		const std::string &date, const std::string &time, std::vector<remote_file> &files)
-{
-	for (unsigned int i=0; i<files.size(); i++) {
-		// 저장 이름: 영문자/숫자만 (random_string 은 특수 문자도 섞는다)
-		static const char an[] = "abcdefghijklmnopqrstuvwxyz0123456789";
-		char rnd[64];
-		snprintf(rnd, sizeof(rnd), "cafe%d_%d_", no, (int)i);
-		std::string tmpname = rnd;
-		for (int k=0; k<8; k++) tmpname += an[rand() % 36];
-		std::string dest = home + "/file/" + tmpname;
-		int code = http_get(files[i].url, dest, files[i].cookie);
-		if ( code != 200 || file_size((char*)dest.c_str()) <= 0 ) {
-			unlink(dest.c_str());
-			char b[32]; snprintf(b, sizeof(b), "%d", code);
-			out("    받기 실패 (HTTP " + std::string(b) + "): " + u2c(files[i].name));
-			continue;
-		}
-		chmod(dest.c_str(), 0644);
-		std::string orig = u2c(files[i].name);
-		database::add_attachment((char*)table.c_str(), no, (char*)uid.c_str(), (char*)date.c_str(),
-			(char*)time.c_str(), (char*)tmpname.c_str(), (char*)orig.c_str());
-		n_files++;
-	}
-}
-
 // 카페 회원을 BBS 회원으로 (로그인할 수 없는 비밀번호)
 static void ensure_member(const std::string &uid, const std::string &nick)
 {
@@ -371,14 +346,71 @@ static bool table_exists(const std::string &t)
 }
 
 // ------------------------------------------------------------------
-// 글 하나. 로그인 쿠키 문제면 false (전체를 멈춘다)
+// 받아 둔 글: data/cafe/download/<글 번호>/
+//   meta.txt  키=값 (EUC-KR): board, menu_id, menu, title, nick, member_key, uid, date, time,
+//             file=<저장 이름>\t<원래 이름> (여러 줄)
+//   body.txt  BBS 에 들어갈 본문 (EUC-KR, 올리기 전에 고쳐도 된다)
+//   files/    그림과 첨부
 // ------------------------------------------------------------------
-static bool import_one(int num, const std::map<int, std::string> &table, std::set<int> &done)
+static std::string stage_dir(int num)
+{
+	char b[32]; snprintf(b, sizeof(b), "%d", num);
+	return state_dir + "/download/" + b;
+}
+
+struct staged {
+	int num;
+	std::map<std::string, std::string> m;
+	std::vector<std::pair<std::string, std::string> > files;	// 저장 이름, 원래 이름
+};
+
+static bool load_staged(int num, staged &s)
+{
+	std::string txt = read_file((stage_dir(num) + "/meta.txt").c_str());
+	if ( txt.empty() ) return false;
+	s.num = num;
+	std::vector<std::string> lines = split_string(txt, '\n');
+	for (unsigned int i=0; i<lines.size(); i++) {
+		size_t e = lines[i].find('=');
+		if ( e == std::string::npos ) continue;
+		std::string k = lines[i].substr(0, e), v = lines[i].substr(e + 1);
+		if ( k == "file" ) {
+			size_t t = v.find('\t');
+			if ( t != std::string::npos ) s.files.push_back(std::make_pair(v.substr(0, t), v.substr(t + 1)));
+		} else s.m[k] = v;
+	}
+	return true;
+}
+
+static std::vector<int> staged_nums(void)
+{
+	std::vector<int> nums;
+	std::vector<std::string> d = find_files(state_dir + "/download/*");
+	for (unsigned int i=0; i<d.size(); i++) {
+		int n = atoi(d[i].substr(d[i].rfind('/') + 1).c_str());
+		if ( n > 0 ) nums.push_back(n);
+	}
+	std::sort(nums.begin(), nums.end());
+	return nums;
+}
+
+static std::string one_line(std::string s)
+{
+	for (unsigned int i=0; i<s.size(); i++) if ( s[i] == '\n' || s[i] == '\r' || s[i] == '\t' ) s[i] = ' ';
+	return s;
+}
+
+// ------------------------------------------------------------------
+// 받기: BBS 는 바꾸지 않는다. 로그인 쿠키 문제면 false (전체를 멈춘다)
+// ------------------------------------------------------------------
+static bool fetch_one(int num, const std::map<int, std::string> &table, std::set<int> &done)
 {
 	char nb[32]; snprintf(nb, sizeof(nb), "%d", num);
 	std::string head = std::string("[") + nb + "] ";
 
-	if ( done.count(num) ) { n_skip_done++; out(head + "이미 가져온 글"); return true; }
+	if ( done.count(num) ) { n_skip_done++; out(head + "이미 BBS 에 올린 글"); return true; }
+	staged tmp;
+	if ( load_staged(num, tmp) ) { n_skip_done++; out(head + "이미 받아 둔 글"); return true; }
 
 	picojson::value v; std::string err;
 	std::string url = api_base + "/cafe-web/cafe-articleapi/v2.1/cafes/" + cafe_id
@@ -409,7 +441,8 @@ static bool import_one(int num, const std::map<int, std::string> &table, std::se
 	std::string hd = u2c(jstr(a, "head"));
 	if ( !hd.empty() ) title = "[" + hd + "] " + title;
 	std::string nick = u2c(jstr(a.get("writer"), "nick"));
-	std::string uid = member_id(jstr(a.get("writer"), "memberKey"), nick);
+	std::string member_key = jstr(a.get("writer"), "memberKey");
+	std::string uid = member_id(member_key, nick);
 	if ( uid.empty() ) return false;	// 로그인 문제
 
 	time_t t = (time_t)(a.get("writeDate").get<double>() / 1000);
@@ -423,27 +456,154 @@ static bool import_one(int num, const std::map<int, std::string> &table, std::se
 	collect_attaches(result, files, num);
 	content += "\n" "(네이버 카페 원문: https://cafe.naver.com/olddos/" + std::string(nb) + ")\n";
 
-	ensure_member(uid, nick);
-	int no = database::add_article((char*)board.c_str(), (char*)uid.c_str(), date, tim,
-		(char*)title.c_str(), (char*)content.c_str());
-	if ( no == -1 ) { n_fail++; out(head + "게시판에 넣지 못함"); return true; }
-	database::attach_article((char*)board.c_str(), no, no);
-	attach_files(board, no, uid, date, tim, files);
+	// 받기
+	std::string dir = stage_dir(num);
+	system(("mkdir -p " + shell_quote(dir + "/files")).c_str());
+	std::string meta;
+	meta += "board=" + board + "\n";
+	char mid[32]; snprintf(mid, sizeof(mid), "%d", menu_id);
+	meta += "menu_id=" + std::string(mid) + "\n";
+	meta += "menu=" + one_line(menu_name) + "\n";
+	meta += "title=" + one_line(title) + "\n";
+	meta += "nick=" + one_line(nick) + "\n";
+	meta += "member_key=" + member_key + "\n";
+	meta += "uid=" + uid + "\n";
+	meta += "date=" + std::string(date) + "\n";
+	meta += "time=" + std::string(tim) + "\n";
+	int got = 0;
+	for (unsigned int i=0; i<files.size(); i++) {
+		char sname[32]; snprintf(sname, sizeof(sname), "%02d", (int)i + 1);
+		std::string dest = dir + "/files/" + sname;
+		int code = http_get(files[i].url, dest, files[i].cookie);
+		if ( code != 200 || file_size(dest) <= 0 ) {
+			unlink(dest.c_str());
+			char b[32]; snprintf(b, sizeof(b), "%d", code);
+			out("    받기 실패 (HTTP " + std::string(b) + "): " + u2c(files[i].name));
+			continue;
+		}
+		meta += "file=" + std::string(sname) + "\t" + one_line(u2c(files[i].name)) + "\n";
+		got++;
+	}
+	FILE *fp = fopen((dir + "/body.txt").c_str(), "w");
+	if ( fp ) { fputs(content.c_str(), fp); fclose(fp); }
+	fp = fopen((dir + "/meta.txt").c_str(), "w");
+	if ( fp ) { fputs(meta.c_str(), fp); fclose(fp); }
 
-	mark_done(num);
-	done.insert(num);
 	n_ok++;
-	char cnt[64]; snprintf(cnt, sizeof(cnt), " (첨부 %d)", (int)files.size());
-	out(head + "올림 -> " + board + ": " + string_truncate(title, 40, "...") + " / " + nick + "(" + uid + ")"
-		+ (files.empty() ? "" : cnt));
+	n_files += got;
+	char cnt[64]; snprintf(cnt, sizeof(cnt), " (첨부 %d)", got);
+	out(head + "받음 -> " + board + ": " + string_truncate(title, 40, "...") + " / " + nick + "(" + uid + ")"
+		+ (got ? cnt : ""));
 	return true;
 }
 
+// ------------------------------------------------------------------
+// 올리기: 받아 둔 글 하나를 BBS 에. 올렸으면 받은 폴더를 지운다
+// ------------------------------------------------------------------
+static bool apply_one(int num, std::set<int> &done)
+{
+	char nb[32]; snprintf(nb, sizeof(nb), "%d", num);
+	std::string head = std::string("[") + nb + "] ";
+	staged s;
+	if ( !load_staged(num, s) ) { n_fail++; out(head + "받아 둔 글이 없음"); return true; }
+	std::string dir = stage_dir(num);
+	if ( done.count(num) ) {
+		n_skip_done++; out(head + "이미 BBS 에 올린 글 (받은 폴더를 지움)");
+		system(("rm -rf " + shell_quote(dir)).c_str());
+		return true;
+	}
+	std::string board = s.m["board"];
+	if ( board.empty() || !table_exists(board) ) { n_fail++; out(head + "게시판 테이블 " + board + " 이 없음"); return true; }
+
+	// 작성자: 받은 뒤에 연결했을 수 있으므로 다시 정한다
+	std::string uid = member_id(s.m["member_key"], s.m["nick"]);
+	if ( uid.empty() ) return false;
+	std::string content = read_file((dir + "/body.txt").c_str());
+
+	ensure_member(uid, s.m["nick"]);
+	int no = database::add_article((char*)board.c_str(), (char*)uid.c_str(), (char*)s.m["date"].c_str(),
+		(char*)s.m["time"].c_str(), (char*)s.m["title"].c_str(), (char*)content.c_str());
+	if ( no == -1 ) { n_fail++; out(head + "게시판에 넣지 못함"); return true; }
+	database::attach_article((char*)board.c_str(), no, no);
+
+	for (unsigned int i=0; i<s.files.size(); i++) {
+		// 저장 이름: 영문자/숫자만
+		static const char an[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+		char rnd[64];
+		snprintf(rnd, sizeof(rnd), "cafe%d_%d_", no, (int)i);
+		std::string tmpname = rnd;
+		for (int k=0; k<8; k++) tmpname += an[rand() % 36];
+		std::string src = dir + "/files/" + s.files[i].first;
+		std::string dest = home + "/file/" + tmpname;
+		std::string cmd = "cp " + shell_quote(src) + " " + shell_quote(dest);
+		if ( system(cmd.c_str()) != 0 ) { out("    첨부를 옮기지 못함: " + s.files[i].second); continue; }
+		chmod(dest.c_str(), 0644);
+		database::add_attachment((char*)board.c_str(), no, (char*)uid.c_str(), (char*)s.m["date"].c_str(),
+			(char*)s.m["time"].c_str(), (char*)tmpname.c_str(), (char*)s.files[i].second.c_str());
+		n_files++;
+	}
+
+	mark_done(num);
+	done.insert(num);
+	system(("rm -rf " + shell_quote(dir)).c_str());
+	n_ok++;
+	out(head + "올림 -> " + board + ": " + string_truncate(s.m["title"], 40, "...") + " / "
+		+ s.m["nick"] + "(" + uid + ")");
+	return true;
+}
+
+// 받은 글 목록
+static void list_staged(void)
+{
+	std::vector<int> nums = staged_nums();
+	if ( nums.empty() ) { out("  받아 둔 글이 없습니다."); return; }
+	for (unsigned int i=0; i<nums.size(); i++) {
+		staged s;
+		if ( !load_staged(nums[i], s) ) continue;
+		// 작성자는 지금 연결 상태로 (캐시만 보고, 네이버에 묻지 않는다)
+		std::string uid = trim(read_file((state_dir + "/links/" + s.m["member_key"]).c_str()));
+		if ( uid.empty() ) uid = s.m["uid"];
+		char b[512];
+		snprintf(b, sizeof(b), "  %6d %-22s %s", nums[i], string_truncate(s.m["board"], 22, "").c_str(),
+			string_truncate(s.m["title"], 44, "...").c_str());
+		out(b);
+		char nf[32] = "";
+		if ( !s.files.empty() ) snprintf(nf, sizeof(nf), "첨부 %d", (int)s.files.size());
+		snprintf(b, sizeof(b), "         %s(%s) %s %s", s.m["nick"].c_str(), uid.c_str(), s.m["date"].c_str(), nf);
+		out(b);
+	}
+	char b[64]; snprintf(b, sizeof(b), "  모두 %d 개", (int)nums.size());
+	out(b);
+}
+
+// 받은 글 보기 (20 줄씩)
+static void show_staged(int num)
+{
+	staged s;
+	if ( !load_staged(num, s) ) { out("  받아 둔 글이 없습니다."); return; }
+	out("  제목: " + s.m["title"]);
+	out("  작성: " + s.m["nick"] + "(" + s.m["uid"] + ")  " + s.m["date"] + " " + s.m["time"]);
+	out("  카페 메뉴: " + s.m["menu"] + " -> 게시판 " + s.m["board"]);
+	for (unsigned int i=0; i<s.files.size(); i++) out("  첨부: " + s.files[i].second);
+	out("  ------------------------------------------------------------------------");
+	std::vector<std::string> lines = split_string(read_file((stage_dir(num) + "/body.txt").c_str()), '\n');
+	for (unsigned int i=0; i<lines.size(); i++) {
+		out("  " + lines[i]);
+		if ( (i + 1) % 18 == 0 && i + 1 < lines.size() ) {
+			printf("  -- 계속: Enter, 그만: Q --");
+			fflush(stdout);
+			int c = getchar();
+			printf("\r\n");
+			if ( c == 'q' || c == 'Q' ) break;
+		}
+	}
+}
+
 // "103001-103050 103100" -> 번호 목록
-static std::vector<int> parse_ranges(int argc, char **argv)
+static std::vector<int> parse_ranges(int argc, char **argv, int from)
 {
 	std::vector<int> nums;
-	for (int i=2; i<argc; i++) {
+	for (int i=from; i<argc; i++) {
 		int a = 0, b = 0;
 		if ( sscanf(argv[i], "%d-%d", &a, &b) == 2 ) {
 			if ( b < a ) std::swap(a, b);
@@ -457,17 +617,33 @@ static std::vector<int> parse_ranges(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	if ( argc < 3 ) {
-		printf("사용법: %s <tty> <글 번호 범위...>   예) %s - 103001-103050 103100\n", argv[0], argv[0]);
+		printf("사용법: %s <tty> fetch <범위...> | list | show <번호> | drop <번호> | apply\n", argv[0]);
+		printf("  예) %s - fetch 103001-103050 103100\n", argv[0]);
 		return 1;
 	}
 	snprintf(tty, sizeof(tty), "%s", argv[1]);
+	std::string mode = argv[2];
 	home = getenv("HANULSO") ? getenv("HANULSO") : ".";
 	if ( chdir(home.c_str()) != 0 ) { out("HANULSO 디렉터리로 갈 수 없습니다."); return 1; }
 	if ( getenv("CAFE_API_BASE") ) api_base = getenv("CAFE_API_BASE");
 	state_dir = home + "/data/cafe";
-	system(("mkdir -p " + shell_quote(state_dir + "/members") + " " + shell_quote(state_dir + "/assigned") + " " + shell_quote(state_dir + "/links") + " " + shell_quote(state_dir + "/tmp")).c_str());
+	system(("mkdir -p " + shell_quote(state_dir + "/members") + " " + shell_quote(state_dir + "/assigned") + " "
+		+ shell_quote(state_dir + "/links") + " " + shell_quote(state_dir + "/tmp") + " "
+		+ shell_quote(state_dir + "/download")).c_str());
 	umask(0022);
 	srand(time(0) ^ getpid());
+
+	if ( mode == "list" ) { list_staged(); return 0; }
+	if ( mode == "show" ) { show_staged(argc > 3 ? atoi(argv[3]) : 0); return 0; }
+	if ( mode == "drop" ) {
+		int n = argc > 3 ? atoi(argv[3]) : 0;
+		staged s;
+		if ( n <= 0 || !load_staged(n, s) ) { out("  받아 둔 글이 없습니다."); return 1; }
+		system(("rm -rf " + shell_quote(stage_dir(n))).c_str());
+		out("  " + std::string(argv[3]) + " 번 글을 뺐습니다.");
+		return 0;
+	}
+	if ( mode != "fetch" && mode != "apply" ) { out("모르는 명령: " + mode); return 1; }
 
 	read_settings("hanulso.cfg");
 	pugi::xml_document doc;
@@ -475,7 +651,8 @@ int main(int argc, char **argv)
 	cafe_id = trim(doc.child("hanulso").child("naver").child("cafe_id").child_value());
 	cookie = trim(doc.child("hanulso").child("naver").child("cookie").child_value());
 	if ( cafe_id.empty() ) cafe_id = "28655511";
-	if ( cookie.empty() || cookie.find('"') != std::string::npos ) {
+	// 쿠키는 받기에 필요하다 (올리기는 작성자 아이디를 아직 모를 때만)
+	if ( mode == "fetch" && (cookie.empty() || cookie.find('"') != std::string::npos) ) {
 		out("hanulso.cfg 에 <naver><cookie>NID_AUT=...; NID_SES=...</cookie></naver> 를 넣으세요.");
 		return 1;
 	}
@@ -486,7 +663,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	std::vector<int> nums = parse_ranges(argc, argv);
 	std::map<int, std::string> table = load_table();
 	std::set<int> done;
 	load_done(home + "/src/restore/restore.log", done);
@@ -494,13 +670,26 @@ int main(int argc, char **argv)
 
 	if ( !database::open() ) { unlink(curl_cfg_cookie.c_str()); return 1; }
 
-	char b[128];
-	snprintf(b, sizeof(b), "카페 %s: 글 %d 개 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
-	out(b);
 	bool login_ok = true;
-	for (unsigned int i=0; i<nums.size(); i++) {
-		if ( !import_one(nums[i], table, done) ) { login_ok = false; break; }
-		sleep(1);	// 네이버에 부담 주지 않게
+	char b[160];
+	if ( mode == "fetch" ) {
+		std::vector<int> nums = parse_ranges(argc, argv, 3);
+		snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
+		out(b);
+		for (unsigned int i=0; i<nums.size(); i++) {
+			if ( !fetch_one(nums[i], table, done) ) { login_ok = false; break; }
+			sleep(1);	// 네이버에 부담 주지 않게
+		}
+		snprintf(b, sizeof(b), "받음 %d, 이미 있음 %d, 메뉴 대응 없음 %d, 실패 %d, 첨부 파일 %d",
+			n_ok, n_skip_done, n_skip_menu, n_fail, n_files);
+	} else {
+		std::vector<int> nums = (argc > 3) ? parse_ranges(argc, argv, 3) : staged_nums();
+		snprintf(b, sizeof(b), "받아 둔 글 %d 개를 BBS 에 올립니다.", (int)nums.size());
+		out(b);
+		for (unsigned int i=0; i<nums.size(); i++) {
+			if ( !apply_one(nums[i], done) ) { login_ok = false; break; }
+		}
+		snprintf(b, sizeof(b), "올림 %d, 이미 올린 글 %d, 실패 %d, 첨부 파일 %d", n_ok, n_skip_done, n_fail, n_files);
 	}
 	database::close();
 	unlink(curl_cfg_cookie.c_str());
@@ -511,8 +700,6 @@ int main(int argc, char **argv)
 		out("네이버 로그인이 되어 있지 않습니다. 쿠키가 만료되었을 수 있습니다.");
 		out("브라우저에서 다시 로그인한 뒤 NID_AUT, NID_SES 쿠키를 hanulso.cfg 에 넣으세요.");
 	}
-	snprintf(b, sizeof(b), "올림 %d, 이미 가져옴 %d, 메뉴 대응 없음 %d, 실패 %d, 첨부 파일 %d",
-		n_ok, n_skip_done, n_skip_menu, n_fail, n_files);
 	out("");
 	out(b);
 	return login_ok ? 0 : 2;

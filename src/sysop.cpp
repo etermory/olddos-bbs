@@ -1099,10 +1099,10 @@ static void cafe_menu(void);
 
 static void cafe_import(void)
 {
-	print_header(S_CYAN "네이버 카페 글 가져오기" S_WHITE);
-	printf("\r\n  카페 글 번호 범위를 넣으면 글/작성자/그림/첨부를 받아");
-	printf("\r\n  src/restore/table.txt 의 메뉴 대응표대로 게시판에 올립니다.");
-	printf("\r\n  " S_GRAY "이미 가져온 글은 건너뜁니다. 필요: hanulso.cfg 의 <naver><cookie>" S_WHITE "\r\n");
+	print_header(S_CYAN "네이버 카페 글 받기" S_WHITE);
+	printf("\r\n  카페 글 번호 범위를 넣으면 글/작성자/그림/첨부를 data/cafe/download/ 에 받아 둡니다.");
+	printf("\r\n  BBS 는 아직 바뀌지 않습니다. '받은 글 확인' 에서 보고 'BBS 에 올리기' 로 올리세요.");
+	printf("\r\n  " S_GRAY "이미 올린 글, 이미 받은 글은 건너뜁니다. 필요: hanulso.cfg 의 <naver><cookie>" S_WHITE "\r\n");
 
 	std::string r = ask("글 번호 (예: 103001-103050 103100) >> ", 120);
 	if ( r.empty() ) return;
@@ -1114,9 +1114,9 @@ static void cafe_import(void)
 			return;
 		}
 	}
-	if ( !confirm("가져올까요?") ) return;
+	if ( !confirm("받을까요?") ) return;
 
-	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty);
+	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty) + " fetch";
 	std::vector<std::string> parts = split_string(r, ' ');
 	for (unsigned int i=0; i<parts.size(); i++) {
 		if ( !trim(parts[i]).empty() ) cmd += " " + shell_quote(trim(parts[i]));
@@ -1127,15 +1127,69 @@ static void cafe_import(void)
 	wait_enter();
 }
 
+static void cafeimport_run(const std::string &args)
+{
+	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty) + " " + args;
+	fflush(stdout);
+	system(cmd.c_str());
+}
+
+// 받은 글 확인: 목록, 본문 보기, 빼기
+static void cafe_review(void)
+{
+	while ( 1 ) {
+		print_header(S_CYAN "받은 카페 글" S_WHITE);
+		printf("\r\n");
+		cafeimport_run("list");
+		std::string c = ask("번호: 본문 보기, D 번호: 빼기 (끝: Enter) >> ", 12);
+		if ( c.empty() ) return;
+		if ( c[0] == 'd' || c[0] == 'D' ) {
+			int n = atoi(c.c_str() + 1);
+			if ( n <= 0 ) continue;
+			char b[64]; snprintf(b, sizeof(b), "%d 번 글을 뺄까요? (BBS 에 올리지 않음)", n);
+			if ( !confirm(b) ) continue;
+			snprintf(b, sizeof(b), "drop %d", n);
+			printf("\r\n");
+			cafeimport_run(b);
+			wait_enter();
+			continue;
+		}
+		int n = atoi(c.c_str());
+		if ( n <= 0 ) continue;
+		print_header(S_CYAN "받은 카페 글" S_WHITE);
+		printf("\r\n");
+		char b[64]; snprintf(b, sizeof(b), "show %d", n);
+		cafeimport_run(b);
+		wait_enter();
+	}
+}
+
+// 받아 둔 글을 BBS 에 올리기
+static void cafe_apply(void)
+{
+	print_header(S_CYAN "받은 카페 글을 BBS 에 올리기" S_WHITE);
+	printf("\r\n");
+	cafeimport_run("list");
+	printf("\r\n  " S_GRAY "작성자는 지금 연결 상태로 올립니다 ('카페 회원 연결' 을 먼저 하면 그 회원 글로)." S_WHITE);
+	if ( !confirm("받아 둔 글을 모두 BBS 에 올릴까요?") ) return;
+	printf("\r\n\r\n");
+	cafeimport_run("apply");
+	wait_enter();
+}
+
 static void cafe_menu(void)
 {
 	while ( 1 ) {
 		print_header(S_CYAN "네이버 카페" S_WHITE);
-		printf("\r\n       1. 카페 글 가져오기 " S_GRAY "(글 번호 범위)" S_WHITE "\r\n");
-		printf("       2. 카페 회원 연결   " S_GRAY "(카페 회원 = BBS 회원)" S_WHITE "\r\n");
+		printf("\r\n       1. 카페 글 받기     " S_GRAY "(글 번호 범위, BBS 는 그대로)" S_WHITE "\r\n");
+		printf("       2. 받은 글 확인     " S_GRAY "(보기, 빼기)" S_WHITE "\r\n");
+		printf("       3. BBS 에 올리기    " S_GRAY "(받아 둔 글을 게시판에)" S_WHITE "\r\n");
+		printf("       4. 카페 회원 연결   " S_GRAY "(카페 회원 = BBS 회원)" S_WHITE "\r\n");
 		std::string c = ask("번호 (끝: Enter) >> ", 2);
 		if ( c == "1" ) cafe_import();
-		else if ( c == "2" ) cafe_link();
+		else if ( c == "2" ) cafe_review();
+		else if ( c == "3" ) cafe_apply();
+		else if ( c == "4" ) cafe_link();
 		else return;
 	}
 }

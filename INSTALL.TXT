@@ -356,9 +356,15 @@ src/muhan 구성
 
 네이버 카페 글 가져오기 (운영자 메뉴 14)
 ==============
-운영자 메뉴 14 -> 1 에서 카페 글 번호 범위(예: 103001-103050 103100)를 넣으면
-bin/cafeimport 가 카페 글 JSON 을 받아 제목/작성자/본문/그림/첨부를 BBS 게시판에 올린다.
-(댓글은 가져오지 않는다. 본문 끝에 카페 원문 주소를 붙인다)
+운영자 메뉴 14 (bin/cafeimport)
+  1. 카페 글 받기   글 번호 범위(예: 103001-103050 103100)를 넣으면 제목/작성자/본문/그림/첨부를
+                    data/cafe/download/<글 번호>/ 에 받아 둔다. BBS 는 아직 바뀌지 않는다.
+                    (body.txt 는 BBS 에 들어갈 본문. 서버에서 직접 고쳐도 된다)
+  2. 받은 글 확인   목록, 번호로 본문 보기, D 번호 로 빼기
+  3. BBS 에 올리기  받아 둔 글을 게시판에 올리고, 올린 글은 받은 폴더에서 지운다
+  4. 카페 회원 연결
+  댓글은 가져오지 않는다. 본문 끝에 카페 원문 주소를 붙인다.
+  명령줄: HANULSO=/home/olddos/olddos-bbs bin/cafeimport - fetch 103001-103050 / list / show 번호 / drop 번호 / apply
 
 1) hanulso.cfg 에 추가 (git 에 올라가지 않는 파일)
   <naver>
@@ -380,12 +386,13 @@ bin/cafeimport 가 카페 글 JSON 을 받아 제목/작성자/본문/그림/첨
     아이디 앞부분까지 다르면 data/cafe/link_check.log 에 남긴다 (확인용).
   - 없으면 가려진 아이디로 회원을 만들어 올린다. 이 회원은 로그인할 수 없다 (비밀번호 '!').
     가려진 아이디가 다른 사람과 겹치면 coma****2 처럼 나눈다.
-  - 운영자 메뉴 14 -> 2 "카페 회원 연결" 에서 후보를 보고 BBS 아이디로 연결하면,
+  - 운영자 메뉴 14 -> 4 "카페 회원 연결" 에서 후보를 보고 BBS 아이디로 연결하면,
     이미 올라간 글/첨부도 그 회원 것으로 옮긴다.
     M: 예전 src/restore/restore 로 가져온 juya**** 같은 회원의 글을 BBS 회원으로 옮기기.
 
 4) 기록 (data/cafe/, git 에 올라가지 않음)
-  imported.log   가져온 카페 글 번호 (예전 src/restore/restore.log 도 함께 읽어 다시 가져오지 않음)
+  download/      받아 두고 아직 올리지 않은 글
+  imported.log   BBS 에 올린 카페 글 번호 (예전 src/restore/restore.log 도 함께 읽어 다시 가져오지 않음)
   members/ assigned/ links/   카페 회원 -> BBS 아이디
   unlinked.log   연결 후보,  attach_unknown.log  읽지 못한 첨부 정보
 
