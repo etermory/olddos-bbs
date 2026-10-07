@@ -582,6 +582,14 @@ static void print_article_line(const std::map<std::string, std::string> &a0)
 			a["DATE_TIME"].substr(2, 8).c_str(), string_truncate(display_text(a["TITLE"]), 44, "").c_str());
 }
 
+// 첨부 표의 파일 이름: "file..." 또는 번호 폴더까지 "001/file..." (그 밖은 건드리지 않는다)
+static bool safe_attach_name(const std::string &f)
+{
+	if ( f.empty() || f[0] == '/' || f.find("..") != std::string::npos ) return false;
+	std::string::size_type sl = f.find('/');
+	return sl == std::string::npos || f.find('/', sl + 1) == std::string::npos;
+}
+
 // 글 하나와 그 꼬리말, 첨부 (파일까지), 고정을 지운다
 static void remove_article(const board_info &b, int no)
 {
@@ -589,7 +597,7 @@ static void remove_article(const board_info &b, int no)
 	rows_t at = rows_of("SELECT FILENAME FROM attachment WHERE FAMILY_TABLE='" + esc(b.id) + "' AND FAMILY_ID=" + n);
 	for ( unsigned int i = 0; i < at.size(); i++ ) {
 		std::string f = at[i]["FILENAME"];
-		if ( !f.empty() && f.find('/') == std::string::npos ) unlink((hanulso() + "/file/" + f).c_str());
+		if ( safe_attach_name(f) ) unlink((hanulso() + "/file/" + f).c_str());
 	}
 	mysql_query(mysql, ("DELETE FROM attachment WHERE FAMILY_TABLE='" + esc(b.id) + "' AND FAMILY_ID=" + n).c_str());
 	mysql_query(mysql, ("DELETE FROM comments WHERE BOARD='" + esc(b.id) + "' AND ARTICLE=" + n).c_str());
@@ -769,9 +777,13 @@ static std::vector<std::string> orphan_files(long *bytes)
 	for ( unsigned int i = 0; i < r.size(); i++ ) known.insert(r[i]["FILENAME"]);
 	std::vector<std::string> out;
 	*bytes = 0;
-	std::vector<std::string> files = find_files((hanulso() + "/file/file*").c_str());
+	// file/ 바로 아래 (예전) 와 번호 폴더 file/000/ ... 안
+	std::string base = hanulso() + "/file/";
+	std::vector<std::string> files = find_files((char*)(base + "file*").c_str());
+	std::vector<std::string> sub = find_files((char*)(base + "[0-9][0-9][0-9]*/file*").c_str());
+	files.insert(files.end(), sub.begin(), sub.end());
 	for ( unsigned int i = 0; i < files.size(); i++ ) {
-		std::string name = split_file_name(files[i]);
+		std::string name = files[i].substr(base.size());		// "file..." 또는 "001/file..."
 		if ( known.count(name) ) continue;
 		struct stat st;
 		if ( stat(files[i].c_str(), &st) != 0 || !S_ISREG(st.st_mode) ) continue;
@@ -781,6 +793,42 @@ static std::vector<std::string> orphan_files(long *bytes)
 		out.push_back(files[i]);
 	}
 	return out;
+}
+
+// 예전처럼 file/ 바로 아래에 있는 첨부를 1000 개씩 번호 폴더로 옮기고 표의 이름도 고친다.
+// 한 파일씩: 옮기고 -> 표를 고치고, 표를 못 고치면 되돌린다 (중간에 끊겨도 어긋나지 않게)
+static void split_attachments(int total)
+{
+	rows_t r = rows_of("SELECT NO, FILENAME FROM attachment WHERE FILENAME NOT LIKE '%/%' ORDER BY NO");
+	int moved = 0, missing = 0, failed = 0;
+	std::string base = hanulso() + "/file/";
+	printf("\r\n");
+	for ( unsigned int i = 0; i < r.size(); i++ ) {
+		std::string f = r[i]["FILENAME"];
+		if ( !safe_attach_name(f) ) { failed++; continue; }
+		std::string from = base + f;
+		struct stat st;
+		if ( stat(from.c_str(), &st) != 0 ) { missing++; continue; }
+		std::string bucket = attachment_bucket();
+		if ( bucket.empty() ) { failed++; break; }
+		std::string nf = bucket + "/" + f;
+		if ( rename(from.c_str(), (base + nf).c_str()) != 0 ) { failed++; continue; }
+		std::string q = "UPDATE attachment SET FILENAME='" + esc(nf) + "' WHERE NO=" + r[i]["NO"];
+		if ( mysql_query(mysql, q.c_str()) != 0 || mysql_affected_rows(mysql) != 1 ) {
+			rename((base + nf).c_str(), from.c_str());
+			failed++;
+			continue;
+		}
+		moved++;
+		if ( moved % 100 == 0 ) {
+			printf("\r  " S_GRAY "%d / %d 개 옮김..." S_WHITE, moved, total);
+			fflush(stdout);
+		}
+	}
+	printf("\r\033[K");
+	msg(S_GREEN, TO_STRING(moved) + " 개를 번호 폴더로 옮겼습니다.");
+	if ( missing ) msg(S_GRAY, TO_STRING(missing) + " 개는 파일이 없어 그대로 두었습니다 (표에만 남은 첨부).");
+	if ( failed ) msg(S_RED, TO_STRING(failed) + " 개는 옮기지 못했습니다. 폴더 권한을 확인하세요.");
 }
 
 static std::string human(long b)
@@ -816,6 +864,9 @@ static void maintenance(void)
 		std::vector<std::string> orphans = orphan_files(&ob);
 		printf("\r\n  " S_YELLOW "◆ 주인 없는 첨부 파일" S_WHITE "\r\n");
 		printf("      %d 개 (%s)  " S_GRAY "글이 지워졌는데 남은 파일" S_WHITE "\r\n", (int)orphans.size(), human(ob).c_str());
+		int flat = query_int("SELECT COUNT(*) FROM attachment WHERE FILENAME NOT LIKE '%/%'");
+		int nb = (int)find_files((char*)(hanulso() + "/file/[0-9][0-9][0-9]*").c_str()).size();
+		printf("      번호 폴더 %d 개" S_GRAY " (1000 개씩)" S_WHITE ",  아직 file/ 바로 아래에 있는 첨부 %d 개\r\n", nb, flat);
 
 		// AI 와 이야기: 오늘 물은 수 (data/aichat/<아이디> 의 "날짜 수")
 		std::vector<std::string> ai = find_files((hanulso() + "/data/aichat/*").c_str());
@@ -838,13 +889,20 @@ static void maintenance(void)
 		if ( ai_top > 0 ) printf("  가장 많이: %s (%d 번)", nick_of(ai_top_id).c_str(), ai_top);
 		printf("\r\n");
 
-		std::string c = ask("T: 임시 파일 정리  F: 주인 없는 첨부 지우기  Enter: 돌아가기 >> ", 2);
+		std::string c = ask("T: 임시 파일 정리  F: 주인 없는 첨부 지우기  M: 첨부 폴더 나누기  Enter >> ", 2);
 		if ( c.empty() ) return;
 		if ( !strcasecmp(c.c_str(), "t") ) {
 			unlink((hanulso() + "/tmp/.sweep").c_str());		// 한 시간 막음 풀기
 			sweep_stale_tmp();
 			msg(S_GREEN, "하루 지난 임시 파일을 정리했습니다.");
 			wait_enter();
+		} else if ( !strcasecmp(c.c_str(), "m") && flat > 0 ) {
+			printf("\r\n  첨부 %d 개를 1000 개씩 번호 폴더 (file/000, file/001 ...) 로 옮깁니다.", flat);
+			printf("\r\n  " S_GRAY "옮기는 동안 그 파일을 받는 사람이 있으면 실패할 수 있으니 한가한 때에 하세요." S_WHITE);
+			if ( confirm("옮길까요?") ) {
+				split_attachments(flat);
+				wait_enter();
+			}
 		} else if ( !strcasecmp(c.c_str(), "f") && !orphans.empty() ) {
 			if ( confirm(TO_STRING(orphans.size()) + " 개 (" + human(ob) + ") 를 지울까요?") ) {
 				for ( unsigned int i = 0; i < orphans.size(); i++ ) unlink(orphans[i].c_str());

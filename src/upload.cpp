@@ -122,7 +122,10 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	// ---------------------------------------------------
 	// 업로드된 첨부 파일을 랜덤 이름으로 변경하여 file 폴더에 옮긴다.
 	// 첨부 파일 이름 생성 (file랜덤이름)
-	sprintf(dir, "%s/file", getenv("HANULSO"));
+	// 1000 개씩 번호 폴더 (file/000, file/001 ...) 에 나눠 둔다. DB 에는 "001/file..." 처럼 폴더까지 적는다
+	std::string bucket = attachment_bucket();
+	if ( bucket.empty() ) sprintf(dir, "%s/file", getenv("HANULSO"));
+	else snprintf(dir, sizeof(dir), "%s/file/%s", getenv("HANULSO"), bucket.c_str());
 	char *new_path = tempnam(dir, "file");
 
 	snprintf(buf, sizeof(buf), "mv %s %s", shell_quote(files[0]).c_str(), shell_quote(new_path).c_str());
@@ -135,7 +138,7 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	// 임시 폴더는 guard 가 지운다
 
 	// 업로드된 파일 이름 (겹치지 않는 임시 파일 이름)
-	*tmp_filename = strdup(split_file_name(new_path).c_str());
+	*tmp_filename = strdup(((bucket.empty() ? "" : bucket + "/") + split_file_name(new_path)).c_str());
 	// 본래의 업로드된 파일 이름 (셸/경로에 위험한 문자는 _ 로 바꿈)
 	*filename = strdup(safe_name(split_file_name(files[0]).c_str()).c_str());
 	// 파일 사이즈

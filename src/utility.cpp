@@ -1,4 +1,5 @@
 #include "main.h"
+#include <dirent.h>
 
 std::string random_string(const int len)
 {
@@ -1324,6 +1325,52 @@ void remove_tmp_dir(const char *dir)
 // 강제 종료, 서버 재시작처럼 정리하지 못하고 남은 임시 폴더/파일을 지운다.
 // (tmp/file*: 파일 주고받기, tmp/edit*: 글 편집, tmp/*.file: 접속자별 임시 파일 목록)
 // 하루가 지난 것만, 한 시간에 한 번만 (접속할 때마다 tmp 를 뒤지지 않도록)
+// 폴더 안의 보통 파일 수 (limit 까지만 센다)
+int count_dir_files(const std::string &dir, int limit)
+{
+	DIR *d = opendir(dir.c_str());
+	if ( d == NULL ) return 0;
+	int n = 0;
+	struct dirent *e;
+	while ( n < limit && (e = readdir(d)) != NULL ) {
+		if ( e->d_name[0] == '.' ) continue;
+		struct stat st;
+		if ( stat((dir + "/" + e->d_name).c_str(), &st) == 0 && S_ISREG(st.st_mode) ) n++;
+	}
+	closedir(d);
+	return n;
+}
+
+// 새 첨부 파일을 넣을 폴더 ("000", "001", ...): file/ 아래 번호 폴더 중 마지막 것,
+// 1000 개가 찼으면 다음 번호를 만든다. 못 만들면 "" (예전처럼 file/ 바로 아래)
+std::string attachment_bucket(void)
+{
+	std::string base = std::string(getenv("HANULSO")) + "/file";
+	int last = -1;
+	DIR *d = opendir(base.c_str());
+	if ( d != NULL ) {
+		struct dirent *e;
+		while ( (e = readdir(d)) != NULL ) {
+			const char *n = e->d_name;
+			if ( strlen(n) < 3 || strspn(n, "0123456789") != strlen(n) ) continue;
+			struct stat st;
+			if ( stat((base + "/" + n).c_str(), &st) == 0 && S_ISDIR(st.st_mode) && atoi(n) > last ) last = atoi(n);
+		}
+		closedir(d);
+	}
+	if ( last < 0 ) last = 0;
+	char name[16];
+	snprintf(name, sizeof(name), "%03d", last);
+	if ( count_dir_files(base + "/" + name, 1000) >= 1000 ) snprintf(name, sizeof(name), "%03d", last + 1);
+	std::string dir = base + "/" + name;
+	struct stat st;
+	if ( stat(dir.c_str(), &st) != 0 ) {
+		if ( mkdir(dir.c_str(), 0755) != 0 && errno != EEXIST ) return "";
+		chmod(dir.c_str(), 0755);		// umask 가 x 를 지워도 들어갈 수 있게
+	}
+	return name;
+}
+
 void sweep_stale_tmp(void)
 {
 	char marker[1024];
