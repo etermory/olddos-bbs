@@ -1924,9 +1924,7 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 		// 성격 검사 프로그램
 		} else if ( !strcasecmp(args[0].c_str(), "mbti") ) {
-			run_mbti_gs();
-			printf("\r\n[Enter] 를 누르세요.");
-			press_enter();
+			run_mbti_gs();		// 끝날 때 프로그램이 [Enter] 를 기다린다
 		}
 	}
 }
@@ -2039,8 +2037,6 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 
 	} else if ( !strcasecmp(type.c_str(), "mbti") ) {
 		run_mbti_gs();
-		printf("\r\n[Enter] 를 누르세요.");
-		press_enter();
 
 	} else {
 		// 프로그램 이름은 bin 아래의 파일 이름만 허용
@@ -2080,7 +2076,7 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 void run_mbti_gs()
 {
 	char buf[1024];
-	sprintf(buf, "%s/bin/mbti_gs", getenv("HANULSO"));
+	snprintf(buf, sizeof(buf), "%s/bin/mbti_gs %s", getenv("HANULSO"), shell_quote(host_name).c_str());
 	// 먼저 출력한 내용이 버퍼에 남아 있다가 외부 프로그램 출력 뒤에 나가지 않도록
 	fflush(stdout);
 	system(buf);
