@@ -298,7 +298,7 @@ static void mark_done(int num)
 // ------------------------------------------------------------------
 struct remote_file { std::string url, name; bool cookie; };
 // 본문 만드는 방식의 판. 바뀌면 받아 둔 글의 본문을 article.json 으로 다시 만든다 (upgrade_staged)
-static const char *BODY_VER = "3";
+static const char *BODY_VER = "4";
 
 static std::string url_file_name(const std::string &url)
 {
@@ -422,7 +422,7 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 	// HTML 안의 줄바꿈/탭은 공백일 뿐이다 (줄은 <br>, <p> 로 나뉜다)
 	for (size_t i=0; i<html.size(); i++)
 		if ( html[i] == '\n' || html[i] == '\r' || html[i] == '\t' ) html[i] = ' ';
-	// 그림: [그림 n: 이름] 자리를 \x01 n: 이름 \x02 로 표시해 두고 EUC-KR 로 바꾼 뒤에 채운다
+	// 그림: 받을 목록에만 넣고 본문에서는 뺀다 (BBS 첨부로 올라간다)
 	p = 0;
 	while ( (p = html.find("<img", p)) != std::string::npos ) {
 		size_t e = html.find('>', p);
@@ -441,8 +441,6 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 		     && src.find("storep-phinf") == std::string::npos ) {
 			remote_file f; f.url = src; f.name = url_decode(url_file_name(src)); f.cookie = false;
 			images.push_back(f);
-			char b[32]; snprintf(b, sizeof(b), "%d", (int)images.size());
-			repl = "<p>\x01" + std::string(b) + ": " + f.name + "\x02</p>";
 		}
 		html.replace(p, e + 1 - p, repl);
 		p += repl.size();
@@ -453,8 +451,6 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 	repl_all(t, "\xE2\x80\x8B", "");		// 폭 없는 공백 (네이버 편집기가 많이 넣는다)
 	repl_all(t, "\xEF\xBB\xBF", "");
 	t = u2c(t);
-	repl_all(t, "\x01", "[그림 ");
-	repl_all(t, "\x02", "]");
 
 	// 줄마다 공백 정리
 	std::vector<std::string> lines = split_string(t, '\n');
