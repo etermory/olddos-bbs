@@ -700,6 +700,7 @@ static int read_escape_key(void)
 		case 'C': return KEY_RIGHT;
 		case 'H': return KEY_HOME;
 		case 'F': return KEY_END;
+		case 'P': return KEY_DEL;		// 이야기의 Del 은 ESC [ P
 		case '~':
 			if ( num == 1 || num == 7 ) return KEY_HOME;
 			if ( num == 4 || num == 8 ) return KEY_END;
@@ -761,6 +762,7 @@ static int li_cur_len(const char *str, int cur, int n)
 
 // ------------------------------------------------------------------------
 // 한 줄 입력.  ←/→ 로 커서를 옮기고 (한글은 한 글자씩), Home/End, Delete,
+// Ctrl+A / Ctrl+E 는 줄 처음 / 끝 (이야기는 End 를 보내지 않는다),
 // 가운데에서 치면 끼워 넣고 백스페이스는 커서 앞 글자를 지운다.
 // 줄 편집기 (line_input_wrap) 는 줄이 차면 마지막 낱말을 다음 줄로 넘긴다 (커서가 끝에 있을 때만).
 void _line_input(char *str, char *init_str, int len, int echo)
@@ -846,8 +848,9 @@ void _line_input(char *str, char *init_str, int len, int echo)
 				}
 			}
 		}
-		else if ( ch == 0x1b ) {
-			switch ( read_escape_key() ) {
+		else if ( ch == 0x1b || ch == 0x01 || ch == 0x05 ) {
+			int key = ch == 0x01 ? KEY_HOME : ch == 0x05 ? KEY_END : read_escape_key();
+			switch ( key ) {
 			case KEY_LEFT:
 				if ( cur > 0 ) {
 					int last = li_prev_len(str, cur);
