@@ -5,7 +5,7 @@
 //   cafeimport <tty> apply [번호...]            받아 둔 글을 BBS 에 올림 (올린 글은 받은 폴더에서 지움)
 //
 // 카페 글 JSON(로그인 쿠키 필요)을 받아 제목/작성자/본문/그림/첨부를 data/cafe/download/ 에 받아 두고,
-// 확인한 뒤 src/restore/table.txt 의 메뉴 대응표에 따라 BBS 게시판에 올린다.
+// 확인한 뒤 table.txt (hanulso.cfg 와 같은 폴더) 의 메뉴 대응표에 따라 BBS 게시판에 올린다.
 //
 // hanulso.cfg:
 //   <naver>
@@ -14,7 +14,7 @@
 //   </naver>
 //
 // 기록 (git 에 올리지 않는 data/cafe/):
-//   imported.log  가져온 카페 글 번호 (예전 src/restore/restore.log 도 함께 읽어 중복을 막는다)
+//   imported.log  가져온 카페 글 번호 (hanulso.cfg 옆의 restore.log 도 함께 읽어 중복을 막는다)
 //   members/      memberKey -> BBS 아이디 (카페의 가려진 아이디, 예 juya****)
 //   assigned/     BBS 아이디 -> memberKey (가려진 아이디가 겹치면 juya****2 처럼 나눔)
 //   links/        memberKey -> 기존 BBS 회원 아이디 (자동 연결 또는 sysop 에서 연결)
@@ -25,6 +25,7 @@
 #include "main.h"
 #include "picojson.h"
 #include <set>
+#include <algorithm>
 
 // utility/database 가 쓰는 전역 (이 프로그램에서는 쓰지 않음)
 int host_close() { exit(1); return 0; }
@@ -146,7 +147,8 @@ static std::string jstr(const picojson::value &v, const char *key)
 // 작성자 아이디: memberKey -> 카페 프로필의 maskedMemberId (회원별로 저장)
 // ------------------------------------------------------------------
 // BBS 회원의 닉네임은 카페 닉네임과 같게 쓰고 있다 (BBS 는 닉네임이 겹치지 않게 가입받는다).
-// 닉네임이 같은 BBS 회원이 딱 한 명이면 그 회원으로 자동 연결한다.
+// 닉네임이 같은 BBS 회원, 또는 아이디가 카페 닉네임과 같은 BBS 회원이 딱 한 명이면 그 회원으로 자동 연결한다.
+// 둘 이상이면 가려진 아이디의 앞부분이 맞는 회원이 하나일 때만 연결한다.
 // 가려진 아이디(coma****)의 앞부분은 확인용: 다르면 link_check.log 에 남긴다.
 // 닉네임이 맞는 회원이 없으면 아이디 앞부분이 같은 회원을 후보로 남긴다 (sysop 14 -> 4 에서 연결).
 static std::string auto_link(const std::string &member_key, const std::string &masked, const std::string &nick)
@@ -155,11 +157,23 @@ static std::string auto_link(const std::string &member_key, const std::string &m
 	std::string prefix = (star == std::string::npos || masked == "탈퇴멤버") ? "" : masked.substr(0, star);
 
 	// 카페에서 가져온 회원(비밀번호 '!')은 빼고
-	std::string q = "SELECT USER_ID, NICK_NAME FROM member WHERE NICK_NAME = '" + database::escape(nick.c_str())
-		+ "' AND USER_ID NOT LIKE '%*%' AND PASSWORD <> '!'";
-	std::vector<std::map<std::string, std::string> > rows = database::fetch_rows((char*)q.c_str());
-	if ( rows.size() == 1 && !trim(nick).empty() ) {
-		std::string id = rows[0]["USER_ID"];
+	std::string en = database::escape(nick.c_str());
+	std::string q = "SELECT USER_ID, NICK_NAME FROM member WHERE (NICK_NAME = '" + en + "' OR USER_ID = '" + en
+		+ "') AND USER_ID NOT LIKE '%*%' AND PASSWORD <> '!'";
+	std::vector<std::map<std::string, std::string> > rows;
+	if ( !trim(nick).empty() ) rows = database::fetch_rows((char*)q.c_str());
+	std::vector<std::string> ids;	// 겹치지 않게
+	for (unsigned int i=0; i<rows.size(); i++)
+		if ( std::find(ids.begin(), ids.end(), rows[i]["USER_ID"]) == ids.end() ) ids.push_back(rows[i]["USER_ID"]);
+	if ( ids.size() > 1 && !prefix.empty() ) {
+		std::vector<std::string> m;
+		for (unsigned int i=0; i<ids.size(); i++)
+			if ( strncasecmp(ids[i].c_str(), prefix.c_str(), prefix.size()) == 0 ) m.push_back(ids[i]);
+		ids = m;
+	}
+	if ( ids.size() == 1 ) {
+		std::string id = ids[0];
+		bool by_id = (strcasecmp(id.c_str(), nick.c_str()) == 0);
 		bool pre = !prefix.empty() && strncasecmp(id.c_str(), prefix.c_str(), prefix.size()) == 0;
 		FILE *fp = fopen((state_dir + "/links/" + member_key).c_str(), "w");
 		if ( fp ) { fputs(id.c_str(), fp); fclose(fp); }
@@ -168,7 +182,8 @@ static std::string auto_link(const std::string &member_key, const std::string &m
 			if ( fc ) { fprintf(fc, "%s\t%s\t%s\t%s\n", masked.c_str(), nick.c_str(), member_key.c_str(), id.c_str()); fclose(fc); }
 		}
 		out("    카페 " + masked + " (" + nick + ") -> BBS 회원 " + id + " 자동 연결"
-			+ (pre ? "" : " (닉네임만 같음, 아이디 앞부분 다름: data/cafe/link_check.log)"));
+			+ (by_id ? " (카페 닉네임 = BBS 아이디)" : "")
+			+ (pre ? "" : " (아이디 앞부분 다름: data/cafe/link_check.log)"));
 		return id;
 	}
 
@@ -248,7 +263,7 @@ static std::string member_id(const std::string &member_key, const std::string &n
 static std::map<int, std::string> load_table(void)
 {
 	std::map<int, std::string> m;
-	std::vector<std::string> lines = split_string(read_file((home + "/src/restore/table.txt").c_str()), '\n');
+	std::vector<std::string> lines = split_string(read_file((home + "/table.txt").c_str()), '\n');
 	for (unsigned int i=0; i<lines.size(); i++) {
 		std::string l = lines[i];
 		size_t c = l.find(';');
@@ -407,6 +422,8 @@ static void collect_attaches(const picojson::value &result, std::vector<remote_f
 		for (int k=0; names[k] && f.name.empty(); k++) f.name = jstr(a[i], names[k]);
 		for (int k=0; urls[k] && f.url.empty(); k++) f.url = jstr(a[i], urls[k]);
 		if ( f.name.empty() && !f.url.empty() ) f.name = url_file_name(f.url);
+		// 그림("type":"I")은 주소 없이 이름만 온다. 본문의 <img> 에서 이미 받으므로 건너뛴다
+		if ( f.url.empty() && jstr(a[i], "type") == "I" ) continue;
 		if ( f.url.empty() ) {
 			// 모르는 구조: 맞출 수 있게 남겨 둔다
 			FILE *fp = fopen((state_dir + "/attach_unknown.log").c_str(), "a");
@@ -699,12 +716,16 @@ static void show_staged(int num)
 }
 
 // "103001-103050 103100" -> 번호 목록
-static std::vector<int> parse_ranges(int argc, char **argv, int from)
+// "10-" 처럼 끝이 없으면 open_from 에 시작 번호 (최근 글까지)
+static std::vector<int> parse_ranges(int argc, char **argv, int from, int *open_from = 0)
 {
 	std::vector<int> nums;
 	for (int i=from; i<argc; i++) {
 		int a = 0, b = 0;
-		if ( sscanf(argv[i], "%d-%d", &a, &b) == 2 ) {
+		size_t len = strlen(argv[i]);
+		if ( open_from && len > 1 && argv[i][len - 1] == '-' && (a = atoi(argv[i])) > 0 ) {
+			if ( *open_from == 0 || a < *open_from ) *open_from = a;
+		} else if ( sscanf(argv[i], "%d-%d", &a, &b) == 2 ) {
 			if ( b < a ) std::swap(a, b);
 			if ( b - a > 5000 ) b = a + 5000;	// 실수 방지
 			for (int n=a; n<=b; n++) nums.push_back(n);
@@ -718,6 +739,7 @@ int main(int argc, char **argv)
 	if ( argc < 3 ) {
 		printf("사용법: %s <tty> fetch <범위...> | list | show <번호> | drop <번호> | apply\n", argv[0]);
 		printf("  예) %s - fetch 103001-103050 103100\n", argv[0]);
+		printf("      %s - fetch 103001-   (103001 번부터 최근 글까지)\n", argv[0]);
 		return 1;
 	}
 	snprintf(tty, sizeof(tty), "%s", argv[1]);
@@ -764,7 +786,7 @@ int main(int argc, char **argv)
 
 	std::map<int, std::string> table = load_table();
 	std::set<int> done;
-	load_done(home + "/src/restore/restore.log", done);
+	load_done(home + "/restore.log", done);
 	load_done(state_dir + "/imported.log", done);
 
 	if ( !database::open() ) { unlink(curl_cfg_cookie.c_str()); return 1; }
@@ -772,15 +794,49 @@ int main(int argc, char **argv)
 	bool login_ok = true;
 	char b[160];
 	if ( mode == "fetch" ) {
-		std::vector<int> nums = parse_ranges(argc, argv, 3);
-		snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
+		int open_from = 0;
+		std::vector<int> nums = parse_ranges(argc, argv, 3, &open_from);
+		// "N-": 앞의 범위 다음에 N 번부터 글이 MISS_END 개 잇달아 없을 때까지 (= 최근 글까지)
+		const int MISS_END = 30;
+		std::set<int> listed(nums.begin(), nums.end());
+		if ( open_from ) {
+			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 + %d 번부터 최근 글까지 받기 (메뉴 대응 %d 개)",
+				cafe_id.c_str(), (int)nums.size(), open_from, (int)table.size());
+		} else {
+			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
+		}
 		out(b);
 		out("  (멈추려면 Q: 지금 받는 글을 마치고 멈춥니다)");
-		for (unsigned int i=0; i<nums.size(); i++) {
+		int miss = 0, last_found = 0;
+		for (unsigned int i=0; ; i++) {
+			bool open = (i >= nums.size());
+			if ( open ) {
+				if ( !open_from ) break;
+				int n = open_from;
+				while ( listed.count(n) ) n++;	// 앞에서 이미 다룬 번호는 건너뜀
+				open_from = n + 1;
+				nums.push_back(n);
+			}
+			int fail_before = n_fail;
 			if ( !fetch_one(nums[i], table, done) ) { login_ok = false; break; }
+			if ( open ) {
+				if ( n_fail > fail_before ) miss++;
+				else { miss = 0; last_found = nums[i]; }
+				if ( miss >= MISS_END ) {
+					char r[128];
+					if ( last_found ) snprintf(r, sizeof(r), "  최근 글까지 받았습니다 (마지막 글 %d, 그 뒤 %d 개 없음)", last_found, MISS_END);
+					else snprintf(r, sizeof(r), "  %d 개 잇달아 글이 없어 멈춥니다.", MISS_END);
+					out(r);
+					n_fail -= MISS_END;	// 끝을 찾느라 없던 번호는 실패로 세지 않는다
+					break;
+				}
+			}
+			bool more = (i + 1 < nums.size()) || open_from;
 			// 네이버에 부담 주지 않게 1 초 쉬며 Q 를 본다
-			if ( i + 1 < nums.size() && user_stop(1) ) {
-				char r[96]; snprintf(r, sizeof(r), "  멈췄습니다. 남은 글: %d - %d", nums[i + 1], nums.back());
+			if ( more && user_stop(1) ) {
+				char r[96];
+				if ( open_from ) snprintf(r, sizeof(r), "  멈췄습니다. 이어 받으려면: %d-", nums[i] + 1);
+				else snprintf(r, sizeof(r), "  멈췄습니다. 남은 글: %d - %d", nums[i + 1], nums.back());
 				out(r);
 				break;
 			}

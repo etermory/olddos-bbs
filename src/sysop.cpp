@@ -979,11 +979,11 @@ static std::string cafe_dir(void)
 	return hanulso() + "/data/cafe";
 }
 
-// 카페 글이 올라가는 게시판들 (src/restore/table.txt)
+// 카페 글이 올라가는 게시판들 (hanulso.cfg 옆의 table.txt)
 static std::vector<std::string> cafe_tables(void)
 {
 	std::vector<std::string> out;
-	std::vector<std::string> lines = split_string(read_file((hanulso() + "/src/restore/table.txt").c_str()), '\n');
+	std::vector<std::string> lines = split_string(read_file((hanulso() + "/table.txt").c_str()), '\n');
 	for (unsigned int i=0; i<lines.size(); i++) {
 		std::string l = lines[i];
 		size_t c = l.find(';');
@@ -1104,6 +1104,7 @@ static void cafe_import(void)
 	printf("\r\n  BBS 는 아직 바뀌지 않습니다. '받은 글 확인' 에서 보고 'BBS 에 올리기' 로 올리세요.");
 	printf("\r\n  " S_GRAY "이미 올린 글, 이미 받은 글은 건너뜁니다. 필요: hanulso.cfg 의 <naver><cookie>" S_WHITE "\r\n");
 
+	printf("  " S_GRAY "103001-103050 처럼 범위, 103001- 처럼 끝을 비우면 최근 글까지" S_WHITE "\r\n");
 	std::string r = ask("글 번호 (예: 103001-103050 103100) >> ", 120);
 	if ( r.empty() ) return;
 	// 숫자, '-', 공백만
