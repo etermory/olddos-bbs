@@ -70,6 +70,8 @@ static int http_get(const std::string &url, const std::string &path, bool with_c
 	return atoi(lines.back().c_str());
 }
 
+static std::string last_json;	// 마지막으로 받은 JSON 원본 (받은 글에 article.json 으로 남긴다)
+
 // JSON 받기. 실패하면 err 에 이유
 static bool get_json(const std::string &url, picojson::value &v, std::string &err)
 {
@@ -82,6 +84,7 @@ static bool get_json(const std::string &url, picojson::value &v, std::string &er
 	}
 	std::string body = read_file(tmp.c_str());
 	unlink(tmp.c_str());
+	last_json = body;
 	std::string perr = picojson::parse(v, body);
 	if ( !perr.empty() ) {
 		char b[64]; snprintf(b, sizeof(b), "HTTP %d", code);
@@ -420,6 +423,7 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 		n_fail++; out(head + "건너뜀: " + err);
 		return true;
 	}
+	std::string article_json = last_json;	// 받은 글에 원본으로 남긴다 (작성자 프로필을 받으면 덮어써지므로)
 	const picojson::value &result = v.get("result");
 	const picojson::value &a = result.get("article");
 
@@ -459,6 +463,10 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 	// 받기
 	std::string dir = stage_dir(num);
 	system(("mkdir -p " + shell_quote(dir + "/files")).c_str());
+	{
+		FILE *fj = fopen((dir + "/article.json").c_str(), "w");	// 카페 JSON 원본 (UTF-8, 문제 확인용)
+		if ( fj ) { fputs(article_json.c_str(), fj); fclose(fj); }
+	}
 	std::string meta;
 	meta += "board=" + board + "\n";
 	char mid[32]; snprintf(mid, sizeof(mid), "%d", menu_id);
@@ -478,7 +486,10 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 		if ( code != 200 || file_size(dest) <= 0 ) {
 			unlink(dest.c_str());
 			char b[32]; snprintf(b, sizeof(b), "%d", code);
-			out("    받기 실패 (HTTP " + std::string(b) + "): " + u2c(files[i].name));
+			// 어떤 주소였는지 (뒤의 ? 이하 인증 값은 빼고)
+			std::string shown = files[i].url.substr(0, files[i].url.find('?'));
+			out("    받기 실패 (HTTP " + std::string(b) + ") " + (files[i].cookie ? "첨부" : "그림") + " "
+				+ u2c(files[i].name) + " <- " + shown + "  (원본: " + stage_dir(num) + "/article.json)");
 			continue;
 		}
 		meta += "file=" + std::string(sname) + "\t" + one_line(u2c(files[i].name)) + "\n";
