@@ -70,7 +70,7 @@ static void read_lines(std::vector<std::string> &out)
 static void text_append(std::vector<std::string> &list)
 {
 	std::string ruler = "0---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----";
-	printf("\r\n\033$)1%s" LE_GRAY "줄이 차면 다음 줄로 저절로 넘어갑니다. 끝내려면 첫 칸에 " LE_YELLOW "." LE_GRAY " + Enter" LE_WHITE "\r\n",
+	printf("\r\n%s" LE_GRAY "줄이 차면 다음 줄로 저절로 넘어갑니다. 끝내려면 첫 칸에 " LE_YELLOW "." LE_GRAY " + Enter" LE_WHITE "\r\n",
 			le_pad().c_str());
 	printf("%s" LE_GRAY "%s" LE_WHITE "\r\n", le_pad().c_str(), ruler.substr(0, le_width).c_str());
 	read_lines(list);
