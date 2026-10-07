@@ -126,12 +126,28 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	std::string bucket = attachment_bucket();
 	if ( bucket.empty() ) sprintf(dir, "%s/file", getenv("HANULSO"));
 	else snprintf(dir, sizeof(dir), "%s/file/%s", getenv("HANULSO"), bucket.c_str());
-	char *new_path = tempnam(dir, "file");
+	// tempnam 은 그 순간 없는 이름만 알려 주고 만들지는 않는다. 둘이 동시에 올려 같은 이름을 받으면
+	// 뒤의 mv 가 앞 파일을 덮으므로, O_EXCL 로 빈 파일을 먼저 만들어 이름을 잡아 둔다 (그 자리에 mv)
+	std::string new_path;
+	for ( int t = 0; t < 20 && new_path.empty(); t++ ) {
+		char *p = tempnam(dir, "file");
+		if ( p == NULL ) continue;
+		int fd = open(p, O_WRONLY | O_CREAT | O_EXCL, 0644);
+		if ( fd >= 0 ) {
+			close(fd);
+			new_path = p;
+		}
+		free(p);
+	}
+	if ( new_path.empty() ) {
+		return false;
+	}
 
 	snprintf(buf, sizeof(buf), "mv %s %s", shell_quote(files[0]).c_str(), shell_quote(new_path).c_str());
 	a = system(buf);
 
 	if ( WEXITSTATUS(a) != 0 ) {
+		unlink(new_path.c_str());
 		return false;
 	}
 
@@ -142,7 +158,7 @@ bool file_upload(int protocol, const char *xname, char **tmp_filename, char **fi
 	// 본래의 업로드된 파일 이름 (셸/경로에 위험한 문자는 _ 로 바꿈)
 	*filename = strdup(safe_name(split_file_name(files[0]).c_str()).c_str());
 	// 파일 사이즈
-	*size = file_size(new_path);
+	*size = file_size((char*)new_path.c_str());
 
 	return true;
 }

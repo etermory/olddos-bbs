@@ -795,30 +795,84 @@ static std::vector<std::string> orphan_files(long *bytes)
 	return out;
 }
 
+// 번호 폴더들에서 이름이 f 인 파일 ("NNN/f", 없으면 "")
+static std::string find_in_buckets(const std::string &f)
+{
+	std::string base = hanulso() + "/file/";
+	std::vector<std::string> hit = find_files((char*)(base + "[0-9][0-9][0-9]*/" + f).c_str());
+	return hit.empty() ? "" : hit[0].substr(base.size());
+}
+
+static bool same_file(const std::string &a, const std::string &b)
+{
+	struct stat x, y;
+	return stat(a.c_str(), &x) == 0 && stat(b.c_str(), &y) == 0 && x.st_dev == y.st_dev && x.st_ino == y.st_ino;
+}
+
+// 자동 끊기 (ctime: 10 분 동안 키 입력이 없으면 끊는다) 에 걸리지 않게 터미널의 마지막 입력 시각을 지금으로
+static void keep_alive(void)
+{
+	struct stat st;
+	if ( fstat(0, &st) != 0 ) return;
+	struct timeval tv[2];
+	gettimeofday(&tv[0], NULL);
+	tv[1].tv_sec = st.st_mtime;
+	tv[1].tv_usec = 0;
+	futimes(0, tv);
+}
+
 // 예전처럼 file/ 바로 아래에 있는 첨부를 1000 개씩 번호 폴더로 옮기고 표의 이름도 고친다.
-// 한 파일씩: 옮기고 -> 표를 고치고, 표를 못 고치면 되돌린다 (중간에 끊겨도 어긋나지 않게)
+// 한 파일씩: 새 이름으로 link -> 표를 고침 -> 옛 이름을 지움. 표를 못 고치면 새 이름을 지운다.
+// 한 파일을 처리하는 동안은 끊김 신호 (SIGHUP) 를 미뤄 파일 사이에서만 멈춘다.
+// 예전 판 (rename 뒤 표 고치기) 이 그 사이에 끊겨 파일만 옮겨지고 표는 옛 이름인 것은 찾아서 표를 고친다.
 static void split_attachments(int total)
 {
 	rows_t r = rows_of("SELECT NO, FILENAME FROM attachment WHERE FILENAME NOT LIKE '%/%' ORDER BY NO");
-	int moved = 0, missing = 0, failed = 0;
+	int moved = 0, missing = 0, failed = 0, repaired = 0;
 	std::string base = hanulso() + "/file/";
+	sigset_t hup, old;
+	sigemptyset(&hup);
+	sigaddset(&hup, SIGHUP);
 	printf("\r\n");
 	for ( unsigned int i = 0; i < r.size(); i++ ) {
+		if ( i % 50 == 0 ) keep_alive();
 		std::string f = r[i]["FILENAME"];
 		if ( !safe_attach_name(f) ) { failed++; continue; }
 		std::string from = base + f;
+		std::string found = find_in_buckets(f);
 		struct stat st;
-		if ( stat(from.c_str(), &st) != 0 ) { missing++; continue; }
-		std::string bucket = attachment_bucket();
-		if ( bucket.empty() ) { failed++; break; }
-		std::string nf = bucket + "/" + f;
-		if ( rename(from.c_str(), (base + nf).c_str()) != 0 ) { failed++; continue; }
-		std::string q = "UPDATE attachment SET FILENAME='" + esc(nf) + "' WHERE NO=" + r[i]["NO"];
-		if ( mysql_query(mysql, q.c_str()) != 0 || mysql_affected_rows(mysql) != 1 ) {
-			rename((base + nf).c_str(), from.c_str());
-			failed++;
+
+		sigprocmask(SIG_BLOCK, &hup, &old);
+		if ( stat(from.c_str(), &st) != 0 ) {
+			// 옛 자리에 없다: 번호 폴더로 이미 옮겨졌으면 표만 고친다
+			if ( !found.empty() && mysql_query(mysql, ("UPDATE attachment SET FILENAME='" + esc(found) + "' WHERE NO=" +
+						r[i]["NO"]).c_str()) == 0 ) repaired++;
+			else missing++;
+			sigprocmask(SIG_SETMASK, &old, NULL);
 			continue;
 		}
+		std::string nf;
+		bool linked_now = false;
+		if ( !found.empty() && same_file(from, base + found) ) {
+			nf = found;			// 지난번에 link 까지 하고 끊긴 것
+		} else {
+			std::string bucket = attachment_bucket();
+			if ( bucket.empty() ) { failed++; sigprocmask(SIG_SETMASK, &old, NULL); break; }
+			nf = bucket + "/" + f;
+			// link 는 같은 이름이 이미 있으면 실패한다 (rename 처럼 덮지 않는다)
+			if ( link(from.c_str(), (base + nf).c_str()) != 0 ) { failed++; sigprocmask(SIG_SETMASK, &old, NULL); continue; }
+			linked_now = true;
+		}
+		std::string q = "UPDATE attachment SET FILENAME='" + esc(nf) + "' WHERE NO=" + r[i]["NO"];
+		if ( mysql_query(mysql, q.c_str()) != 0 || mysql_affected_rows(mysql) != 1 ) {
+			if ( linked_now ) unlink((base + nf).c_str());
+			failed++;
+			sigprocmask(SIG_SETMASK, &old, NULL);
+			continue;
+		}
+		unlink(from.c_str());
+		sigprocmask(SIG_SETMASK, &old, NULL);
+
 		moved++;
 		if ( moved % 100 == 0 ) {
 			printf("\r  " S_GRAY "%d / %d 개 옮김..." S_WHITE, moved, total);
@@ -827,8 +881,9 @@ static void split_attachments(int total)
 	}
 	printf("\r\033[K");
 	msg(S_GREEN, TO_STRING(moved) + " 개를 번호 폴더로 옮겼습니다.");
+	if ( repaired ) msg(S_GREEN, TO_STRING(repaired) + " 개는 지난번에 파일만 옮겨진 것이라 표를 고쳤습니다.");
 	if ( missing ) msg(S_GRAY, TO_STRING(missing) + " 개는 파일이 없어 그대로 두었습니다 (표에만 남은 첨부).");
-	if ( failed ) msg(S_RED, TO_STRING(failed) + " 개는 옮기지 못했습니다. 폴더 권한을 확인하세요.");
+	if ( failed ) msg(S_RED, TO_STRING(failed) + " 개는 옮기지 못했습니다 (폴더 권한, 또는 번호 폴더에 같은 이름의 다른 파일).");
 }
 
 static std::string human(long b)
