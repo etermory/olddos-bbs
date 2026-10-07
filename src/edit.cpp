@@ -82,6 +82,13 @@ bool edit_article(char *table_name, int no)
 			//std::string plain_string = base64_decode(base64_string);
 			std::string plain_string = base64_string;
 			std::vector<std::string> lines = split_string(plain_string, '\n');
+			// 본문은 줄을 "\r\n" 으로 이어 저장한다 (string_convert): '\n' 으로만 나누면 줄 끝에 '\r' 이 남아
+			// 고칠 때 커서가 줄 처음으로 가 버리고, 저장할 때마다 '\r' 이 하나씩 늘어난다
+			for ( unsigned int i = 0; i < lines.size(); i++ ) {
+				while ( !lines[i].empty() && lines[i][lines[i].size() - 1] == '\r' ) {
+					lines[i].erase(lines[i].size() - 1);
+				}
+			}
 
 			// 라인 편집기 진입
 			if ( !strcasecmp(cmd, "1") ) {

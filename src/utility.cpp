@@ -772,9 +772,12 @@ void _line_input(char *str, char *init_str, int len, int echo)
 	bool wait_trail = false;
 	char pending_lead = 0;
 
-	// 초기 문자열이 버퍼보다 길면 잘라냄
-	if ( n > len ) n = len;
-	memcpy(str, init_str, n);
+	// 초기 문자열이 버퍼보다 길면 잘라냄.  제어 글자 ('\r' 따위) 는 뺀다 (찍으면 화면 커서가 어긋난다)
+	n = 0;
+	for ( const char *q = init_str; *q && n < len; q++ ) {
+		if ( (unsigned char)*q < 0x20 || *q == 0x7f ) continue;
+		str[n++] = *q;
+	}
 	str[n] = 0;
 	li_put(str, 0, n, 1);		// 처음 글은 그대로 보인다 (예전처럼)
 	cur = n;
