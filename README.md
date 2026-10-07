@@ -82,7 +82,7 @@
 <img width="850" alt="뉴스 기사 목록 화면" src="docs/screenshots/news_list.png" />
 <img width="850" alt="환율 정보 화면" src="docs/screenshots/exchange.png" />
 
-**머드 게임** (`go game`)
+**게임 마당** (`go game`)
 - 용사의 전설: 옛 BBS 도어 게임 방식의 1 인용 텍스트 RPG
 - 쥬라기공원 2: PC통신 시절 머드의 HanLP 복원판 (아래 머드 게임 항목 참고)
 - 무한대전: Mordor 기반의 1990 년대 한글 머드, 64 비트로 이식 (아래 머드 게임 항목 참고)
