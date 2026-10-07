@@ -411,7 +411,8 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 }
 
 // 첨부: 이름/주소가 들어 있을 만한 항목을 차례로 찾는다
-static void collect_attaches(const picojson::value &result, std::vector<remote_file> &files, int num)
+// 동영상("type":"M")은 네이버 동영상 서비스에 있어 파일 주소가 없다. 개수만 videos 에 센다
+static void collect_attaches(const picojson::value &result, std::vector<remote_file> &files, int num, int &videos)
 {
 	if ( !result.contains("attaches") || !result.get("attaches").is<picojson::array>() ) return;
 	const picojson::array &a = result.get("attaches").get<picojson::array>();
@@ -424,6 +425,7 @@ static void collect_attaches(const picojson::value &result, std::vector<remote_f
 		if ( f.name.empty() && !f.url.empty() ) f.name = url_file_name(f.url);
 		// 그림("type":"I")은 주소 없이 이름만 온다. 본문의 <img> 에서 이미 받으므로 건너뛴다
 		if ( f.url.empty() && jstr(a[i], "type") == "I" ) continue;
+		if ( f.url.empty() && jstr(a[i], "type") == "M" ) { videos++; continue; }
 		if ( f.url.empty() ) {
 			// 모르는 구조: 맞출 수 있게 남겨 둔다
 			FILE *fp = fopen((state_dir + "/attach_unknown.log").c_str(), "a");
@@ -551,7 +553,13 @@ static bool fetch_one(int num, std::set<int> &done)
 
 	std::vector<remote_file> files;
 	std::string content = html_to_text(jstr(a, "contentHtml"), files);
-	collect_attaches(result, files, num);
+	int videos = 0;
+	collect_attaches(result, files, num, videos);
+	if ( videos ) {
+		char vb[96]; snprintf(vb, sizeof(vb), "\n[동영상 %d 개: 네이버 카페 원문에서 보세요]\n", videos);
+		content += vb;
+		out("    " + trim(std::string(vb)));
+	}
 	content += "\n" "(네이버 카페 원문: https://cafe.naver.com/olddos/" + std::string(nb) + ")\n";
 
 	// 받기
