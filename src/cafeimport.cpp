@@ -5,7 +5,7 @@
 //   cafeimport <tty> apply [번호...]            받아 둔 글을 BBS 에 올림 (올린 글은 받은 폴더에서 지움)
 //
 // 카페 글 JSON(로그인 쿠키 필요)을 받아 제목/작성자/본문/그림/첨부를 data/cafe/download/ 에 받아 두고,
-// 확인한 뒤 table.txt (hanulso.cfg 와 같은 폴더) 의 메뉴 대응표에 따라 BBS 게시판에 올린다.
+// 받기는 메뉴와 상관없이 모두 받고, 올릴 때 table.txt (hanulso.cfg 와 같은 폴더) 의 메뉴 대응표로 게시판을 정한다.
 //
 // hanulso.cfg:
 //   <naver>
@@ -455,7 +455,7 @@ static bool table_exists(const std::string &t)
 
 // ------------------------------------------------------------------
 // 받아 둔 글: data/cafe/download/<글 번호>/
-//   meta.txt  키=값 (EUC-KR): board, menu_id, menu, title, nick, member_key, uid, date, time,
+//   meta.txt  키=값 (EUC-KR): menu_id, menu, title, nick, member_key, uid, date, time,
 //             file=<저장 이름>\t<원래 이름> (여러 줄)
 //   body.txt  BBS 에 들어갈 본문 (EUC-KR, 올리기 전에 고쳐도 된다)
 //   files/    그림과 첨부
@@ -511,7 +511,7 @@ static std::string one_line(std::string s)
 // ------------------------------------------------------------------
 // 받기: BBS 는 바꾸지 않는다. 로그인 쿠키 문제면 false (전체를 멈춘다)
 // ------------------------------------------------------------------
-static bool fetch_one(int num, const std::map<int, std::string> &table, std::set<int> &done)
+static bool fetch_one(int num, std::set<int> &done)
 {
 	char nb[32]; snprintf(nb, sizeof(nb), "%d", num);
 	std::string head = std::string("[") + nb + "] ";
@@ -534,17 +534,6 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 
 	int menu_id = (int)a.get("menu").get("id").get<double>();
 	std::string menu_name = u2c(jstr(a.get("menu"), "name"));
-	std::map<int, std::string>::const_iterator it = table.find(menu_id);
-	if ( it == table.end() ) {
-		char mb[32]; snprintf(mb, sizeof(mb), "%d", menu_id);
-		n_skip_menu++; out(head + "건너뜀: 메뉴 " + mb + " " + menu_name + " (table.txt 에 없음)");
-		return true;
-	}
-	std::string board = it->second;
-	if ( !table_exists(board) ) {
-		n_fail++; out(head + "건너뜀: 게시판 테이블 " + board + " 이 없음");
-		return true;
-	}
 
 	std::string title = u2c(jstr(a, "subject"));
 	std::string hd = u2c(jstr(a, "head"));
@@ -573,7 +562,6 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 		if ( fj ) { fputs(article_json.c_str(), fj); fclose(fj); }
 	}
 	std::string meta;
-	meta += "board=" + board + "\n";
 	char mid[32]; snprintf(mid, sizeof(mid), "%d", menu_id);
 	meta += "menu_id=" + std::string(mid) + "\n";
 	meta += "menu=" + one_line(menu_name) + "\n";
@@ -608,9 +596,18 @@ static bool fetch_one(int num, const std::map<int, std::string> &table, std::set
 	n_ok++;
 	n_files += got;
 	char cnt[64]; snprintf(cnt, sizeof(cnt), " (첨부 %d)", got);
-	out(head + "받음 -> " + board + ": " + string_truncate(title, 40, "...") + " / " + nick + "(" + uid + ")"
+	out(head + "받음 [" + menu_name + "] " + string_truncate(title, 40, "...") + " / " + nick + "(" + uid + ")"
 		+ (got ? cnt : ""));
 	return true;
+}
+
+static std::map<int, std::string> table;	// 카페 메뉴 번호 -> 게시판 테이블 (table.txt)
+
+// 받아 둔 글이 올라갈 게시판 (table.txt 에 없으면 "")
+static std::string board_of(staged &s)
+{
+	std::map<int, std::string>::const_iterator it = table.find(atoi(s.m["menu_id"].c_str()));
+	return it == table.end() ? "" : it->second;
 }
 
 // ------------------------------------------------------------------
@@ -628,8 +625,13 @@ static bool apply_one(int num, std::set<int> &done)
 		system(("rm -rf " + shell_quote(dir)).c_str());
 		return true;
 	}
-	std::string board = s.m["board"];
-	if ( board.empty() || !table_exists(board) ) { n_fail++; out(head + "게시판 테이블 " + board + " 이 없음"); return true; }
+	std::string board = board_of(s);
+	if ( board.empty() ) {
+		n_skip_menu++;
+		out(head + "건너뜀: 메뉴 " + s.m["menu_id"] + " " + s.m["menu"] + " (table.txt 에 없음, 받은 그대로 둠)");
+		return true;
+	}
+	if ( !table_exists(board) ) { n_fail++; out(head + "게시판 테이블 " + board + " 이 없음"); return true; }
 
 	// 작성자: 받은 뒤에 연결했을 수 있으므로 다시 정한다
 	std::string uid = member_id(s.m["member_key"], s.m["nick"]);
@@ -680,7 +682,9 @@ static void list_staged(void)
 		std::string uid = trim(read_file((state_dir + "/links/" + s.m["member_key"]).c_str()));
 		if ( uid.empty() ) uid = s.m["uid"];
 		char b[512];
-		snprintf(b, sizeof(b), "  %6d %-22s %s", nums[i], string_truncate(s.m["board"], 22, "").c_str(),
+		std::string board = board_of(s);
+		if ( board.empty() ) board = "(table.txt 에 없음)";
+		snprintf(b, sizeof(b), "  %6d %-22s %s", nums[i], string_truncate(board, 22, "").c_str(),
 			string_truncate(s.m["title"], 44, "...").c_str());
 		out(b);
 		char nf[32] = "";
@@ -699,7 +703,9 @@ static void show_staged(int num)
 	if ( !load_staged(num, s) ) { out("  받아 둔 글이 없습니다."); return; }
 	out("  제목: " + s.m["title"]);
 	out("  작성: " + s.m["nick"] + "(" + s.m["uid"] + ")  " + s.m["date"] + " " + s.m["time"]);
-	out("  카페 메뉴: " + s.m["menu"] + " -> 게시판 " + s.m["board"]);
+	std::string board = board_of(s);
+	out("  카페 메뉴: " + s.m["menu_id"] + " " + s.m["menu"] + " -> 게시판 "
+		+ (board.empty() ? std::string("없음 (table.txt 에 넣으면 올릴 수 있음)") : board));
 	for (unsigned int i=0; i<s.files.size(); i++) out("  첨부: " + s.files[i].second);
 	out("  ------------------------------------------------------------------------");
 	std::vector<std::string> lines = split_string(read_file((stage_dir(num) + "/body.txt").c_str()), '\n');
@@ -754,6 +760,7 @@ int main(int argc, char **argv)
 	umask(0022);
 	srand(time(0) ^ getpid());
 
+	table = load_table();
 	if ( mode == "list" ) { list_staged(); return 0; }
 	if ( mode == "show" ) { show_staged(argc > 3 ? atoi(argv[3]) : 0); return 0; }
 	if ( mode == "drop" ) {
@@ -784,7 +791,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	std::map<int, std::string> table = load_table();
 	std::set<int> done;
 	load_done(home + "/restore.log", done);
 	load_done(state_dir + "/imported.log", done);
@@ -800,10 +806,10 @@ int main(int argc, char **argv)
 		const int MISS_END = 30;
 		std::set<int> listed(nums.begin(), nums.end());
 		if ( open_from ) {
-			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 + %d 번부터 최근 글까지 받기 (메뉴 대응 %d 개)",
-				cafe_id.c_str(), (int)nums.size(), open_from, (int)table.size());
+			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 + %d 번부터 최근 글까지 받기",
+				cafe_id.c_str(), (int)nums.size(), open_from);
 		} else {
-			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
+			snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기", cafe_id.c_str(), (int)nums.size());
 		}
 		out(b);
 		out("  (멈추려면 Q: 지금 받는 글을 마치고 멈춥니다)");
@@ -818,7 +824,7 @@ int main(int argc, char **argv)
 				nums.push_back(n);
 			}
 			int fail_before = n_fail;
-			if ( !fetch_one(nums[i], table, done) ) { login_ok = false; break; }
+			if ( !fetch_one(nums[i], done) ) { login_ok = false; break; }
 			if ( open ) {
 				if ( n_fail > fail_before ) miss++;
 				else { miss = 0; last_found = nums[i]; }
@@ -841,8 +847,7 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		snprintf(b, sizeof(b), "받음 %d, 이미 있음 %d, 메뉴 대응 없음 %d, 실패 %d, 첨부 파일 %d",
-			n_ok, n_skip_done, n_skip_menu, n_fail, n_files);
+		snprintf(b, sizeof(b), "받음 %d, 이미 있음 %d, 실패 %d, 첨부 파일 %d", n_ok, n_skip_done, n_fail, n_files);
 	} else {
 		std::vector<int> nums = (argc > 3) ? parse_ranges(argc, argv, 3) : staged_nums();
 		snprintf(b, sizeof(b), "받아 둔 글 %d 개를 BBS 에 올립니다.", (int)nums.size());
@@ -852,7 +857,8 @@ int main(int argc, char **argv)
 			if ( !apply_one(nums[i], done) ) { login_ok = false; break; }
 			if ( i + 1 < nums.size() && user_stop(0) ) { out("  멈췄습니다."); break; }
 		}
-		snprintf(b, sizeof(b), "올림 %d, 이미 올린 글 %d, 실패 %d, 첨부 파일 %d", n_ok, n_skip_done, n_fail, n_files);
+		snprintf(b, sizeof(b), "올림 %d, 이미 올린 글 %d, 메뉴 대응 없음 %d, 실패 %d, 첨부 파일 %d",
+			n_ok, n_skip_done, n_skip_menu, n_fail, n_files);
 	}
 	database::close();
 	unlink(curl_cfg_cookie.c_str());
