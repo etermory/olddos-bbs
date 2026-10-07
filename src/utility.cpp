@@ -671,6 +671,29 @@ static int wait_getchar(const char *str, int typed_len)
 	return getchar();
 }
 
+// 줄 편집기용 자동 줄바꿈 (line_input_wrap): 줄이 차면 마지막 낱말을 다음 줄로 넘긴다
+static bool wrap_enabled = false;
+static bool wrap_done = false;
+static std::string wrap_carry;
+
+// 줄이 찼을 때: 마지막 띄어쓰기 뒤의 낱말을 화면과 버퍼에서 지우고 extra 와 함께 wrap_carry 에.
+// 띄어쓰기가 없으면 (긴 낱말) 줄은 그대로 두고 extra 만 넘긴다.
+static void wrap_line(char *str, int *i, const std::string &extra, int echo)
+{
+	int k = *i;
+	while ( k > 0 && str[k - 1] != ' ' ) k--;
+	if ( k > 0 ) {
+		wrap_carry = std::string(str + k, *i - k) + extra;
+		if ( echo != 0 ) {
+			for ( int n = k; n < *i; n++ ) { putchar('\b'); putchar(' '); putchar('\b'); }
+		}
+		*i = k - 1;		// 띄어쓰기도 줄 끝에서 뺀다
+	} else {
+		wrap_carry = extra;
+	}
+	wrap_done = true;
+}
+
 // ------------------------------------------------------------------------
 void _line_input(char *str, char *init_str, int len, int echo)
 {
@@ -681,6 +704,7 @@ void _line_input(char *str, char *init_str, int len, int echo)
 	// 한글 두 번째 바이트를 기다리는 중인지, 그 바이트를 버려야 하는지
 	bool wait_trail = false;
 	bool skip_trail = false;
+	char pending_lead = 0;		// 줄이 찬 뒤 들어온 한글 첫 바이트 (자동 줄바꿈)
 
 	// 초기 문자열이 버퍼보다 길면 잘라냄
 	if ( i > len ) i = len;
@@ -740,11 +764,17 @@ void _line_input(char *str, char *init_str, int len, int echo)
 					// 한글 첫 바이트: 두 바이트가 다 들어갈 자리가 없으면 글자를 받지 않는다
 					wait_trail = true;
 					skip_trail = (i + 2 > len);
+					pending_lead = ch;
 					if ( !skip_trail ) {
 						str[i++] = ch;
 					}
 				} else {
 					wait_trail = false;
+					// 줄이 찼으면 (자동 줄바꿈) 이 글자와 마지막 낱말을 다음 줄로
+					if ( skip_trail && wrap_enabled ) {
+						wrap_line(str, &i, std::string(1, pending_lead) + ch, echo);
+						break;
+					}
 					if ( !skip_trail ) {
 						str[i++] = ch;
 						if     (echo==0) ;
@@ -768,6 +798,15 @@ void _line_input(char *str, char *init_str, int len, int echo)
 					else if(echo==2) putchar(' ');
 					else if(echo==3) putchar('*');
 					else             putchar(ch);
+				} else if ( wrap_enabled ) {
+					// 줄이 찼다 (자동 줄바꿈): 띄어쓰기면 그냥 다음 줄, 글자면 마지막 낱말과 함께
+					if ( ch == ' ' ) {
+						wrap_carry.clear();
+						wrap_done = true;
+					} else {
+						wrap_line(str, &i, std::string(1, ch), echo);
+					}
+					break;
 				}
 			}
 		}
@@ -867,6 +906,18 @@ void line_input_edit(char *str, char *init_str, int len)
 void line_input(char *str, int len)
 {
     _line_input(str, (char*)"", len, 1);
+}
+
+// 줄 편집기용: init_str 에 이어서 받고, 줄이 차면 마지막 낱말을 carry 에 담아 true (다음 줄에서 이어 받는다)
+bool line_input_wrap(char *str, const char *init_str, int len, std::string &carry)
+{
+	wrap_enabled = true;
+	wrap_done = false;
+	wrap_carry.clear();
+	_line_input(str, (char*)init_str, len, 1);
+	wrap_enabled = false;
+	carry = wrap_done ? wrap_carry : "";
+	return wrap_done;
 }
 
 void line_input2(char *mess, char *str, int len)

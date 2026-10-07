@@ -349,6 +349,7 @@ std::string utf8_to_cp949(const std::string &in);
 
 void press_enter(void);
 void line_input(char *str,int len);
+bool line_input_wrap(char *str, const char *init_str, int len, std::string &carry);
 void line_input_edit(char *str, char *init_str, int len);
 void line_input2(char *mess, char *str, int len);
 void line_input_echo(char *str, int len);
