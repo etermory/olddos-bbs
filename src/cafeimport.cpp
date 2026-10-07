@@ -297,6 +297,8 @@ static void mark_done(int num)
 // 본문: 그림 태그를 [그림 n: 이름] 으로 바꾸고 텍스트(EUC-KR)로
 // ------------------------------------------------------------------
 struct remote_file { std::string url, name; bool cookie; };
+// 본문 만드는 방식의 판. 바뀌면 받아 둔 글의 본문을 article.json 으로 다시 만든다 (upgrade_staged)
+static const char *BODY_VER = "3";
 
 static std::string url_file_name(const std::string &url)
 {
@@ -454,17 +456,35 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 	repl_all(t, "\x01", "[그림 ");
 	repl_all(t, "\x02", "]");
 
-	// 줄마다: 공백 정리, 76 칸으로 나누기, 빈 줄은 하나까지
+	// 줄마다 공백 정리
 	std::vector<std::string> lines = split_string(t, '\n');
-	std::string o;
-	int blank = 0;
 	for (unsigned int i=0; i<lines.size(); i++) {
 		std::string l;
 		for (size_t k=0; k<lines[i].size(); k++) {
 			if ( lines[i][k] == ' ' && (l.empty() || l[l.size()-1] == ' ') ) continue;
 			l += lines[i][k];
 		}
-		l = trim(l);
+		lines[i] = trim(l);
+	}
+	// 네이버 편집기의 첨부 상자 ("첨부파일 이름" + "null 파일 다운로드") 는 뺀다. 파일은 BBS 첨부로 올라간다
+	static const std::string dl = "파일 다운로드", box = "첨부파일";
+	for (unsigned int i=0; i<lines.size(); i++) {
+		const std::string &l = lines[i];
+		bool is_dl = l.size() >= dl.size() && l.compare(l.size() - dl.size(), dl.size(), dl) == 0
+			&& (l == dl || l == "null " + dl || l.compare(0, box.size(), box) == 0);
+		if ( is_dl ) { lines[i] = ""; continue; }
+		if ( l.compare(0, box.size(), box) == 0 ) {
+			unsigned int j = i + 1;
+			while ( j < lines.size() && lines[j].empty() ) j++;
+			const std::string &m = (j < lines.size()) ? lines[j] : "";
+			if ( m.size() >= dl.size() && m.compare(m.size() - dl.size(), dl.size(), dl) == 0 ) lines[i] = "";
+		}
+	}
+	// 76 칸으로 나누기, 빈 줄은 하나까지
+	std::string o;
+	int blank = 0;
+	for (unsigned int i=0; i<lines.size(); i++) {
+		std::string l = lines[i];
 		if ( l.empty() ) {
 			if ( !o.empty() && blank == 0 ) o += "\n";
 			blank++;
@@ -657,7 +677,7 @@ static bool fetch_one(int num, std::set<int> &done)
 	meta += "uid=" + uid + "\n";
 	meta += "date=" + std::string(date) + "\n";
 	meta += "time=" + std::string(tim) + "\n";
-	meta += "body=2\n";	// 본문을 새 방식으로 만듦 (아래 upgrade_staged)
+	meta += "body=" + std::string(BODY_VER) + "\n";	// 본문을 만든 방식 (upgrade_staged)
 	int got = 0;
 	for (unsigned int i=0; i<files.size(); i++) {
 		char sname[32]; snprintf(sname, sizeof(sname), "%02d", (int)i + 1);
@@ -818,7 +838,7 @@ static bool redo_one(int num)
 	return true;
 }
 
-// 예전 방식(lynx)으로 받아 둔 글: 본문 한글이 깨졌으므로 남겨 둔 article.json 으로 본문을 다시 만든다.
+// 예전 방식으로 받아 둔 글 (lynx 로 한글이 깨졌거나, 첨부 상자 글자가 남은 글): 남겨 둔 article.json 으로 본문을 다시 만든다.
 // 네이버에서 다시 받지 않는다. 그림/첨부 파일도 그대로 두고, 이름의 %EB%8B.. 만 푼다.
 static void upgrade_staged(void)
 {
@@ -826,7 +846,7 @@ static void upgrade_staged(void)
 	int n = 0;
 	for (unsigned int i=0; i<nums.size(); i++) {
 		staged s;
-		if ( !load_staged(nums[i], s) || s.m["body"] == "2" ) continue;
+		if ( !load_staged(nums[i], s) || s.m["body"] == BODY_VER ) continue;
 		std::string dir = stage_dir(nums[i]);
 		picojson::value v;
 		if ( !picojson::parse(v, read_file((dir + "/article.json").c_str())).empty()
@@ -837,13 +857,13 @@ static void upgrade_staged(void)
 		std::string meta;
 		for (unsigned int k=0; k<lines.size(); k++) {
 			std::string l = lines[k];
-			if ( l.empty() ) continue;
+			if ( l.empty() || l.compare(0, 5, "body=") == 0 ) continue;
 			size_t t = l.find('\t');
 			if ( l.compare(0, 5, "file=") == 0 && t != std::string::npos && l.find('%', t) != std::string::npos )
 				l = l.substr(0, t + 1) + one_line(u2c(url_decode(l.substr(t + 1))));
 			meta += l + "\n";
 		}
-		meta += "body=2\n";
+		meta += "body=" + std::string(BODY_VER) + "\n";
 		FILE *fp = fopen((dir + "/body.txt").c_str(), "w");
 		if ( !fp ) continue;
 		fputs(content.c_str(), fp); fclose(fp);
@@ -852,7 +872,7 @@ static void upgrade_staged(void)
 		n++;
 	}
 	if ( n ) {
-		char b[128]; snprintf(b, sizeof(b), "  받아 둔 글 %d 개의 본문을 새로 만들었습니다 (깨진 한글 고침, 다시 받지 않음).", n);
+		char b[128]; snprintf(b, sizeof(b), "  받아 둔 글 %d 개의 본문을 새로 만들었습니다 (다시 받지 않음).", n);
 		out(b);
 	}
 }
