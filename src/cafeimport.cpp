@@ -42,6 +42,17 @@ static int n_ok = 0, n_skip_done = 0, n_skip_menu = 0, n_fail = 0, n_files = 0;
 
 static void out(const std::string &s) { printf("%s\r\n", s.c_str()); fflush(stdout); }
 
+// BBS 는 10 분 동안 키 입력이 없으면 끊는다 (ctime 이 터미널의 접근 시각을 본다).
+// 오래 받는 동안 끊기지 않게 터미널의 접근 시각을 지금으로 바꾼다.
+static void keep_alive(void)
+{
+	static time_t last = 0;
+	if ( time(0) - last < 30 ) return;
+	last = time(0);
+	const char *t = ttyname(0);
+	if ( t ) utimes(t, NULL);
+}
+
 // 최대 sec 초 기다리며 Q (또는 ESC) 를 눌렀는지 본다. 눌렀으면 true
 // (운영자 메뉴는 터미널을 한 글자씩 받는 모드로 두므로 Ctrl+C 가 오지 않는다)
 static bool user_stop(int sec)
@@ -49,6 +60,7 @@ static bool user_stop(int sec)
 	fd_set fds;
 	struct timeval tv;
 	time_t until = time(0) + sec;
+	keep_alive();
 	do {
 		FD_ZERO(&fds);
 		FD_SET(0, &fds);
@@ -82,6 +94,7 @@ static bool write_curl_cfg(const std::string &path, bool with_cookie)
 // url 을 path 에 받는다. HTTP 상태 코드를 돌려준다 (실패하면 0)
 static int http_get(const std::string &url, const std::string &path, bool with_cookie)
 {
+	keep_alive();
 	std::string cmd = "curl -K " + shell_quote(with_cookie ? curl_cfg_cookie : curl_cfg_plain)
 		+ " -o " + shell_quote(path) + " -w '%{http_code}' " + shell_quote(url);
 	bool ok;
