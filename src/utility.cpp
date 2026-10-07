@@ -657,20 +657,6 @@ static bool input_pending(int msec)
 // 지금까지 화면에 친 글자를 넘겨, 메시지를 띄운 뒤 입력 줄을 다시 그릴 수 있게 한다.
 void (*line_input_wait_hook)(const char *typed) = NULL;
 
-static int wait_getchar(const char *str, int typed_len)
-{
-	if ( line_input_wait_hook != NULL ) {
-		// getchar() 는 읽기 전에 화면 출력(stdout)을 내보내지만 select 로 기다릴 때는
-		// 내보내지 않으므로, 먼저 내보내야 프롬프트가 보인다
-		fflush(stdout);
-		while ( !input_pending(1000) ) {
-			std::string typed(str, typed_len > 0 ? typed_len : 0);
-			line_input_wait_hook(typed.c_str());
-		}
-	}
-	return getchar();
-}
-
 // 줄 편집기용 자동 줄바꿈 (line_input_wrap): 줄이 차면 마지막 낱말을 다음 줄로 넘긴다
 static bool wrap_enabled = false;
 static bool wrap_done = false;
@@ -694,56 +680,155 @@ static void wrap_line(char *str, int *i, const std::string &extra, int echo)
 	wrap_done = true;
 }
 
+// 커서키 따위 (ESC [ ... 끝 글자, ESC O x) 를 읽어 키로.  모르는 열은 통째로 버린다
+// (버리지 않으면 ESC 만 빠지고 뒤의 "[C" 가 글자로 들어간다).  ESC 하나만 눌렀으면 곧 아무것도 오지 않는다.
+enum { KEY_NONE, KEY_LEFT, KEY_RIGHT, KEY_HOME, KEY_END, KEY_DEL };
+static int read_escape_key(void)
+{
+	if ( !input_pending(50) ) return KEY_NONE;
+	int c = getchar();
+	if ( c == '[' ) {
+		int num = 0;
+		while ( input_pending(50) ) {
+			c = getchar();
+			if ( c == EOF ) return KEY_NONE;
+			if ( c >= '0' && c <= '9' ) { num = num * 10 + (c - '0'); continue; }
+			if ( c >= 0x40 && c <= 0x7e ) break;		// 끝 글자
+		}
+		switch ( c ) {
+		case 'D': return KEY_LEFT;
+		case 'C': return KEY_RIGHT;
+		case 'H': return KEY_HOME;
+		case 'F': return KEY_END;
+		case '~':
+			if ( num == 1 || num == 7 ) return KEY_HOME;
+			if ( num == 4 || num == 8 ) return KEY_END;
+			if ( num == 3 ) return KEY_DEL;
+			return KEY_NONE;
+		}
+		return KEY_NONE;
+	} else if ( c == 'O' ) {
+		if ( !input_pending(50) ) return KEY_NONE;
+		c = getchar();
+		if ( c == 'D' ) return KEY_LEFT;
+		if ( c == 'C' ) return KEY_RIGHT;
+		if ( c == 'H' ) return KEY_HOME;
+		if ( c == 'F' ) return KEY_END;
+		return KEY_NONE;
+	} else if ( c != EOF ) {
+		ungetc(c, stdin);
+	}
+	return KEY_NONE;
+}
+
+// 줄 입력의 화면 쪽: str[a..b) 를 echo 방식대로 찍는다 (1 글자 그대로, 2 빈칸, 3 '*', 0 안 찍음)
+static void li_put(const char *str, int a, int b, int echo)
+{
+	for ( int k = a; k < b; k++ ) {
+		if      (echo == 0) ;
+		else if (echo == 2) putchar(' ');
+		else if (echo == 3) putchar('*');
+		else                putchar(str[k]);
+	}
+}
+
+// 커서를 왼쪽으로 n 칸
+static void li_back(int n, int echo)
+{
+	if ( echo == 0 ) return;
+	while ( n-- > 0 ) putchar('\b');
+}
+
+// cur 바로 앞 글자의 바이트 수 (완성형 한글은 2)
+static int li_prev_len(const char *str, int cur)
+{
+	int k = 0, last = 1;
+	while ( k < cur ) {
+		last = ( is_han(str[k]) && k + 1 < cur ) ? 2 : 1;
+		k += last;
+	}
+	return last;
+}
+
+// cur 자리 글자의 바이트 수
+static int li_cur_len(const char *str, int cur, int n)
+{
+	return ( is_han(str[cur]) && cur + 1 < n ) ? 2 : 1;
+}
+
 // ------------------------------------------------------------------------
+// 한 줄 입력.  ←/→ 로 커서를 옮기고 (한글은 한 글자씩), Home/End, Delete,
+// 가운데에서 치면 끼워 넣고 백스페이스는 커서 앞 글자를 지운다.
+// 줄 편집기 (line_input_wrap) 는 줄이 차면 마지막 낱말을 다음 줄로 넘긴다 (커서가 끝에 있을 때만).
 void _line_input(char *str, char *init_str, int len, int echo)
 {
-	unsigned int j;
-    int i = strlen(init_str);
-    char ch;
-    int c;
-	// 한글 두 번째 바이트를 기다리는 중인지, 그 바이트를 버려야 하는지
+	int n = strlen(init_str);		// 글자 수 (바이트)
+	int cur;						// 커서 자리 (바이트, 늘 글자 경계)
+	int c;
+	// 한글 첫 바이트가 들어와 두 번째 바이트를 기다리는 중
 	bool wait_trail = false;
-	bool skip_trail = false;
-	char pending_lead = 0;		// 줄이 찬 뒤 들어온 한글 첫 바이트 (자동 줄바꿈)
+	char pending_lead = 0;
 
 	// 초기 문자열이 버퍼보다 길면 잘라냄
-	if ( i > len ) i = len;
-	memcpy(str, init_str, i);
-	str[i] = 0;
-	for(j=0; j<(unsigned int)i; j++) {
-		putchar(init_str[j]);
-	}
+	if ( n > len ) n = len;
+	memcpy(str, init_str, n);
+	str[n] = 0;
+	li_put(str, 0, n, 1);		// 처음 글은 그대로 보인다 (예전처럼)
+	cur = n;
 
-    while((c=wait_getchar(str, (wait_trail && !skip_trail) ? i - 1 : i)) != '\r' ) {
+	while ( 1 ) {
+		if ( line_input_wait_hook != NULL ) {
+			// getchar() 는 읽기 전에 화면 출력(stdout)을 내보내지만 select 로 기다릴 때는
+			// 내보내지 않으므로, 먼저 내보내야 프롬프트가 보인다
+			fflush(stdout);
+			while ( !input_pending(1000) ) {
+				std::string typed(str, n);
+				line_input_wait_hook(typed.c_str());		// 전보를 띄우고 줄을 다시 그린다 (커서는 줄 끝)
+				li_back(n - cur, echo);
+			}
+		}
+		c = getchar();
 		// 접속이 끊기면 (EOF) 무한 루프에 빠지지 않도록 종료
 		if ( c == EOF ) {
 			host_close();
 			exit(1);
 		}
-		ch = (char)c;
-        if(ch == '\b') {
-			wait_trail = false;
-			skip_trail = false;
-            if(i > 0) {
-				// 마지막 글자가 한글(2 바이트)이면 한 번에 지운다
-				int last = 1;
-				int k = 0;
-				while ( k < i ) {
-					if ( is_han(str[k]) && k + 1 < i ) {
-						last = 2;
-						k += 2;
-					} else {
-						last = 1;
-						k += 1;
-					}
-				}
+		if ( c == '\r' ) break;
+		char ch = (char)c;
 
-				i -= last;
-				if ( echo != 0 ) {
-					for (int n=0; n<last; n++) {
-						putchar('\b'); putchar(' '); putchar('\b');
-					}
+		// 한글 두 번째 바이트
+		if ( wait_trail ) {
+			wait_trail = false;
+			if ( is_han(ch) ) {
+				if ( n + 2 <= len ) {
+					memmove(str + cur + 2, str + cur, n - cur);
+					str[cur] = pending_lead;
+					str[cur + 1] = ch;
+					n += 2;
+					li_put(str, cur, n, echo);
+					cur += 2;
+					li_back(n - cur, echo);
+				} else if ( wrap_enabled && cur == n ) {
+					// 줄이 찼으면 (자동 줄바꿈) 이 글자와 마지막 낱말을 다음 줄로
+					wrap_line(str, &n, std::string(1, pending_lead) + ch, echo);
+					break;
 				}
+				continue;
+			}
+			// 한글 두 번째 바이트가 오지 않았으면 첫 바이트는 버린다 (이 글자는 아래에서 그대로)
+		}
+
+		if ( ch == '\b' || c == 0x7f ) {
+			if ( cur > 0 ) {
+				// 커서 앞 글자 (한글이면 2 바이트) 를 지우고 뒤를 당긴다
+				int last = li_prev_len(str, cur);
+				memmove(str + cur - last, str + cur, n - cur);
+				cur -= last;
+				n -= last;
+				li_back(last, echo);
+				li_put(str, cur, n, echo);
+				if ( echo != 0 ) for ( int k = 0; k < last; k++ ) putchar(' ');
+				li_back(n - cur + last, echo);
 
 				// 한글 한 글자에 백스페이스를 바이트 수만큼(2 번) 보내는 터미널이면
 				// 바로 이어서 들어온 두 번째 백스페이스는 버린다
@@ -753,69 +838,76 @@ void _line_input(char *str, char *init_str, int len, int echo)
 						ungetc(c2, stdin);
 					}
 				}
-            }
-        } else {
-			// 표시 가능하지 않은 문제가 입력되고 한글이 아니면 pass
-			if (ch <= 0x1F && !is_han(ch)) {
-				// pass
-			}
-			else if (is_han(ch)) {
-				if ( !wait_trail ) {
-					// 한글 첫 바이트: 두 바이트가 다 들어갈 자리가 없으면 글자를 받지 않는다
-					wait_trail = true;
-					skip_trail = (i + 2 > len);
-					pending_lead = ch;
-					if ( !skip_trail ) {
-						str[i++] = ch;
-					}
-				} else {
-					wait_trail = false;
-					// 줄이 찼으면 (자동 줄바꿈) 이 글자와 마지막 낱말을 다음 줄로
-					if ( skip_trail && wrap_enabled ) {
-						wrap_line(str, &i, std::string(1, pending_lead) + ch, echo);
-						break;
-					}
-					if ( !skip_trail ) {
-						str[i++] = ch;
-						if     (echo==0) ;
-						else if(echo==2) { putchar(' '); putchar(' '); }
-						else if(echo==3) { putchar('*'); putchar('*'); }
-						else             { putchar(str[i-2]); putchar(ch); }
-					}
-					skip_trail = false;
-				}
-			}
-			else if (isascii(ch)) {
-				// 한글 두 번째 바이트가 오지 않았으면 첫 바이트는 버린다
-				if ( wait_trail ) {
-					if ( !skip_trail ) i--;
-					wait_trail = false;
-					skip_trail = false;
-				}
-				if(i < len) {
-					str[i++] = ch;
-					if     (echo==0) ;
-					else if(echo==2) putchar(' ');
-					else if(echo==3) putchar('*');
-					else             putchar(ch);
-				} else if ( wrap_enabled ) {
-					// 줄이 찼다 (자동 줄바꿈): 띄어쓰기면 그냥 다음 줄, 글자면 마지막 낱말과 함께
-					if ( ch == ' ' ) {
-						wrap_carry.clear();
-						wrap_done = true;
-					} else {
-						wrap_line(str, &i, std::string(1, ch), echo);
-					}
-					break;
-				}
 			}
 		}
-    }
+		else if ( ch == 0x1b ) {
+			switch ( read_escape_key() ) {
+			case KEY_LEFT:
+				if ( cur > 0 ) {
+					int last = li_prev_len(str, cur);
+					cur -= last;
+					li_back(last, echo);
+				}
+				break;
+			case KEY_RIGHT:
+				if ( cur < n ) {
+					int l = li_cur_len(str, cur, n);
+					li_put(str, cur, cur + l, echo);
+					cur += l;
+				}
+				break;
+			case KEY_HOME:
+				li_back(cur, echo);
+				cur = 0;
+				break;
+			case KEY_END:
+				li_put(str, cur, n, echo);
+				cur = n;
+				break;
+			case KEY_DEL:
+				if ( cur < n ) {
+					int l = li_cur_len(str, cur, n);
+					memmove(str + cur, str + cur + l, n - cur - l);
+					n -= l;
+					li_put(str, cur, n, echo);
+					if ( echo != 0 ) for ( int k = 0; k < l; k++ ) putchar(' ');
+					li_back(n - cur + l, echo);
+				}
+				break;
+			}
+		}
+		else if ( is_han(ch) ) {
+			// 한글 첫 바이트: 두 번째 바이트와 함께 넣는다
+			wait_trail = true;
+			pending_lead = ch;
+		}
+		else if ( ch <= 0x1F ) {
+			// 표시 가능하지 않은 문자는 pass
+		}
+		else if ( isascii(ch) ) {
+			if ( n < len ) {
+				memmove(str + cur + 1, str + cur, n - cur);
+				str[cur] = ch;
+				n++;
+				li_put(str, cur, n, echo);
+				cur++;
+				li_back(n - cur, echo);
+			} else if ( wrap_enabled && cur == n ) {
+				// 줄이 찼다 (자동 줄바꿈): 띄어쓰기면 그냥 다음 줄, 글자면 마지막 낱말과 함께
+				if ( ch == ' ' ) {
+					wrap_carry.clear();
+					wrap_done = true;
+				} else {
+					wrap_line(str, &n, std::string(1, ch), echo);
+				}
+				break;
+			}
+		}
+	}
 
-	// 한글 두 번째 바이트 없이 끝났으면 첫 바이트는 버린다
-	if ( wait_trail && !skip_trail ) i--;
-
-    str[i] = 0;
+	// 엔터: 커서가 가운데여도 줄 끝으로 (다음 줄바꿈이 글을 자르지 않게)
+	if ( cur < n ) li_put(str, cur, n, echo);
+	str[n] = 0;
 }
 
 #if 0
