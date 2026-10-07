@@ -41,6 +41,26 @@ static std::string curl_cfg_plain;	// 쿠키 없는 것 (그림 받기)
 static int n_ok = 0, n_skip_done = 0, n_skip_menu = 0, n_fail = 0, n_files = 0;
 
 static void out(const std::string &s) { printf("%s\r\n", s.c_str()); fflush(stdout); }
+
+// 최대 sec 초 기다리며 Q (또는 ESC) 를 눌렀는지 본다. 눌렀으면 true
+// (운영자 메뉴는 터미널을 한 글자씩 받는 모드로 두므로 Ctrl+C 가 오지 않는다)
+static bool user_stop(int sec)
+{
+	fd_set fds;
+	struct timeval tv;
+	time_t until = time(0) + sec;
+	do {
+		FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		tv.tv_sec = sec > 0 ? 1 : 0;
+		tv.tv_usec = 0;
+		if ( select(1, &fds, NULL, NULL, &tv) > 0 ) {
+			char c;
+			if ( read(0, &c, 1) == 1 && (c == 'q' || c == 'Q' || c == 27) ) return true;
+		}
+	} while ( time(0) < until );
+	return false;
+}
 static std::string u2c(const std::string &s) { return utf8_to_cp949(s); }
 
 // ------------------------------------------------------------------
@@ -257,6 +277,54 @@ static std::string url_file_name(const std::string &url)
 	return (s == std::string::npos) ? u : u.substr(s + 1);
 }
 
+static bool has_tag(const std::string &t)
+{
+	return t.find("<span") != std::string::npos || t.find("<p") != std::string::npos
+		|| t.find("<div") != std::string::npos || t.find("<br") != std::string::npos
+		|| t.find("</") != std::string::npos;
+}
+
+// 태그를 지우고 (문단/줄바꿈 태그는 줄바꿈으로) 문자 참조를 푼다.
+// 한 번 더 감싸진 HTML 은 참조를 풀면 태그가 다시 드러나므로 태그가 없어질 때까지 되풀이한다.
+static std::string strip_html(std::string t)
+{
+	static const char *ents[][2] = { {"&nbsp;", " "}, {"&lt;", "<"}, {"&gt;", ">"}, {"&quot;", "\""},
+		{"&#39;", "'"}, {"&amp;", "&"}, {NULL, NULL} };
+	for (int round = 0; round < 3; round++) {
+		if ( has_tag(t) ) {
+			std::string o;
+			for (size_t i=0; i<t.size(); i++) {
+				if ( t[i] == '<' ) {
+					size_t e = t.find('>', i);
+					if ( e == std::string::npos ) { o += t.substr(i); break; }
+					// 태그 이름 (소문자). 맨 앞의 '/' 는 닫는 태그 표시, 공백이나 '/' 에서 멈춘다
+					std::string nm;
+					for (size_t k=i+1; k<e && nm.size() < 8; k++) {
+						if ( t[k] == ' ' || (t[k] == '/' && k > i + 1) ) break;
+						nm += (char)tolower((unsigned char)t[k]);
+					}
+					if ( nm == "br" || nm == "/p" || nm == "/div" || nm == "/li" ) o += "\n";
+					i = e;
+					continue;
+				}
+				o += t[i];
+			}
+			t = o;
+		}
+		bool had_ent = false;
+		for (int k=0; ents[k][0]; k++) {
+			size_t q = 0;
+			while ( (q = t.find(ents[k][0], q)) != std::string::npos ) {
+				t.replace(q, strlen(ents[k][0]), ents[k][1]);
+				q += strlen(ents[k][1]);
+				had_ent = true;
+			}
+		}
+		if ( !had_ent || !has_tag(t) ) break;
+	}
+	return t;
+}
+
 static std::string html_to_text(std::string html, std::vector<remote_file> &images)
 {
 	// <script> 덩어리 빼기
@@ -302,6 +370,13 @@ static std::string html_to_text(std::string html, std::vector<remote_file> &imag
 	system(cmd.c_str());
 	std::string t = read_file(txt.c_str());
 	unlink(in.c_str()); unlink(txt.c_str());
+	// lynx 가 없거나 실패하면 원래 HTML 에서 직접 태그를 지운다
+	if ( trim(t).empty() && !trim(html).empty() ) t = u2c(html);
+	// 안전장치: 태그가 남았으면 (lynx 가 없거나, 본문이 &lt;span&gt; 처럼 한 번 더 감싸진 글) 직접 지운다
+	t = strip_html(t);
+	// 빈 줄이 셋 이상 이어지면 둘로
+	size_t q;
+	while ( (q = t.find("\n\n\n\n")) != std::string::npos ) t.erase(q, 1);
 	// 끝의 빈 줄 정리
 	while ( !t.empty() && (t[t.size()-1] == '\n' || t[t.size()-1] == ' ') ) t.erase(t.size()-1);
 	return t + "\n";
@@ -687,9 +762,15 @@ int main(int argc, char **argv)
 		std::vector<int> nums = parse_ranges(argc, argv, 3);
 		snprintf(b, sizeof(b), "카페 %s: 글 %d 개 받기 (메뉴 대응 %d 개)", cafe_id.c_str(), (int)nums.size(), (int)table.size());
 		out(b);
+		out("  (멈추려면 Q: 지금 받는 글을 마치고 멈춥니다)");
 		for (unsigned int i=0; i<nums.size(); i++) {
 			if ( !fetch_one(nums[i], table, done) ) { login_ok = false; break; }
-			sleep(1);	// 네이버에 부담 주지 않게
+			// 네이버에 부담 주지 않게 1 초 쉬며 Q 를 본다
+			if ( i + 1 < nums.size() && user_stop(1) ) {
+				char r[96]; snprintf(r, sizeof(r), "  멈췄습니다. 남은 글: %d - %d", nums[i + 1], nums.back());
+				out(r);
+				break;
+			}
 		}
 		snprintf(b, sizeof(b), "받음 %d, 이미 있음 %d, 메뉴 대응 없음 %d, 실패 %d, 첨부 파일 %d",
 			n_ok, n_skip_done, n_skip_menu, n_fail, n_files);
@@ -697,8 +778,10 @@ int main(int argc, char **argv)
 		std::vector<int> nums = (argc > 3) ? parse_ranges(argc, argv, 3) : staged_nums();
 		snprintf(b, sizeof(b), "받아 둔 글 %d 개를 BBS 에 올립니다.", (int)nums.size());
 		out(b);
+		out("  (멈추려면 Q: 지금 올리는 글을 마치고 멈춥니다. 남은 글은 받은 그대로 남습니다)");
 		for (unsigned int i=0; i<nums.size(); i++) {
 			if ( !apply_one(nums[i], done) ) { login_ok = false; break; }
+			if ( i + 1 < nums.size() && user_stop(0) ) { out("  멈췄습니다."); break; }
 		}
 		snprintf(b, sizeof(b), "올림 %d, 이미 올린 글 %d, 실패 %d, 첨부 파일 %d", n_ok, n_skip_done, n_fail, n_files);
 	}
