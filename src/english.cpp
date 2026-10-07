@@ -1,9 +1,15 @@
 #include "main.h"
+#include <dirent.h>
 
 // ------------------------------------------------------------------
-// 오늘의 영어 한 문장 : 날짜마다 바뀌는 쉬운 생활 영어, 뜻, 짧은 풀이
+// 오늘의 영어 한 문장 : 날마다 인터넷에서 새 문장을 받아 온다
 //   bin/english <호스트이름> <아이디> <tty>
 //   bin/english --line : 오늘의 문장 한 줄 "문장<TAB>뜻" (화면 파일 태그용)
+//
+// 문장은 ZenQuotes (zenquotes.io, 오늘의 명언), 뜻은 MyMemory (기계 번역).
+// 하루에 한 번만 받아 $HANULSO/data/english/YYYY-MM-DD.txt 에 둔다
+// (영어 / 뜻 / 말한 사람, 완성형). 그날 다른 사람은 이 파일을 읽는다.
+// 이전/다음은 그동안 모아 둔 날들을 오간다.
 // ------------------------------------------------------------------
 
 struct termio sys_term;
@@ -18,71 +24,9 @@ char host_name[256];
 #define E_Y		"\033[=14F"
 #define E_C		"\033[=11F"
 #define E_G		"\033[=7F"
+#define E_R		"\033[=12F"
 
-struct sentence { const char *en, *ko, *tip; };
-static const sentence sentences[] = {
-	{ "Long time no see.", "오랜만이에요.", "오랜만에 만난 사람에게. 친한 사이에서 많이 씁니다." },
-	{ "What have you been up to?", "그동안 어떻게 지냈어요?", "be up to ~ : ~을 하며 지내다" },
-	{ "I'm on my way.", "가는 중이에요.", "약속 장소로 가고 있을 때. on my way = 가는 길에" },
-	{ "Take your time.", "천천히 하세요.", "서두르지 않아도 된다고 말할 때" },
-	{ "It's up to you.", "당신 뜻대로 하세요.", "be up to someone : ~에게 달려 있다" },
-	{ "I'll keep that in mind.", "명심할게요.", "keep in mind : 기억해 두다" },
-	{ "Let me know if you need anything.", "필요한 것 있으면 말해요.", "let me know : 알려 주다" },
-	{ "That makes sense.", "그렇군요. (말이 되네요)", "make sense : 이치에 맞다, 이해가 되다" },
-	{ "I couldn't agree more.", "전적으로 동의해요.", "더 동의할 수 없을 만큼 = 완전히 동의" },
-	{ "It's not a big deal.", "별일 아니에요.", "big deal : 대단한 일" },
-	{ "Better late than never.", "늦더라도 안 하는 것보다 낫다.", "자주 쓰는 속담" },
-	{ "Practice makes perfect.", "연습이 완벽을 만든다.", "타자 연습에도 딱 맞는 말" },
-	{ "Every cloud has a silver lining.", "괴로움 뒤에는 기쁨이 있다.", "silver lining : 구름의 은빛 가장자리 = 희망" },
-	{ "Actions speak louder than words.", "말보다 행동이 중요하다.", "speak louder : 더 크게 말하다 = 더 강하다" },
-	{ "Don't put off until tomorrow what you can do today.", "오늘 할 일을 내일로 미루지 마라.", "put off : 미루다" },
-	{ "Could you do me a favor?", "부탁 하나 들어줄래요?", "do someone a favor : 부탁을 들어주다" },
-	{ "I'm looking forward to it.", "기대하고 있어요.", "look forward to ~ing / 명사" },
-	{ "Sorry to keep you waiting.", "기다리게 해서 미안해요.", "keep someone waiting : 기다리게 하다" },
-	{ "Help yourself.", "마음껏 드세요.", "음식을 권할 때" },
-	{ "It's on me.", "제가 낼게요.", "계산할 때. on me = 내가 낸다" },
-	{ "Let's call it a day.", "오늘은 여기까지 합시다.", "call it a day : 하루 일을 마치다" },
-	{ "I'm all ears.", "잘 듣고 있어요.", "온몸이 귀 = 귀 기울여 듣다" },
-	{ "Break a leg!", "행운을 빌어요!", "공연, 시험 전에 하는 응원" },
-	{ "Hang in there.", "조금만 더 힘내요.", "힘든 사람을 응원할 때" },
-	{ "You made my day.", "덕분에 정말 기분 좋아요.", "make someone's day : 하루를 즐겁게 하다" },
-	{ "I didn't catch your name.", "성함을 못 들었어요.", "catch : (말을) 알아듣다" },
-	{ "Could you say that again?", "다시 말씀해 주시겠어요?", "못 알아들었을 때 정중하게" },
-	{ "How do you spell that?", "철자가 어떻게 되나요?", "아이디나 이름을 물어볼 때도" },
-	{ "What do you do for fun?", "취미가 뭐예요?", "for fun : 재미로" },
-	{ "I'm into old computers.", "옛날 컴퓨터에 빠져 있어요.", "be into ~ : ~에 푹 빠지다" },
-	{ "My computer froze.", "컴퓨터가 멈췄어요.", "freeze (froze) : 얼다, 멈추다" },
-	{ "Did you save the file?", "파일 저장했어요?", "save : 저장하다" },
-	{ "The connection is slow today.", "오늘 접속이 느리네요.", "connection : 연결, 접속" },
-	{ "Let's keep in touch.", "계속 연락하고 지내요.", "keep in touch : 연락을 이어가다" },
-	{ "See you around.", "또 봐요.", "가볍게 헤어질 때" },
-	{ "Have a good one.", "좋은 하루 보내요.", "one = day, night 등" },
-	{ "No worries.", "걱정 마세요. 괜찮아요.", "고맙다/미안하다는 말에 답할 때" },
-	{ "I'll get back to you.", "나중에 다시 연락드릴게요.", "get back to : 다시 연락하다" },
-	{ "Fingers crossed.", "잘되길 빌어요.", "손가락을 꼬는 행운의 몸짓에서" },
-	{ "It's a piece of cake.", "식은 죽 먹기예요.", "아주 쉬운 일" },
-	{ "Easy does it.", "살살 해요. 천천히.", "조심스럽게 하라고 할 때" },
-	{ "I'm running late.", "좀 늦을 것 같아요.", "run late : 늦어지다" },
-	{ "What's the weather like today?", "오늘 날씨 어때요?", "GO WEATHER 로 확인해 보세요" },
-	{ "It's raining cats and dogs.", "비가 억수같이 와요.", "아주 세게 오는 비" },
-	{ "Time flies.", "시간 참 빠르네요.", "Time flies when you're having fun." },
-	{ "Never mind.", "신경 쓰지 마세요.", "괜찮다고 말을 거둘 때" },
-	{ "Same here.", "저도 그래요.", "Me too 와 비슷" },
-	{ "You can say that again.", "맞아요, 정말 그래요.", "강하게 동의할 때" },
-	{ "Let's get started.", "시작해 봅시다.", "get started : 시작하다" },
-	{ "Mind your step.", "발밑 조심하세요.", "mind : 조심하다" },
-	{ "What a small world!", "세상 참 좁네요!", "뜻밖의 곳에서 아는 사람을 만났을 때" },
-	{ "Count me in.", "저도 끼워 주세요.", "모임, 놀이에 참여하겠다고 할 때 (반대: count me out)" },
-	{ "I owe you one.", "신세 졌어요.", "owe : 빚지다" },
-	{ "Keep up the good work.", "계속 잘해 주세요.", "칭찬과 격려" },
-	{ "Let's play it by ear.", "상황 봐서 정해요.", "악보 없이 귀로 연주하다 = 그때그때" },
-	{ "I'm not a morning person.", "저는 아침형 인간이 아니에요.", "morning person : 아침에 강한 사람" },
-	{ "The early bird catches the worm.", "일찍 일어나는 새가 벌레를 잡는다.", "부지런하면 얻는 것이 있다" },
-	{ "Rome wasn't built in a day.", "로마는 하루아침에 이루어지지 않았다.", "큰일은 시간이 걸린다" },
-	{ "Where there's a will, there's a way.", "뜻이 있는 곳에 길이 있다.", "will : 의지" },
-	{ "Two heads are better than one.", "백지장도 맞들면 낫다.", "둘이 생각하면 혼자보다 낫다" },
-};
-static const int sentence_count = sizeof(sentences) / sizeof(sentences[0]);
+struct sentence { std::string day, en, ko, who; };
 
 void raw_mode(void)
 {
@@ -125,28 +69,197 @@ void print_header(const char *head_title)
     printf("\033[4;1H");
 }
 
-// 오늘의 문장 번호 (날짜마다 하나, 1970-01-01 부터 날 수)
-static int today_index(void)
+// ------------------------------------------------------------------
+// 받아 오기
+// ------------------------------------------------------------------
+static std::string data_dir(void)
 {
-	time_t t = time(NULL);
-	struct tm *tm = localtime(&t);
-	long days = (long)((t + tm->tm_gmtoff) / 86400);
-	return (int)(days % sentence_count);
+	return std::string(getenv("HANULSO") ? getenv("HANULSO") : ".") + "/data/english";
 }
 
-// 가운데 맞춰 한 줄 (80 칸)
-static void center_line(const char *color, const std::string &s)
+static std::string today_str(void)
 {
-	int w = s.size();
-	int pad = w < 78 ? (80 - w) / 2 : 1;
-	printf("%s%s%s" E_W "\r\n", std::string(pad, ' ').c_str(), color, s.c_str());
+	time_t t = time(NULL);
+	struct tm tm;
+	localtime_r(&t, &tm);
+	char b[16];
+	snprintf(b, sizeof(b), "%04d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+	return b;
+}
+
+static void put_utf8(std::string &out, unsigned int cp)
+{
+	if ( cp < 0x80 ) out += (char)cp;
+	else if ( cp < 0x800 ) { out += (char)(0xC0 | cp >> 6); out += (char)(0x80 | (cp & 0x3F)); }
+	else if ( cp < 0x10000 ) { out += (char)(0xE0 | cp >> 12); out += (char)(0x80 | (cp >> 6 & 0x3F)); out += (char)(0x80 | (cp & 0x3F)); }
+	else { out += (char)(0xF0 | cp >> 18); out += (char)(0x80 | (cp >> 12 & 0x3F)); out += (char)(0x80 | (cp >> 6 & 0x3F)); out += (char)(0x80 | (cp & 0x3F)); }
+}
+
+// JSON 의 "key":"..." 값 (\" \\ \/ \n \uXXXX 를 풀어 UTF-8 로). from 부터 찾는다
+static std::string json_string_value(const std::string &j, const char *key, std::string::size_type from = 0)
+{
+	std::string k = std::string("\"") + key + "\":\"";
+	std::string::size_type p = j.find(k, from);
+	if ( p == std::string::npos ) return "";
+	p += k.size();
+	std::string out;
+	while ( p < j.size() && j[p] != '"' ) {
+		char c = j[p++];
+		if ( c != '\\' || p >= j.size() ) { out += c; continue; }
+		char e = j[p++];
+		if ( e == 'n' || e == 't' || e == 'r' ) out += ' ';
+		else if ( e == 'u' && p + 4 <= j.size() ) {
+			unsigned int cp = strtoul(j.substr(p, 4).c_str(), NULL, 16);
+			p += 4;
+			// 서로게이트 짝
+			if ( cp >= 0xD800 && cp <= 0xDBFF && p + 6 <= j.size() && j[p] == '\\' && j[p + 1] == 'u' ) {
+				unsigned int lo = strtoul(j.substr(p + 2, 4).c_str(), NULL, 16);
+				p += 6;
+				cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
+			}
+			put_utf8(out, cp);
+		}
+		else out += e;
+	}
+	return out;
+}
+
+// 영어 문장의 꾸밈 따옴표, 줄표 따위를 ASCII 로 (완성형으로 바꾸면 두 칸짜리 글자가 된다)
+static std::string ascii_punct(const std::string &s)
+{
+	static const char *from[] = { "\xE2\x80\x98", "\xE2\x80\x99", "\xE2\x80\x9C", "\xE2\x80\x9D", "\xE2\x80\x93",
+		"\xE2\x80\x94", "\xE2\x80\xA6", "\xC2\xA0", NULL };
+	static const char *to[] = { "'", "'", "\"", "\"", "-", " - ", "...", " " };
+	std::string r = s;
+	for ( int i = 0; from[i]; i++ ) r = replace_all(r, from[i], to[i]);
+	return r;
+}
+
+static std::string url_encode(const std::string &s)
+{
+	std::string r;
+	for ( unsigned int i = 0; i < s.size(); i++ ) {
+		unsigned char c = s[i];
+		if ( isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ) r += c;
+		else { char b[4]; snprintf(b, sizeof(b), "%%%02X", c); r += b; }
+	}
+	return r;
+}
+
+static bool load_day(const std::string &day, sentence &s)
+{
+	std::string text = read_file((data_dir() + "/" + day + ".txt").c_str());
+	std::vector<std::string> l = split_string(text, '\n');
+	if ( l.size() < 3 || trim(l[0]).empty() ) return false;
+	s.day = day;
+	s.en = trim(l[0]);
+	s.ko = trim(l[1]);
+	s.who = trim(l[2]);
+	return true;
+}
+
+static void save_day(const sentence &s)
+{
+	mkdir((std::string(getenv("HANULSO") ? getenv("HANULSO") : ".") + "/data").c_str(), 0755);
+	mkdir(data_dir().c_str(), 0755);
+	std::string path = data_dir() + "/" + s.day + ".txt";
+	std::string tmp = path + "." + TO_STRING(getpid());
+	FILE *fp = fopen(tmp.c_str(), "w");
+	if ( fp == NULL ) return;
+	fprintf(fp, "%s\n%s\n%s\n", s.en.c_str(), s.ko.c_str(), s.who.c_str());
+	fclose(fp);
+	chmod(tmp.c_str(), 0644);
+	rename(tmp.c_str(), path.c_str());		// 여럿이 같이 받아도 반쪽 파일이 보이지 않게
+}
+
+// 한국어 뜻 (MyMemory 기계 번역). 못 받으면 ""
+static std::string translate(const std::string &en_utf8)
+{
+	std::string json;
+	if ( !download_text("https://api.mymemory.translated.net/get?langpair=en%7Cko&q=" + url_encode(en_utf8), json) ) return "";
+	if ( json.find("\"responseStatus\":200") == std::string::npos ) return "";
+	std::string ko = json_string_value(json, "translatedText");
+	if ( ko.empty() || ko.find("MYMEMORY WARNING") != std::string::npos ) return "";
+	return utf8_to_cp949(ascii_punct(ko));
+}
+
+// 오늘 문장: 저장해 둔 것이 있으면 그것, 없으면 받아 온다. 못 받으면 false
+static bool fetch_today(sentence &s)
+{
+	std::string day = today_str();
+	if ( load_day(day, s) ) {
+		if ( !s.ko.empty() ) return true;
+		// 지난번에 뜻을 못 받았으면 다시
+	} else {
+		std::string json;
+		if ( !download_text("https://zenquotes.io/api/today", json) ) return false;
+		std::string q = json_string_value(json, "q");
+		if ( q.empty() || q.find("Too many requests") != std::string::npos ) return false;
+		s.day = day;
+		s.en = utf8_to_cp949(ascii_punct(q));
+		s.who = utf8_to_cp949(ascii_punct(json_string_value(json, "a")));
+		s.ko = "";
+	}
+	// 뜻은 원래 (UTF-8) 문장으로 번역한다. 저장한 것은 완성형이므로 되돌려 쓴다
+	std::string en_utf8 = s.en;
+	{
+		char *u = cp949_to_utf8((char*)s.en.c_str());
+		if ( u ) { en_utf8 = u; free(u); }
+	}
+	s.ko = translate(en_utf8);
+	save_day(s);
+	return true;
+}
+
+// 모아 둔 날들 (오래된 것부터)
+static std::vector<std::string> saved_days(void)
+{
+	std::vector<std::string> days;
+	DIR *d = opendir(data_dir().c_str());
+	if ( d == NULL ) return days;
+	struct dirent *e;
+	while ( (e = readdir(d)) != NULL ) {
+		std::string n = e->d_name;
+		if ( n.size() == 14 && n.compare(10, 4, ".txt") == 0 ) days.push_back(n.substr(0, 10));
+	}
+	closedir(d);
+	std::sort(days.begin(), days.end());
+	return days;
+}
+
+// ------------------------------------------------------------------
+// 화면
+// ------------------------------------------------------------------
+// 낱말 사이에서 width 칸에 맞춰 나누고 가운데 맞춰 찍는다 (완성형 한글은 두 칸)
+static void center_wrapped(const char *color, const std::string &s, int width)
+{
+	std::vector<std::string> lines = wrap_words(s, width);
+	for ( unsigned int i = 0; i < lines.size(); i++ ) {
+		std::string l = trim(lines[i]);
+		int pad = (80 - (int)l.size()) / 2;
+		if ( pad < 1 ) pad = 1;
+		printf("%s%s%s" E_W "\r\n", std::string(pad, ' ').c_str(), color, l.c_str());
+	}
+}
+
+static const char *weekday_name(const std::string &day)
+{
+	static const char *w[] = { "일", "월", "화", "수", "목", "금", "토" };
+	struct tm tm;
+	memset(&tm, 0, sizeof(tm));
+	sscanf(day.c_str(), "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+	tm.tm_year -= 1900;
+	tm.tm_mon -= 1;
+	tm.tm_hour = 12;
+	mktime(&tm);
+	return w[tm.tm_wday];
 }
 
 int main(int argc, char **argv)
 {
 	if ( argc > 1 && !strcmp(argv[1], "--line") ) {
-		const sentence &s = sentences[today_index()];
-		printf("%s\t%s\n", s.en, s.ko);
+		sentence s;
+		if ( fetch_today(s) ) printf("%s\t%s\n", s.en.c_str(), s.ko.c_str());
 		return 0;
 	}
 	if ( argc > 1 ) {
@@ -162,32 +275,48 @@ int main(int argc, char **argv)
 
     ioctl(0,TCGETA, &sys_term);
 	raw_mode();
-    umask(0111);
+    umask(0022);
 
-	int today = today_index();
-	int shift = 0;		// 오늘에서 며칠 앞/뒤 문장
+	print_header(title);
+	printf("\r\n\r\n   " E_G "오늘의 문장을 받아 오는 중입니다..." E_W);
+	fflush(stdout);
+	sentence today;
+	bool got = fetch_today(today);
+
+	std::vector<std::string> days = saved_days();
+	if ( days.empty() ) {
+		print_header(title);
+		printf("\r\n\r\n   " E_R "문장을 받아 오지 못했습니다. 잠시 뒤에 다시 들어와 주세요." E_W "\r\n");
+		printf("\r\n [Enter] 를 누르세요.");
+		press_enter();
+		host_close();
+	}
+	int idx = days.size() - 1;		// 맨 마지막 = 오늘 (못 받았으면 가장 최근)
 
 	while ( 1 ) {
-		int i = ((today + shift) % sentence_count + sentence_count) % sentence_count;
-		const sentence &s = sentences[i];
-		time_t t = time(NULL) + shift * 86400L;
-		struct tm *tm = localtime(&t);
-		static const char *w[] = { "일", "월", "화", "수", "목", "금", "토" };
+		sentence s;
+		if ( !load_day(days[idx], s) ) s.en = "(읽지 못했습니다)";
+		bool is_today = s.day == today_str();
 
 		print_header(title);
-		char head[64];
-		snprintf(head, sizeof(head), "%d월 %d일 (%s)%s", tm->tm_mon + 1, tm->tm_mday, w[tm->tm_wday],
-				shift == 0 ? " 오늘의 문장" : shift < 0 ? " 지난 문장" : " 다음 문장");
+		int y, m, d;
+		sscanf(s.day.c_str(), "%d-%d-%d", &y, &m, &d);
+		char head[96];
+		snprintf(head, sizeof(head), "%d년 %d월 %d일 (%s)%s", y, m, d, weekday_name(s.day),
+				is_today ? " 오늘의 문장" : "");
 		printf("\r\n\r\n");
-		center_line(E_G, head);
+		center_wrapped(E_G, head, 76);
+		if ( !got && idx == (int)days.size() - 1 ) {
+			center_wrapped(E_R, "(오늘 문장을 받아 오지 못해 가장 최근 문장을 보여 줍니다)", 76);
+		}
 		printf("\r\n\r\n");
-		center_line(E_Y, s.en);
+		center_wrapped(E_Y, s.en, 70);
 		printf("\r\n");
-		center_line(E_C, s.ko);
+		center_wrapped(E_C, s.ko.empty() ? "(뜻을 받아 오지 못했습니다)" : s.ko, 70);
+		printf("\r\n");
+		if ( !s.who.empty() ) center_wrapped(E_G, "─ " + s.who + " ─", 76);
 		printf("\r\n\r\n");
-		center_line(E_G, std::string("─ ") + s.tip + " ─");
-		printf("\r\n\r\n\r\n");
-		printf("  " E_G "%d / %d" E_W "\r\n", i + 1, sentence_count);
+		printf("  " E_G "%d / %d   문장: zenquotes.io   뜻: MyMemory 기계 번역" E_W "\r\n", idx + 1, (int)days.size());
 
 		char cmd[16];
 		printf(ESC_ENG);
@@ -195,9 +324,9 @@ int main(int argc, char **argv)
 		line_input(cmd, 4);
 		std::string c = trim(cmd);
 		if ( !strcasecmp(c.c_str(), "p") || !strcasecmp(c.c_str(), "x") || !strcasecmp(c.c_str(), "q") ) break;
-		if ( !strcasecmp(c.c_str(), "b") ) shift--;
-		else if ( !strcasecmp(c.c_str(), "n") || c.empty() ) shift++;
-		else if ( !strcasecmp(c.c_str(), "t") ) shift = 0;
+		if ( !strcasecmp(c.c_str(), "b") ) { if ( idx > 0 ) idx--; }
+		else if ( !strcasecmp(c.c_str(), "n") || c.empty() ) { if ( idx + 1 < (int)days.size() ) idx++; }
+		else if ( !strcasecmp(c.c_str(), "t") ) idx = days.size() - 1;
 	}
 
 	host_close();
