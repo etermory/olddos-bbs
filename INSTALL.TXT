@@ -404,6 +404,8 @@ src/muhan 구성
 4) 기록 (data/cafe/, git 에 올라가지 않음)
   download/      받아 두고 아직 올리지 않은 글
   imported.log   BBS 에 올린 카페 글 번호 (hanulso.cfg 옆의 restore.log 도 함께 읽어 다시 가져오지 않음)
+                 없어지면 BBS 게시판 본문 끝의 "(네이버 카페 원문: ...번호)" 로 저절로 다시 만든다.
+                 받기 화면에 지금까지 올린 마지막 번호가 나온다 (이어 받으려면 그 다음 번호-).
   members/ assigned/ links/   카페 회원 -> BBS 아이디
   unlinked.log   연결 후보,  attach_unknown.log  읽지 못한 첨부 정보
 

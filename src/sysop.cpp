@@ -1231,6 +1231,16 @@ static void cafe_import(void)
 	printf("\r\n  " S_GRAY "이미 올린 글, 이미 받은 글은 건너뜁니다. 필요: hanulso.cfg 의 <naver><cookie>" S_WHITE "\r\n");
 
 	printf("  " S_GRAY "103001-103050 처럼 범위, 103001- 처럼 끝을 비우면 최근 글까지" S_WHITE "\r\n");
+	{
+		// 어디서부터 받을지: 지금까지 올린 카페 글 번호 중 가장 큰 것
+		int last = 0;
+		const char *logs[] = { "/data/cafe/imported.log", "/restore.log", NULL };
+		for (int k=0; logs[k]; k++) {
+			std::vector<std::string> l = split_string(read_file((hanulso() + logs[k]).c_str()), '\n');
+			for (unsigned int i=0; i<l.size(); i++) if ( atoi(l[i].c_str()) > last ) last = atoi(l[i].c_str());
+		}
+		if ( last ) printf("  지금까지 올린 카페 글의 마지막 번호: " S_CYAN "%d" S_WHITE "  (이어 받으려면 %d-)\r\n", last, last + 1);
+	}
 	std::string r = ask("글 번호 (예: 103001-103050 103100) >> ", 120);
 	if ( r.empty() ) return;
 	// 숫자, '-', 공백만

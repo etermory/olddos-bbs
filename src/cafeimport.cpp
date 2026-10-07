@@ -287,6 +287,38 @@ static void load_done(const std::string &path, std::set<int> &done)
 	}
 }
 
+static std::map<int, std::string> table;	// 카페 메뉴 번호 -> 게시판 테이블 (table.txt)
+static bool table_exists(const std::string &t);
+
+// imported.log 가 없어졌을 때: BBS 게시판에서 다시 모은다.
+// 올린 글 본문 끝에는 늘 "(네이버 카페 원문: https://cafe.naver.com/olddos/번호)" 가 있다.
+static void rebuild_imported(std::set<int> &done)
+{
+	std::string path = state_dir + "/imported.log";
+	if ( file_size(path) > 0 ) return;
+	std::set<std::string> boards;
+	for (std::map<int, std::string>::const_iterator it = table.begin(); it != table.end(); ++it) boards.insert(it->second);
+	std::set<int> found;
+	for (std::set<std::string>::iterator b = boards.begin(); b != boards.end(); ++b) {
+		if ( !table_exists(*b) ) continue;
+		std::string q = "SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(CONTENT, '(네이버 카페 원문: https://cafe.naver.com/olddos/', -1), ')', 1) AS N FROM "
+			+ *b + " WHERE CONTENT LIKE '%(네이버 카페 원문: https://cafe.naver.com/olddos/%'";
+		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows((char*)q.c_str());
+		for (unsigned int i=0; i<rows.size(); i++) {
+			int n = atoi(rows[i]["N"].c_str());
+			if ( n > 0 ) found.insert(n);
+		}
+	}
+	if ( found.empty() ) return;
+	FILE *fp = fopen(path.c_str(), "w");
+	if ( !fp ) return;
+	fprintf(fp, "; BBS 게시판에서 다시 모음\n");
+	for (std::set<int>::iterator it = found.begin(); it != found.end(); ++it) { fprintf(fp, "%d\n", *it); done.insert(*it); }
+	fclose(fp);
+	char b[128]; snprintf(b, sizeof(b), "  imported.log 가 없어 BBS 게시판에서 올린 카페 글 %d 개를 다시 모았습니다.", (int)found.size());
+	out(b);
+}
+
 static void mark_done(int num)
 {
 	FILE *fp = fopen((state_dir + "/imported.log").c_str(), "a");
@@ -704,8 +736,6 @@ static bool fetch_one(int num, std::set<int> &done)
 	return true;
 }
 
-static std::map<int, std::string> table;	// 카페 메뉴 번호 -> 게시판 테이블 (table.txt)
-
 // 받아 둔 글이 올라갈 게시판 (table.txt 에 없으면 "")
 static std::string board_of(staged &s)
 {
@@ -1000,6 +1030,7 @@ int main(int argc, char **argv)
 	load_done(state_dir + "/imported.log", done);
 
 	if ( !database::open() ) { unlink(curl_cfg_cookie.c_str()); return 1; }
+	rebuild_imported(done);
 
 	bool login_ok = true;
 	char b[160];
