@@ -20,7 +20,7 @@ endif
 .c.o: ; $(CC) -c $(CFLAGS) -o $*.o $<
 .cpp.o: ; $(CXX) -c $(CFLAGS) -o $*.o $<
 
-all: ctime main guest pass sysop weather exchange lunar hero rain omok baseball mine blackjack tgsend lotto coin sun worldtime english love tojeong today fortune mudlink memo biorhythm chattclient chattserver mbti_gs aichat typing   
+all: ctime main guest pass sysop weather exchange lunar hero rain omok baseball mine blackjack tgsend lotto coin sun worldtime english love tojeong today fortune mudlink memo biorhythm chattclient chattserver mbti_gs aichat typing cafeimport
 
 # 글쓰기 화면 편집기 pico (src/pico/pico, 한글 고침). ncurses-devel 이 필요하다.
 # all 에는 넣지 않는다 (서버에 ncurses-devel 이 없으면 BBS 업데이트가 통째로 실패하므로).
@@ -171,6 +171,11 @@ biorhythm: biorhythm.o
 
 mbti_gs: mbti_gs.o
 	$(CC) -o ../bin/$@ mbti_gs.o -lm
+	$(STRIP) ../bin/$@
+
+# 네이버 카페 글 가져오기 (sysop 14 번)
+cafeimport: cafeimport.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o
+	$(CXX) -o ../bin/$@ pugixml.o cafeimport.o database.o utility.o textutil.o settings.o menu.o re.o 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
 memo: memo.o pugixml.o database.o utility.o textutil.o settings.o menu.o re.o lineeditor.o

@@ -971,6 +971,175 @@ static void maintenance(void)
 // ------------------------------------------------------------------
 // 차림표
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// 네이버 카페 글 가져오기 (bin/cafeimport) / 카페 회원 연결
+// ------------------------------------------------------------------
+static std::string cafe_dir(void)
+{
+	return hanulso() + "/data/cafe";
+}
+
+// 카페 글이 올라가는 게시판들 (src/restore/table.txt)
+static std::vector<std::string> cafe_tables(void)
+{
+	std::vector<std::string> out;
+	std::vector<std::string> lines = split_string(read_file((hanulso() + "/src/restore/table.txt").c_str()), '\n');
+	for (unsigned int i=0; i<lines.size(); i++) {
+		std::string l = lines[i];
+		size_t c = l.find(';');
+		if ( c != std::string::npos ) l = l.substr(0, c);
+		int id; char t[256];
+		if ( sscanf(l.c_str(), "%d %255s", &id, t) == 2 &&
+		     std::find(out.begin(), out.end(), std::string(t)) == out.end() )
+			out.push_back(t);
+	}
+	return out;
+}
+
+// from 아이디로 올라간 카페 글과 첨부를 to 회원으로 옮긴다. 옮긴 글 수
+static int move_cafe_articles(const std::string &from, const std::string &to)
+{
+	std::vector<std::string> tables = cafe_tables();
+	int n = 0;
+	for (unsigned int i=0; i<tables.size(); i++) {
+		std::string q = "UPDATE " + tables[i] + " SET USER_ID='" + esc(to) + "' WHERE USER_ID='" + esc(from) + "'";
+		if ( mysql_query(mysql, q.c_str()) == 0 ) n += (int)mysql_affected_rows(mysql);
+		q = "UPDATE attachment SET USER_ID='" + esc(to) + "' WHERE USER_ID='" + esc(from)
+			+ "' AND FAMILY_TABLE='" + esc(tables[i]) + "'";
+		mysql_query(mysql, q.c_str());
+	}
+	return n;
+}
+
+// 연결할 BBS 회원 묻기 (카페에서 가져온 회원이 아닌 진짜 회원만)
+static std::string ask_bbs_member(const std::string &def)
+{
+	std::string prompt = "BBS 아이디" + (def.empty() ? std::string("") : " [" + def + "]") + " >> ";
+	std::string id = ask(prompt.c_str(), 40);
+	if ( id.empty() ) id = def;
+	if ( id.empty() ) return "";
+	if ( query_int("SELECT COUNT(*) FROM member WHERE USER_ID='" + esc(id) + "' AND PASSWORD <> '!'") != 1 ) {
+		msg(S_RED, "'" + id + "' 는 BBS 회원이 아닙니다. (카페에서 가져온 회원에는 연결할 수 없습니다)");
+		wait_enter();
+		return "";
+	}
+	return id;
+}
+
+struct cafe_unlinked {
+	std::string masked, nick, key, cands, now;
+};
+
+static void cafe_link(void)
+{
+	while ( 1 ) {
+		// 연결 후보: 같은 회원은 마지막 줄만, 이미 연결된 회원은 빼고
+		std::vector<std::string> lines = split_string(read_file((cafe_dir() + "/unlinked.log").c_str()), '\n');
+		std::vector<cafe_unlinked> list;
+		std::vector<std::string> seen;
+		for (int i=(int)lines.size()-1; i>=0; i--) {
+			std::vector<std::string> f = split_string(lines[i], '\t');
+			if ( f.size() < 3 || std::find(seen.begin(), seen.end(), f[2]) != seen.end() ) continue;
+			seen.push_back(f[2]);
+			if ( !trim(read_file((cafe_dir() + "/links/" + f[2]).c_str())).empty() ) continue;
+			cafe_unlinked u;
+			u.masked = f[0]; u.nick = f[1]; u.key = f[2]; u.cands = (f.size() > 3) ? f[3] : "";
+			u.now = trim(read_file((cafe_dir() + "/members/" + f[2]).c_str()));
+			list.push_back(u);
+		}
+
+		print_header(S_CYAN "카페 회원 연결" S_WHITE);
+		printf("\r\n  네이버는 매니저에게도 카페 아이디를 가려서 줍니다 (coma****).");
+		printf("\r\n  같은 사람의 BBS 아이디를 정해 주면 그 사람의 카페 글이 BBS 회원 글로 올라갑니다.\r\n\r\n");
+		if ( list.empty() ) printf("  " S_GRAY "연결을 기다리는 카페 회원이 없습니다." S_WHITE "\r\n");
+		for (unsigned int i=0; i<list.size() && i<15; i++) {
+			printf("  %2d. %-12s %-16s " S_GRAY "후보: %s" S_WHITE "\r\n", i + 1, list[i].now.c_str(),
+				string_truncate(list[i].nick, 16, "").c_str(),
+				list[i].cands.empty() ? "없음" : string_truncate(list[i].cands, 36, "...").c_str());
+		}
+		if ( list.size() > 15 ) printf("  " S_GRAY "... 외 %d 명 (연결하면 다음 사람이 보입니다)" S_WHITE "\r\n", (int)list.size() - 15);
+		printf("\r\n  " S_GRAY "M: 예전에 가져온 글을 가려진 아이디로 옮기기 (juya**** -> BBS 아이디)" S_WHITE);
+
+		std::string c = ask("번호 / M (끝: Enter) >> ", 3);
+		if ( c.empty() ) return;
+
+		if ( !strcasecmp(c.c_str(), "m") ) {
+			std::string from = ask("옮길 카페 아이디 (예 juya****) >> ", 40);
+			if ( from.empty() || from.find('*') == std::string::npos ) continue;
+			std::string to = ask_bbs_member("");
+			if ( to.empty() ) continue;
+			if ( !confirm(from + " 의 카페 글을 " + to + " 회원 글로 옮길까요?") ) continue;
+			char b[64]; snprintf(b, sizeof(b), "%d", move_cafe_articles(from, to));
+			msg(S_GREEN, std::string("글 ") + b + " 개를 옮겼습니다.");
+			wait_enter();
+			continue;
+		}
+
+		int n = atoi(c.c_str());
+		if ( n < 1 || n > (int)list.size() || n > 15 ) continue;
+		cafe_unlinked &u = list[n - 1];
+		std::string def = u.cands.substr(0, u.cands.find(','));
+		printf("\r\n  %s (%s)", u.now.c_str(), u.nick.c_str());
+		std::string to = ask_bbs_member(def);
+		if ( to.empty() ) continue;
+		if ( !confirm(u.now + " (" + u.nick + ") = BBS 회원 " + to + " 로 연결할까요?") ) continue;
+
+		FILE *fp = fopen((cafe_dir() + "/links/" + u.key).c_str(), "w");
+		if ( !fp ) { msg(S_RED, "기록하지 못했습니다: " + cafe_dir() + "/links"); wait_enter(); continue; }
+		fputs(to.c_str(), fp);
+		fclose(fp);
+		int moved = u.now.empty() ? 0 : move_cafe_articles(u.now, to);
+		char b[64]; snprintf(b, sizeof(b), "%d", moved);
+		msg(S_GREEN, "연결했습니다. 이미 올라간 글 " + std::string(b) + " 개를 " + to + " 회원 글로 옮겼습니다.");
+		wait_enter();
+	}
+}
+
+static void cafe_menu(void);
+
+static void cafe_import(void)
+{
+	print_header(S_CYAN "네이버 카페 글 가져오기" S_WHITE);
+	printf("\r\n  카페 글 번호 범위를 넣으면 글/작성자/그림/첨부를 받아");
+	printf("\r\n  src/restore/table.txt 의 메뉴 대응표대로 게시판에 올립니다.");
+	printf("\r\n  " S_GRAY "이미 가져온 글은 건너뜁니다. 필요: hanulso.cfg 의 <naver><cookie>" S_WHITE "\r\n");
+
+	std::string r = ask("글 번호 (예: 103001-103050 103100) >> ", 120);
+	if ( r.empty() ) return;
+	// 숫자, '-', 공백만
+	for (unsigned int i=0; i<r.size(); i++) {
+		if ( !isdigit((unsigned char)r[i]) && r[i] != '-' && r[i] != ' ' ) {
+			msg(S_RED, "숫자와 '-' 만 쓸 수 있습니다.");
+			wait_enter();
+			return;
+		}
+	}
+	if ( !confirm("가져올까요?") ) return;
+
+	std::string cmd = hanulso() + "/bin/cafeimport " + shell_quote(tty);
+	std::vector<std::string> parts = split_string(r, ' ');
+	for (unsigned int i=0; i<parts.size(); i++) {
+		if ( !trim(parts[i]).empty() ) cmd += " " + shell_quote(trim(parts[i]));
+	}
+	printf("\r\n\r\n");
+	fflush(stdout);
+	system(cmd.c_str());
+	wait_enter();
+}
+
+static void cafe_menu(void)
+{
+	while ( 1 ) {
+		print_header(S_CYAN "네이버 카페" S_WHITE);
+		printf("\r\n       1. 카페 글 가져오기 " S_GRAY "(글 번호 범위)" S_WHITE "\r\n");
+		printf("       2. 카페 회원 연결   " S_GRAY "(카페 회원 = BBS 회원)" S_WHITE "\r\n");
+		std::string c = ask("번호 (끝: Enter) >> ", 2);
+		if ( c == "1" ) cafe_import();
+		else if ( c == "2" ) cafe_link();
+		else return;
+	}
+}
+
 static void main_menu(void)
 {
 	while ( 1 ) {
@@ -987,7 +1156,7 @@ static void main_menu(void)
 		printf("  " S_YELLOW "◆ 게시판" S_WHITE "\r\n");
 		printf("       8. 게시물 옮기기                 9. 게시물 지우기\r\n");
 		printf("      10. 공지 고정 / 풀기             11. 꼬리말 지우기\r\n");
-		printf("      12. 투표 마감 / 지우기\r\n");
+		printf("      12. 투표 마감 / 지우기           14. 네이버 카페 글 가져오기\r\n");
 		printf("  " S_YELLOW "◆ 서버" S_WHITE "\r\n");
 		printf("      13. 정리와 점검 " S_GRAY "(디스크, 임시 파일, 주인 없는 첨부, AI 사용량)" S_WHITE "\r\n");
 
@@ -1007,6 +1176,7 @@ static void main_menu(void)
 		case 11: delete_comments(); break;
 		case 12: polls(); break;
 		case 13: maintenance(); break;
+		case 14: cafe_menu(); break;
 		}
 	}
 }
