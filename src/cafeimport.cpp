@@ -657,6 +657,7 @@ static bool fetch_one(int num, std::set<int> &done)
 	meta += "uid=" + uid + "\n";
 	meta += "date=" + std::string(date) + "\n";
 	meta += "time=" + std::string(tim) + "\n";
+	meta += "body=2\n";	// 본문을 새 방식으로 만듦 (아래 upgrade_staged)
 	int got = 0;
 	for (unsigned int i=0; i<files.size(); i++) {
 		char sname[32]; snprintf(sname, sizeof(sname), "%02d", (int)i + 1);
@@ -817,6 +818,45 @@ static bool redo_one(int num)
 	return true;
 }
 
+// 예전 방식(lynx)으로 받아 둔 글: 본문 한글이 깨졌으므로 남겨 둔 article.json 으로 본문을 다시 만든다.
+// 네이버에서 다시 받지 않는다. 그림/첨부 파일도 그대로 두고, 이름의 %EB%8B.. 만 푼다.
+static void upgrade_staged(void)
+{
+	std::vector<int> nums = staged_nums();
+	int n = 0;
+	for (unsigned int i=0; i<nums.size(); i++) {
+		staged s;
+		if ( !load_staged(nums[i], s) || s.m["body"] == "2" ) continue;
+		std::string dir = stage_dir(nums[i]);
+		picojson::value v;
+		if ( !picojson::parse(v, read_file((dir + "/article.json").c_str())).empty()
+		     || !v.is<picojson::object>() || !v.contains("result") || !v.get("result").contains("article") ) continue;
+		std::vector<remote_file> files;
+		std::string content = build_content(v.get("result"), v.get("result").get("article"), nums[i], files, false);
+		std::vector<std::string> lines = split_string(read_file((dir + "/meta.txt").c_str()), '\n');
+		std::string meta;
+		for (unsigned int k=0; k<lines.size(); k++) {
+			std::string l = lines[k];
+			if ( l.empty() ) continue;
+			size_t t = l.find('\t');
+			if ( l.compare(0, 5, "file=") == 0 && t != std::string::npos && l.find('%', t) != std::string::npos )
+				l = l.substr(0, t + 1) + one_line(u2c(url_decode(l.substr(t + 1))));
+			meta += l + "\n";
+		}
+		meta += "body=2\n";
+		FILE *fp = fopen((dir + "/body.txt").c_str(), "w");
+		if ( !fp ) continue;
+		fputs(content.c_str(), fp); fclose(fp);
+		fp = fopen((dir + "/meta.txt").c_str(), "w");
+		if ( fp ) { fputs(meta.c_str(), fp); fclose(fp); }
+		n++;
+	}
+	if ( n ) {
+		char b[128]; snprintf(b, sizeof(b), "  받아 둔 글 %d 개의 본문을 새로 만들었습니다 (깨진 한글 고침, 다시 받지 않음).", n);
+		out(b);
+	}
+}
+
 // 받은 글 목록
 static void list_staged(void)
 {
@@ -908,6 +948,7 @@ int main(int argc, char **argv)
 	srand(time(0) ^ getpid());
 
 	table = load_table();
+	upgrade_staged();
 	if ( mode == "list" ) { list_staged(); return 0; }
 	if ( mode == "show" ) { show_staged(argc > 3 ? atoi(argv[3]) : 0); return 0; }
 	if ( mode == "drop" ) {
