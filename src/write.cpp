@@ -22,9 +22,12 @@ int write_article(char *table_name)
 		while (1) {
 			// 작성 방법 선택
 			printf("\r\n\r\n작성하실 편집기나 전송 프로토콜을 선택해주세요.");
-			printf("\r\n[1]라인편집기 [2]스크린편집기(pico) [3]zmodem [0] 취소");
-			printf("\r\n선택 >> ");
+			printf("\r\n\033[=14F[1]\033[=15F줄 편집기 \033[=14F[2]\033[=15F화면 편집기(pico) \033[=14F[3]\033[=15F파일 올리기 "
+					"\033[=14F[0]\033[=15F취소");
+			printf("\r\n\033[=7F(Enter: 줄 편집기)\033[=15F >> ");
+			printf(ESC_ENG);
 			line_input(buf, 1);
+			if ( strlen(buf) == 0 ) strcpy(buf, "1");
 
 			if ( !strcasecmp(buf, "0") ) {
 				printf("\r\n취소 되었습니다.");
@@ -125,7 +128,10 @@ int write_article(char *table_name)
 				char *lines = NULL;
 				int length = 0;
 
-				if ( file_editor(&lines, &length) ) {
+				int protocol = ask_upload_protocol();
+				if ( protocol == 0 ) continue;
+
+				if ( file_editor(&lines, &length, protocol) ) {
 					if ( length > 0 ) {
 						if ( is_binary(lines, length) ) {
 							printf("\r\n텍스트 파일만 지원합니다.");

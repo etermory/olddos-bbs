@@ -21,7 +21,7 @@ static std::string safe_name(const char *s)
 }
 
 // Xmodem 은 마지막 128 바이트 덩이를 0x1A (^Z) 로 채워 보낸다: 끝의 채움 글자를 떼어 낸다 (마지막 덩이 안에서만)
-static void strip_xmodem_pad(const char *path)
+void strip_xmodem_pad(const char *path)
 {
 	FILE *f = fopen(path, "rb");
 	if ( !f )

@@ -6,14 +6,29 @@ struct file_editor_tmp_dir {
 	~file_editor_tmp_dir() { if ( !dir.empty() ) remove_tmp_dir(dir.c_str()); }
 };
 
-bool file_editor(char **lines, int *length)
+// 글을 파일로 올릴 때 프로토콜 묻기. 1:Xmodem 2:Ymodem 3:Zmodem 4:Kermit, Enter 는 Zmodem, 취소는 0
+int ask_upload_protocol(void)
+{
+	char buf[8];
+	printf(ESC_ENG);
+	printf("\r\n송신 프로토콜 (1:Xmodem 2:Ymodem 3:Zmodem 4:Kermit, Enter:Zmodem) : ");
+	line_input(buf, 1);
+	if ( strlen(buf) == 0 ) return 3;
+	int p = atoi(buf);
+	return (p >= 1 && p <= 4) ? p : 0;
+}
+
+// 텍스트 파일을 받아 글로 (protocol 은 ask_upload_protocol 의 값)
+bool file_editor(char **lines, int *length, int protocol)
 {
 	char tmpdir[9072];
 	char buf[9072];
 		
 	*length = 0;
 
-	printf("\r\n전송 프로토콜을 실행하세요.\r\n");
+	static const char *pname[] = { "", "Xmodem", "Ymodem", "Zmodem", "Kermit" };
+	if ( protocol < 1 || protocol > 4 ) protocol = 3;
+	printf("\r\n%s 로 텍스트 파일을 보내세요.\r\n", pname[protocol]);
 	
 	// ---------------------------------------------------
 	// 우선 임시 폴더를 생성하여 업로드를 한다.
@@ -34,13 +49,31 @@ bool file_editor(char **lines, int *length)
 	// 폴더 변경
 	chdir(tmpdir);
 
-	// zmodem 프로토콜 실행
+	// 프로토콜 실행 (자료실 올리기 file_upload 와 같은 방식)
+	fflush(stdout);
 	ioctl(0, TCSETAF, &sys_term);
-	int a = system("rz -e");
+	int a;
+	if ( protocol == 1 ) {
+		// 이름을 주지 않으면 lrzsz rz 는 Xmodem 이 아니라 Ymodem 묶음으로 받는다
+		a = system("rz --xmodem -e xmodem.bin");
+	} else if ( protocol == 2 ) {
+		a = system("rz --ymodem -e");
+	} else if ( protocol == 4 ) {
+		sprintf(buf, KERMIT_PROG " -i -r", getenv("HANULSO"));
+		a = system(buf);
+	} else {
+		a = system("rz --zmodem -e");
+	}
 	ioctl(0, TCSETAF, &curr_term);
 
 	// 본래의 폴더로 복귀
 	chdir(getenv("HANULSO"));
+
+	// Xmodem 은 마지막 덩이를 ^Z 로 채워 보낸다
+	if ( protocol == 1 && WEXITSTATUS(a) == 0 ) {
+		snprintf(buf, sizeof(buf), "%s/xmodem.bin", tmpdir);
+		strip_xmodem_pad(buf);
+	}
 
 	if ( WEXITSTATUS(a) != 0 ) {
 		printf("\r\n파일 전송을 실패하였습니다.\r\n");
