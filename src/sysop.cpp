@@ -1,17 +1,31 @@
 #include "main.h"
 
+// ------------------------------------------------------------------
+// 운영자 메뉴 (SYSOP)
+//   bin/sysop <tty>
+//   접속자: 지금 접속자 / 강제 종료, 전체 공지 방송, 로그인 공지
+//   회원  : 찾기 / 등급 / 비밀번호, 이용 정지, 가입 / 접속 통계, 삭제
+//   게시판: 옮기기, 지우기, 공지 고정, 꼬리말 지우기, 투표 관리
+//   서버  : 임시 파일, 주인 없는 첨부, 디스크, AI 사용량
+// ------------------------------------------------------------------
+
 struct termio sys_term;
 
-char user_id[50];
-char nick_name[50];
-char birthday[50];
-char email_address[50];
-char sex[50];
-char user_passwd[50];
-
-std::ostringstream query;
-
 char tty[10];
+
+char login_user_id[50];		// 이 접속의 운영자 아이디 (정지한 사람으로 적는다)
+
+#define S_WHITE		"\033[=15F"
+#define S_YELLOW	"\033[=14F"
+#define S_RED		"\033[=12F"
+#define S_GREEN		"\033[=10F"
+#define S_CYAN		"\033[=11F"
+#define S_GRAY		"\033[=7F"
+#define S_MAGENTA	"\033[=13F"
+
+#define MAX_PINS	3		// 게시판마다 고정할 수 있는 글
+
+typedef std::vector<std::map<std::string, std::string> > rows_t;
 
 void raw_mode(void)
 {
@@ -29,265 +43,864 @@ void raw_mode(void)
     tbuf.c_cflag &= ~CSIZE;
     tbuf.c_cflag |= CS8;
     ioctl(0, TCSETAF, &tbuf);
-
-	return;
 }
 
 /* 프로그램 종료 루틴 */
-int host_close (void)  
+int host_close (void)
 {
+	printf(S_WHITE);
+	fflush(stdout);
 	database::close();
-
     ioctl(0, TCSETAF, &sys_term);
     exit(1);
 }
 
-void prompt(char *cmd)
-{
-	printf(ESC_ENG);
-	printf("이동(번호) 상위메뉴(P) 종료(X)\r\n");
-	printf("선택 >> ");
-	line_input(cmd, 30);
-		
-	std::vector<std::string> args = split_string(std::string(cmd), ' ');
-	if ( args.size() == 0 ) return;
-
-	/* 입력이 명령 코드 */
-	if( !is_number(cmd) ) {
-		// 종료 명령
-		if ( !strcasecmp(args[0].c_str(), "x") ) {
-			host_close();
-		}
-	}
-}
-
-void modify_user_info(void)
-{
-	while (1) {
-		printf(ESC_CLEAR);
-
-		printf("***** 회원 정보 변경 *****\r\n\r\n");
-		printf("1. 레벨 변경\r\n");
-		printf("2. 비밀번호 변경\r\n");
-		printf("\r\n");
-
-		char cmd[1024];
-		prompt(cmd);
-				
-		/* 입력이 숫자 */
-		if( is_number(cmd) && (atoi(cmd) >= 1 && atoi(cmd) <= 3) ) {
-			char id [256];
-
-			printf(ESC_ENG);
-			printf("\r\n아이디 입력 : ");
-			line_input(id, 50);
-			if ( strlen(id) <= 0 ) continue;
-
-			std::map<std::string, std::string> user;
-			if ( database::exist_user_id(id) == false ) {
-				printf("\r\n등록된 아이디가 없습니다.");
-				printf("\r\n[Enter] 를 누르세요.");
-				press_enter();
-
-			} else {
-				bool exist;
-				user = database::user_info(id, &exist);
-
-				if ( !strcmp(cmd, "1") ) {
-					int user_level = atoi(user["LEVEL"].c_str());
-
-					printf("\r\n'%s(%s)' 님의 등급은 '%s' 입니다.", 
-						user["NICK_NAME"].c_str(), id,
-						get_level_name(user_level).c_str());
-					printf("\r\n새로운 등급을 선택하세요.");
-					printf("\r\n");
-					for(unsigned int i=0; i<level_nums.size(); i++) {
-						printf("[%d]%s ", level_nums[i], level_names[i].c_str());
-					}
-
-					printf("\r\n선택 : ");
-					
-					char new_level[20];
-					line_input(new_level, 2);
-
-					if ( is_number(new_level) ) {
-						if ( check_exist_level(atoi(new_level)) ) {
-							if ( database::set_user_level(id, atoi(new_level)) ) {
-								printf("\r\n정상적으로 변경 되었습니다.");
-								printf("\r\n[Enter] 를 누르세요.");
-								press_enter();
-							}
-						} else {
-							printf("\r\n등급이 존재하지 않습니다.");
-							printf("\r\n[Enter] 를 누르세요.");
-							press_enter();
-						}
-					}
-				} else if ( !strcmp(cmd, "2") ) {
-					printf(ESC_HAN);
-					printf("\r\n비밀번호 입력 : ");
-					char password [256];
-					line_input(password, 50);
-
-					if ( strlen(password) > 0 ) {
-						if ( database::set_user_password(id, password) ) {
-							printf("\r\n정상적으로 변경 되었습니다.");
-							printf("\r\n[Enter] 를 누르세요.");
-							press_enter();
-						}
-					}
-
-				}
-			}
-		} else {
-			if ( !strcmp(cmd, "p") ) { 
-				return;
-			}
-		}
-	}
-}
-
-void find_user(void)
-{
-	while (1) {
-		printf(ESC_CLEAR);
-
-		printf("***** 회원 검색 *****\r\n\r\n");
-		printf("1. 아이디로 닉네임 검색\r\n");
-		printf("2. 닉네임으로 아이디 검색\r\n");
-		printf("\r\n");
-
-		char cmd[1024];
-		prompt(cmd);
-				
-		/* 입력이 숫자 */
-		if ( is_number(cmd) && atoi(cmd) == 1 ) {
-			char id [256];
-
-			printf(ESC_ENG);
-			printf("\r\n아이디 입력 : ");
-			line_input(id, 50);
-			if ( strlen(id) <= 0 ) continue;
-
-			std::map<std::string, std::string> user;
-			if ( database::exist_user_id(id) == false ) {
-				printf("\r\n등록된 아이디가 없습니다.");
-				printf("\r\n[Enter] 를 누르세요.");
-				press_enter();
-
-			} else {
-				bool exist;
-				user = database::user_info(id, &exist);
-
-				printf("\r\n닉네임은 '%s' 입니다.", user["NICK_NAME"].c_str());
-
-				printf("\r\n[Enter] 를 누르세요.");
-				press_enter();
-
-			}
-
-		} else if ( is_number(cmd) && atoi(cmd) == 2 ) {
-			char nick_name [256];
-
-			printf(ESC_HAN);
-			printf("\r\n닉네임 입력 : ");
-			line_input(nick_name, 50);
-			if ( strlen(nick_name) <= 0 ) continue;
-
-			std::map<std::string, std::string> user;
-			bool exist;
-			user = database::user_info_by_nick_name(nick_name, &exist);
-
-			printf("\r\n아이디는 '%s' 입니다.", user["USER_ID"].c_str());
-
-			printf("\r\n[Enter] 를 누르세요.");
-			press_enter();
-
-		} else {
-			if ( !strcmp(cmd, "p") ) { 
-				return;
-			}
-		}
-	}
-}
-
-void delete_user(void)
+static void print_header(const char *head_title)
 {
 	printf(ESC_CLEAR);
-
-	printf("***** 회원 정리 *****\r\n\r\n");
-	printf("삭제된 회원은 복구가 불가능합니다.\r\n신중하게 입력해주세요.\r\n");
-
-	printf(ESC_ENG);
-	printf("\r\n아이디 입력 : ");
-	
-	char id [256];
-	line_input(id, 50);
-	if ( strlen(id) <= 0 ) return;
-
-	std::map<std::string, std::string> user;
-	if ( database::exist_user_id(id) == false ) {
-		printf("\r\n등록된 아이디가 없습니다.");
-		printf("\r\n[Enter] 를 누르세요.");
-		press_enter();
-
-	} else {
-		if ( database::delete_user(id) == true ) {
-			printf("\r\n정상적으로 삭제 되었습니다.");
-			printf("\r\n[Enter] 를 누르세요.");
-			press_enter();
-		}
-	}
+    printf("\033[1;1H");
+	printf("\033[=9F\033[=1G%s\033[=15F\033[=1G", repeat("─", 40).c_str());
+    printf("\033[1;1H");
+	printf("\033[1A\033[7m%s\033[0m", host_name);
+	int center = (80 - strlen(strip_ansi_codes(head_title))) / 2;
+	if ( center < 0 ) center = 0;
+    printf("\033[2;1H");
+	printf("\r\033[%dC%s", center, head_title);
+    printf("\033[3;1H");
+	printf("\033[=0F\033[=1G%s\033[=15F\033[=1G", repeat("━", 40).c_str());
+    printf("\033[4;1H");
 }
 
-void delete_article(void)
+static void wait_enter(void)
 {
-	printf(ESC_CLEAR);
-
-	printf("***** 게시물 정리 *****\r\n\r\n");
-	printf("삭제된 게시물은 복구가 불가능합니다.\r\n신중하게 입력해주세요.\r\n");
-
-	printf("\r\n현재 구현되지 않았습니다.");
-	printf("\r\n[Enter] 를 누르세요.");
+	printf("\r\n " S_GRAY "[Enter] 를 누르세요." S_WHITE);
 	press_enter();
 }
 
-void main_menu(void)
+static void msg(const char *color, const std::string &m)
 {
-	while (1) {
-		printf(ESC_CLEAR);
+	printf("\r\n  %s%s" S_WHITE, color, m.c_str());
+}
 
-		printf("***** 운영자 메뉴 *****\r\n\r\n");
-		printf("1. 회원 검색\r\n");
-		printf("2. 회원 정보 변경\r\n");
-		printf("3. 회원 삭제\r\n");
-		printf("4. 게시물 삭제\r\n");
+// 한 줄 묻기. 한글이면 han
+static std::string ask(const char *q, int len, bool han = false)
+{
+	char buf[256];
+	if ( len > 200 ) len = 200;
+	printf(han ? ESC_HAN : ESC_ENG);
+	printf("\r\n  %s", q);
+	line_input(buf, len);
+	printf(ESC_ENG);
+	return trim(buf);
+}
+
+static bool confirm(const std::string &q)
+{
+	printf(ESC_ENG);
+	printf("\r\n  " S_YELLOW "%s" S_WHITE " (y/N) ", q.c_str());
+	return yesno(NO) == YES;
+}
+
+static int query_int(const std::string &q)
+{
+	bool ok;
+	return atoi(database::fetch((char*)q.c_str(), &ok).c_str());
+}
+
+static rows_t rows_of(const std::string &q)
+{
+	return database::fetch_rows((char*)q.c_str());
+}
+
+static std::string esc(const std::string &s)
+{
+	return database::escape(s.c_str());
+}
+
+static std::string nick_of(const std::string &id)
+{
+	bool exist;
+	std::map<std::string, std::string> u = database::user_info((char*)id.c_str(), &exist);
+	std::string n = exist ? display_text(u["NICK_NAME"]) : "";
+	return n.empty() ? id : n;
+}
+
+static bool is_sysop(const std::string &id)
+{
+	return std::find(sysop_users.begin(), sysop_users.end(), id) != sysop_users.end();
+}
+
+static std::string hanulso(void)
+{
+	return getenv("HANULSO") ? getenv("HANULSO") : ".";
+}
+
+static void create_tables(void)
+{
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS member_suspend ( "
+			"USER_ID VARCHAR(50) NOT NULL PRIMARY KEY, "
+			"UNTIL DATETIME NULL, "				/* NULL 이면 영구 */
+			"REASON VARCHAR(255) NOT NULL, "
+			"BY_ID VARCHAR(50) NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS login_log ( "
+			"NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+			"USER_ID VARCHAR(50) NOT NULL, "
+			"NODE VARCHAR(16) NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL, "
+			"KEY IDX_DATE (DATE_TIME) )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS board_pin ( "
+			"BOARD VARCHAR(64) NOT NULL, "
+			"NO INT NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL, "
+			"PRIMARY KEY (BOARD, NO) )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS stat_online ( "
+			"DAY DATE NOT NULL PRIMARY KEY, "
+			"MAX_ONLINE INT NOT NULL, "
+			"MAX_TIME DATETIME NOT NULL )");
+}
+
+// ------------------------------------------------------------------
+// 접속자
+// ------------------------------------------------------------------
+struct online_user {
+	std::string id, node, path;
+	int pid;
+	long ms;		// 접속한 지
+};
+
+static std::vector<online_user> online_users(void)
+{
+	std::vector<online_user> r;
+	std::vector<std::string> files = find_files_time_sorted((char*)(hanulso() + "/tmp/*.tty").c_str());
+	for ( unsigned int i = 0; i < files.size(); i++ ) {
+		online_user u;
+		if ( !read_tty_file(files[i], u.id) ) continue;
+		char sid[256] = "";
+		u.pid = 0;
+		sscanf(trim(read_file(files[i].c_str())).c_str(), "%255s %d", sid, &u.pid);
+		u.node = split_string(split_file_name(files[i]), '.')[0];
+		u.path = files[i];
+		u.ms = ms_time_now() - file_ms_mtime(files[i]);
+		r.push_back(u);
+	}
+	return r;
+}
+
+// 접속을 끊는다: 알림을 띄우고 그 접속의 프로세스 묶음에 SIGHUP
+static void disconnect(const online_user &u, const std::string &why)
+{
+	notify_online(u.id, why, true);
+	fflush(stdout);
+	sleep(1);
+	pid_t pg = getpgid(u.pid);
+	if ( pg > 1 && pg != getpgrp() ) killpg(pg, SIGHUP);
+	else kill(u.pid, SIGHUP);
+}
+
+static void disconnect_user(const std::string &id, const std::string &why)
+{
+	std::vector<online_user> us = online_users();
+	for ( unsigned int i = 0; i < us.size(); i++ ) {
+		if ( us[i].id == id && us[i].node != tty ) disconnect(us[i], why);
+	}
+}
+
+static void show_online(void)
+{
+	while ( 1 ) {
+		std::vector<online_user> us = online_users();
+		print_header(S_CYAN "운영자 - 지금 접속자" S_WHITE);
+		printf("\r\n  " S_GRAY "%3s  %-24s %-10s %s" S_WHITE "\r\n", "", "이름 (아이디)", "노드", "접속한 지");
+		for ( unsigned int i = 0; i < us.size() && i < 15; i++ ) {
+			std::string name = string_truncate(nick_of(us[i].id), 12, "") + " (" + us[i].id + ")";
+			bool me = us[i].node == tty;
+			printf("  %s%3d  %-24s pts/%-6s %s%s" S_WHITE "\r\n", me ? S_YELLOW : S_WHITE, i + 1,
+					string_truncate(name, 24, "").c_str(), us[i].node.c_str(),
+					ms_time_to_string(us[i].ms).substr(0, 8).c_str(), me ? "  (나)" : "");
+		}
+		if ( us.size() > 15 ) printf("  " S_GRAY "... 그 밖에 %d 명" S_WHITE "\r\n", (int)us.size() - 15);
+		printf("\r\n  " S_GRAY "모두 %d 명" S_WHITE, (int)us.size());
+
+		std::string c = ask("강제로 끊을 번호 (Enter: 돌아가기, R: 새로 보기) >> ", 3);
+		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "r") ) continue;
+		int k = atoi(c.c_str());
+		if ( k < 1 || k > (int)us.size() ) continue;
+		online_user &u = us[k - 1];
+		if ( u.node == tty ) { msg(S_RED, "자기 접속은 끊을 수 없습니다."); wait_enter(); continue; }
+		if ( !confirm(nick_of(u.id) + " (" + u.id + ") 님의 접속을 끊을까요?") ) continue;
+		disconnect(u, "◆ 운영자가 접속을 끊습니다.");
+		msg(S_GREEN, "접속을 끊었습니다.");
+		wait_enter();
+	}
+}
+
+static void broadcast(void)
+{
+	print_header(S_CYAN "운영자 - 전체 공지 방송" S_WHITE);
+	printf("\r\n  지금 접속한 모든 회원의 화면에 한 줄 알림을 띄웁니다.\r\n");
+	printf("  " S_GRAY "예) 10 분 뒤 서버 점검으로 잠시 접속이 끊깁니다." S_WHITE "\r\n");
+	std::string m = display_text(ask("알림 (Enter: 취소) >> ", 60, true));
+	if ( m.empty() ) return;
+	if ( !confirm("모두에게 보낼까요?") ) return;
+	std::vector<online_user> us = online_users();
+	std::set<std::string> done;
+	int n = 0;
+	for ( unsigned int i = 0; i < us.size(); i++ ) {
+		if ( done.count(us[i].id) ) continue;
+		done.insert(us[i].id);
+		n += notify_online(us[i].id, "◆ 운영자 공지: " + m, true) > 0 ? 1 : 0;
+	}
+	msg(S_GREEN, TO_STRING(n) + " 명에게 보냈습니다.");
+	wait_enter();
+}
+
+static std::string notice_path(void)
+{
+	return hanulso() + "/txt/login_notice.txt";
+}
+
+static void login_notice(void)
+{
+	while ( 1 ) {
+		std::vector<std::string> lines = split_string(read_file(notice_path().c_str()), '\n');
+		while ( !lines.empty() && trim(lines.back()).empty() ) lines.pop_back();
+		for ( unsigned int i = 0; i < lines.size(); i++ ) {
+			if ( !lines[i].empty() && lines[i][lines[i].size() - 1] == '\r' ) lines[i].erase(lines[i].size() - 1);
+		}
+
+		print_header(S_CYAN "운영자 - 로그인 공지" S_WHITE);
+		printf("\r\n  로그인할 때 회원 정보 아래에 보이는 공지입니다. (앞의 5 줄까지)\r\n\r\n");
+		if ( lines.empty() ) printf("  " S_GRAY "(지금은 공지가 없습니다)" S_WHITE "\r\n");
+		for ( unsigned int i = 0; i < lines.size() && i < 8; i++ ) {
+			printf("  " S_YELLOW "%s" S_WHITE "\r\n", string_truncate(lines[i], 74, "").c_str());
+		}
+		std::string c = ask("E: 고치기  D: 지우기  Enter: 돌아가기 >> ", 2);
+		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "d") ) {
+			if ( confirm("로그인 공지를 지울까요?") ) unlink(notice_path().c_str());
+		} else if ( !strcasecmp(c.c_str(), "e") ) {
+			printf("\r\n");
+			line_editor_layout(2, 72);
+			if ( line_editor(lines, !lines.empty()) ) {
+				FILE *fp = fopen(notice_path().c_str(), "w");
+				if ( fp != NULL ) {
+					for ( unsigned int i = 0; i < lines.size(); i++ ) fprintf(fp, "%s\n", lines[i].c_str());
+					fclose(fp);
+					chmod(notice_path().c_str(), 0644);
+				}
+			}
+		}
+	}
+}
+
+// ------------------------------------------------------------------
+// 회원
+// ------------------------------------------------------------------
+
+// 정지 중이면 정지 줄 (아니면 빈 map)
+static std::map<std::string, std::string> suspension_of(const std::string &id)
+{
+	rows_t r = rows_of("SELECT *, IFNULL(UNTIL, '영구') AS UNTIL_S FROM member_suspend WHERE USER_ID='" + esc(id) +
+			"' AND (UNTIL IS NULL OR UNTIL > NOW())");
+	return r.empty() ? std::map<std::string, std::string>() : r[0];
+}
+
+// 아이디나 닉네임으로 찾는다
+static std::string find_member(const std::string &key)
+{
+	if ( key.empty() ) return "";
+	if ( database::exist_user_id((char*)key.c_str()) ) return key;
+	bool exist;
+	std::map<std::string, std::string> u = database::user_info_by_nick_name((char*)key.c_str(), &exist);
+	return exist ? u["USER_ID"] : "";
+}
+
+static void suspend_member(const std::string &id)
+{
+	if ( is_sysop(id) ) { msg(S_RED, "운영자는 정지할 수 없습니다."); return; }
+	std::string d = ask("정지 기간 (일 수, 0: 영구, Enter: 취소) >> ", 4);
+	if ( d.empty() || !is_number((char*)d.c_str()) ) return;
+	std::string reason = display_text(ask("사유 >> ", 60, true));
+	if ( reason.empty() ) reason = "운영 원칙 위반";
+	int days = atoi(d.c_str());
+	if ( !confirm(nick_of(id) + " (" + id + ") 님을 " + (days ? TO_STRING(days) + " 일" : std::string("영구")) + " 정지할까요?") ) return;
+	std::string until = days ? "NOW() + INTERVAL " + TO_STRING(days) + " DAY" : "NULL";
+	std::string q = "REPLACE INTO member_suspend (USER_ID, UNTIL, REASON, BY_ID, DATE_TIME) VALUES ('" + esc(id) + "', " +
+		until + ", '" + esc(reason) + "', '" + esc(login_user_id) + "', NOW())";
+	mysql_query(mysql, q.c_str());
+	disconnect_user(id, "◆ 운영자가 이용을 정지했습니다: " + reason);
+	msg(S_GREEN, "정지했습니다. 접속해 있었다면 끊었습니다.");
+}
+
+static void member_card(const std::string &id)
+{
+	while ( 1 ) {
+		bool exist;
+		std::map<std::string, std::string> u = database::user_info((char*)id.c_str(), &exist);
+		if ( !exist ) return;
+		std::map<std::string, std::string> s = suspension_of(id);
+		int articles = 0;
+
+		print_header(S_CYAN "운영자 - 회원 정보" S_WHITE);
+		printf("\r\n");
+		printf("  %-10s: %s\r\n", "아이디", id.c_str());
+		printf("  %-10s: %s\r\n", "닉네임", display_text(u["NICK_NAME"]).c_str());
+		printf("  %-10s: %s%s\r\n", "등급", is_sysop(id) ? "운영자 / " : "", get_level_name(atoi(u["LEVEL"].c_str())).c_str());
+		printf("  %-10s: %s\r\n", "가입일", u["REGISTRATION_DATETIME"].c_str());
+		printf("  %-10s: %s\r\n", "최근 접속", u["LASTLOGIN_DATETIME"].c_str());
+		printf("  %-10s: %s\r\n", "생일", u["BIRTHDAY"].c_str());
+		printf("  %-10s: %s\r\n", "이메일", display_text(u["EMAIL"]).c_str());
+		printf("  %-10s: %d 번\r\n", "로그인", query_int("SELECT COUNT(*) FROM login_log WHERE USER_ID='" + esc(id) + "'"));
+		printf("  %-10s: %d 개\r\n", "꼬리말", query_int("SELECT COUNT(*) FROM comments WHERE USER_ID='" + esc(id) + "'"));
+		(void)articles;
+		if ( !s.empty() ) {
+			printf("  %-10s: " S_RED "정지 중 (%s 까지) %s" S_WHITE "\r\n", "상태", s["UNTIL_S"].c_str(), display_text(s["REASON"]).c_str());
+		} else {
+			printf("  %-10s: " S_GREEN "정상" S_WHITE "\r\n", "상태");
+		}
+
+		std::string c = ask("L: 등급  W: 비밀번호  S: 정지  U: 정지 풀기  Enter: 돌아가기 >> ", 2);
+		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "l") ) {
+			printf("\r\n  ");
+			for ( unsigned int i = 0; i < level_nums.size(); i++ ) printf("[%d]%s ", level_nums[i], level_names[i].c_str());
+			std::string lv = ask("새 등급 >> ", 2);
+			if ( is_number((char*)lv.c_str()) && check_exist_level(atoi(lv.c_str())) ) {
+				database::set_user_level((char*)id.c_str(), atoi(lv.c_str()));
+				msg(S_GREEN, "바꿨습니다.");
+				wait_enter();
+			}
+		} else if ( !strcasecmp(c.c_str(), "w") ) {
+			std::string pw = ask("새 비밀번호 (Enter: 취소) >> ", 20);
+			if ( !pw.empty() && confirm("비밀번호를 바꿀까요?") ) {
+				database::set_user_password((char*)id.c_str(), (char*)pw.c_str());
+				msg(S_GREEN, "바꿨습니다.");
+				wait_enter();
+			}
+		} else if ( !strcasecmp(c.c_str(), "s") ) {
+			suspend_member(id);
+			wait_enter();
+		} else if ( !strcasecmp(c.c_str(), "u") ) {
+			if ( !s.empty() && confirm("정지를 풀까요?") ) {
+				mysql_query(mysql, ("DELETE FROM member_suspend WHERE USER_ID='" + esc(id) + "'").c_str());
+				msg(S_GREEN, "정지를 풀었습니다.");
+				wait_enter();
+			}
+		}
+	}
+}
+
+static void members(void)
+{
+	print_header(S_CYAN "운영자 - 회원 찾기" S_WHITE);
+	printf("\r\n  아이디나 닉네임으로 찾습니다. 닉네임 일부를 넣으면 비슷한 회원을 보여 줍니다.\r\n");
+	std::string key = ask("아이디 / 닉네임 (Enter: 돌아가기) >> ", 30, true);
+	if ( key.empty() ) return;
+	std::string id = find_member(key);
+	if ( !id.empty() ) { member_card(id); return; }
+
+	rows_t r = rows_of("SELECT USER_ID, NICK_NAME FROM member WHERE USER_ID LIKE '%" + esc(key) + "%' OR NICK_NAME LIKE '%" +
+			esc(key) + "%' ORDER BY USER_ID LIMIT 15");
+	if ( r.empty() ) { msg(S_RED, "찾는 회원이 없습니다."); wait_enter(); return; }
+	printf("\r\n");
+	for ( unsigned int i = 0; i < r.size(); i++ ) {
+		printf("  %3d. %-20s %s\r\n", i + 1, r[i]["USER_ID"].c_str(), display_text(r[i]["NICK_NAME"]).c_str());
+	}
+	std::string c = ask("번호 (Enter: 돌아가기) >> ", 3);
+	int k = atoi(c.c_str());
+	if ( k >= 1 && k <= (int)r.size() ) member_card(r[k - 1]["USER_ID"]);
+}
+
+static void suspensions(void)
+{
+	while ( 1 ) {
+		print_header(S_CYAN "운영자 - 이용 정지" S_WHITE);
+		rows_t r = rows_of("SELECT *, IFNULL(DATE_FORMAT(UNTIL, '%Y-%m-%d %H:%i'), '영구') AS UNTIL_S FROM member_suspend "
+				"WHERE UNTIL IS NULL OR UNTIL > NOW() ORDER BY DATE_TIME DESC LIMIT 14");
+		printf("\r\n  " S_GRAY "%3s  %-20s %-17s %s" S_WHITE "\r\n", "", "아이디", "언제까지", "사유");
+		if ( r.empty() ) printf("  " S_GRAY "     정지된 회원이 없습니다." S_WHITE "\r\n");
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			printf("  %3d  %-20s %-17s %s\r\n", i + 1, r[i]["USER_ID"].c_str(), r[i]["UNTIL_S"].c_str(),
+					string_truncate(display_text(r[i]["REASON"]), 30, "").c_str());
+		}
+		std::string c = ask("A: 정지하기  번호: 정지 풀기  Enter: 돌아가기 >> ", 3);
+		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "a") ) {
+			std::string id = find_member(ask("아이디 / 닉네임 >> ", 30, true));
+			if ( id.empty() ) { msg(S_RED, "찾는 회원이 없습니다."); wait_enter(); continue; }
+			suspend_member(id);
+			wait_enter();
+		} else {
+			int k = atoi(c.c_str());
+			if ( k >= 1 && k <= (int)r.size() && confirm(r[k - 1]["USER_ID"] + " 님의 정지를 풀까요?") ) {
+				mysql_query(mysql, ("DELETE FROM member_suspend WHERE USER_ID='" + esc(r[k - 1]["USER_ID"]) + "'").c_str());
+			}
+		}
+	}
+}
+
+static void member_stats(void)
+{
+	print_header(S_CYAN "운영자 - 가입 / 접속 통계" S_WHITE);
+	printf("  " S_GRAY "%-12s %8s %8s %8s %8s" S_WHITE "\r\n", "날짜", "로그인", "회원 수", "최고동시", "새 회원");
+	for ( int d = 0; d < 14; d++ ) {
+		std::string day = "CURDATE() - INTERVAL " + TO_STRING(d) + " DAY";
+		rows_t r = rows_of("SELECT DATE_FORMAT(" + day + ", '%m-%d (%a)') AS D, "
+				"(SELECT COUNT(*) FROM login_log WHERE DATE(DATE_TIME) = " + day + ") AS L, "
+				"(SELECT COUNT(DISTINCT USER_ID) FROM login_log WHERE DATE(DATE_TIME) = " + day + ") AS U, "
+				"(SELECT IFNULL(MAX(MAX_ONLINE), 0) FROM stat_online WHERE DAY = " + day + ") AS M, "
+				"(SELECT COUNT(*) FROM member WHERE DATE(REGISTRATION_DATETIME) = " + day + ") AS N");
+		if ( r.empty() ) continue;
+		printf("  %s%-12s %8s %8s %8s %8s" S_WHITE "\r\n", d == 0 ? S_YELLOW : S_WHITE, r[0]["D"].c_str(),
+				r[0]["L"].c_str(), r[0]["U"].c_str(), r[0]["M"].c_str(), r[0]["N"].c_str());
+	}
+	int total = query_int("SELECT COUNT(*) FROM member");
+	int idle = query_int("SELECT COUNT(*) FROM member WHERE LASTLOGIN_DATETIME < NOW() - INTERVAL 1 YEAR");
+	printf("\r\n  전체 회원 " S_CYAN "%d" S_WHITE " 명,  1 년 넘게 접속하지 않은 회원 " S_CYAN "%d" S_WHITE " 명\r\n", total, idle);
+	printf("  " S_GRAY "로그인 기록은 이 기능을 넣은 뒤부터 쌓입니다." S_WHITE);
+	printf(ESC_ENG);
+	printf("\r\n  N: 새 회원 목록  I: 오래 쉰 회원  Enter: 돌아가기 >> ");
+	char c[4];
+	line_input(c, 1);
+	if ( c[0] == 'n' || c[0] == 'N' || c[0] == 'i' || c[0] == 'I' ) {
+		bool news = c[0] == 'n' || c[0] == 'N';
+		print_header(news ? S_CYAN "운영자 - 새 회원" S_WHITE : S_CYAN "운영자 - 오래 쉰 회원" S_WHITE);
+		rows_t r = rows_of(news ? "SELECT * FROM member ORDER BY REGISTRATION_DATETIME DESC LIMIT 16"
+				: "SELECT * FROM member ORDER BY LASTLOGIN_DATETIME ASC LIMIT 16");
+		printf("  " S_GRAY "%-20s %-16s %-19s %s" S_WHITE "\r\n", "아이디", "닉네임", "가입", "최근 접속");
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			printf("  %-20s %-16s %-19s %s\r\n", string_truncate(r[i]["USER_ID"], 20, "").c_str(),
+					string_truncate(display_text(r[i]["NICK_NAME"]), 16, "").c_str(),
+					r[i]["REGISTRATION_DATETIME"].substr(0, 16).c_str(), r[i]["LASTLOGIN_DATETIME"].substr(0, 16).c_str());
+		}
+		wait_enter();
+	}
+}
+
+static void delete_member(void)
+{
+	print_header(S_CYAN "운영자 - 회원 삭제" S_WHITE);
+	printf("\r\n  " S_RED "지운 회원은 되살릴 수 없습니다." S_WHITE " 잠시 막으려면 이용 정지를 쓰세요.\r\n");
+	std::string id = find_member(ask("아이디 / 닉네임 (Enter: 돌아가기) >> ", 30, true));
+	if ( id.empty() ) return;
+	if ( is_sysop(id) ) { msg(S_RED, "운영자는 지울 수 없습니다."); wait_enter(); return; }
+	if ( !confirm(nick_of(id) + " (" + id + ") 님을 정말 지울까요?") ) return;
+	disconnect_user(id, "◆ 운영자가 접속을 끊습니다.");
+	if ( database::delete_user((char*)id.c_str()) ) msg(S_GREEN, "지웠습니다.");
+	wait_enter();
+}
+
+// ------------------------------------------------------------------
+// 게시판
+// ------------------------------------------------------------------
+struct board_info { std::string id, go, name; };
+
+static void collect_boards(pugi::xml_node node, std::vector<board_info> &list)
+{
+	for ( pugi::xml_node n = node.first_child(); n; n = n.next_sibling() ) {
+		if ( !strcasecmp(n.attribute("type").value(), "board") ) {
+			board_info b;
+			b.id = n.attribute("id").value();
+			b.go = n.attribute("go").value();
+			b.name = trim(n.child("name").child_value());
+			if ( !b.id.empty() ) list.push_back(b);
+		}
+		collect_boards(n, list);
+	}
+}
+
+static std::vector<board_info> all_boards(void)
+{
+	static std::vector<board_info> list;
+	if ( list.empty() ) {
+		pugi::xml_document doc;
+		if ( doc.load_file((hanulso() + "/hanulso.mnu").c_str()) ) collect_boards(doc.first_child(), list);
+	}
+	return list;
+}
+
+// 게시판 고르기: 아이디 (bbs_...), GO 이름, ? 로 목록에서 번호
+static bool choose_board(const char *what, board_info &out)
+{
+	std::vector<board_info> list = all_boards();
+	while ( 1 ) {
+		std::string c = ask((std::string(what) + " (GO 이름 / 아이디, ?: 목록, Enter: 취소) >> ").c_str(), 30);
+		if ( c.empty() ) return false;
+		if ( c == "?" ) {
+			for ( unsigned int i = 0; i < list.size(); i += 32 ) {
+				print_header(S_CYAN "운영자 - 게시판 목록" S_WHITE);
+				for ( unsigned int k = i; k < list.size() && k < i + 32; k += 2 ) {
+					for ( unsigned int j = k; j < k + 2 && j < list.size() && j < i + 32; j++ ) {
+						// 한 칸 38 자: 번호. 이름 (회색 GO 이름)
+						std::string go = string_truncate(list[j].go, 10, "");
+						std::string num = TO_STRING(j + 1) + ". ";
+						int room = 36 - num.size() - (go.empty() ? 0 : go.size() + 1);
+						std::string s = num + string_truncate(display_text(list[j].name), room, "");
+						int pad = 36 - (int)s.size() - (go.empty() ? 0 : (int)go.size() + 1);
+						printf("  %s%s" S_GRAY "%s" S_WHITE "%s", s.c_str(), go.empty() ? "" : " ", go.c_str(),
+								std::string(pad > 0 ? pad : 0, ' ').c_str());
+					}
+					printf("\r\n");
+				}
+				if ( i + 32 < list.size() ) {
+					printf(ESC_ENG);
+					printf("  " S_GRAY "번호를 넣거나 Enter (다음 쪽) >> " S_WHITE);
+					char b[8];
+					line_input(b, 3);
+					if ( strlen(b) ) { c = b; break; }
+				} else {
+					c = ask("번호 (Enter: 취소) >> ", 3);
+				}
+			}
+			if ( c.empty() || c == "?" ) continue;		// 목록만 보고 다시 묻기
+			int k = atoi(c.c_str());
+			if ( k >= 1 && k <= (int)list.size() ) { out = list[k - 1]; return true; }
+			continue;
+		}
+		for ( unsigned int i = 0; i < list.size(); i++ ) {
+			if ( !strcasecmp(list[i].id.c_str(), c.c_str()) || !strcasecmp(list[i].go.c_str(), c.c_str()) ) {
+				out = list[i];
+				return true;
+			}
+		}
+		msg(S_RED, "그런 게시판이 없습니다. ? 로 목록을 보세요.");
+	}
+}
+
+static std::map<std::string, std::string> article(const board_info &b, int no)
+{
+	rows_t r = rows_of("SELECT NO, FAMILY, STEP, USER_ID, DATE_TIME, TITLE FROM " + b.id + " WHERE NO=" + TO_STRING(no));
+	return r.empty() ? std::map<std::string, std::string>() : r[0];
+}
+
+static void print_article_line(const std::map<std::string, std::string> &a0)
+{
+	std::map<std::string, std::string> a = a0;
+	printf("  %5s  %-12s %s  %s\r\n", a["NO"].c_str(), string_truncate(nick_of(a["USER_ID"]), 12, "").c_str(),
+			a["DATE_TIME"].substr(2, 8).c_str(), string_truncate(display_text(a["TITLE"]), 44, "").c_str());
+}
+
+// 글 하나와 그 꼬리말, 첨부 (파일까지), 고정을 지운다
+static void remove_article(const board_info &b, int no)
+{
+	std::string n = TO_STRING(no);
+	rows_t at = rows_of("SELECT FILENAME FROM attachment WHERE FAMILY_TABLE='" + esc(b.id) + "' AND FAMILY_ID=" + n);
+	for ( unsigned int i = 0; i < at.size(); i++ ) {
+		std::string f = at[i]["FILENAME"];
+		if ( !f.empty() && f.find('/') == std::string::npos ) unlink((hanulso() + "/file/" + f).c_str());
+	}
+	mysql_query(mysql, ("DELETE FROM attachment WHERE FAMILY_TABLE='" + esc(b.id) + "' AND FAMILY_ID=" + n).c_str());
+	mysql_query(mysql, ("DELETE FROM comments WHERE BOARD='" + esc(b.id) + "' AND ARTICLE=" + n).c_str());
+	mysql_query(mysql, ("DELETE FROM board_pin WHERE BOARD='" + esc(b.id) + "' AND NO=" + n).c_str());
+	mysql_query(mysql, ("DELETE FROM " + b.id + " WHERE NO=" + n).c_str());
+}
+
+static void move_articles(void)
+{
+	print_header(S_CYAN "운영자 - 게시물 옮기기" S_WHITE);
+	printf("\r\n  글을 다른 게시판으로 옮깁니다. 꼬리말과 첨부도 함께 옮깁니다.\r\n");
+	printf("  " S_GRAY "첫 글을 옮기면 그 글에 달린 답글도 함께 옮깁니다." S_WHITE "\r\n");
+	board_info from, to;
+	if ( !choose_board("어느 게시판에서", from) ) return;
+	int no = atoi(ask("글 번호 >> ", 8).c_str());
+	std::map<std::string, std::string> a = article(from, no);
+	if ( a.empty() ) { msg(S_RED, "그런 글이 없습니다."); wait_enter(); return; }
+	printf("\r\n");
+	print_article_line(a);
+	if ( !choose_board("어느 게시판으로", to) ) return;
+	if ( to.id == from.id ) { msg(S_RED, "같은 게시판입니다."); wait_enter(); return; }
+	if ( !database::create_board((char*)to.id.c_str()) ) return;
+
+	// 옮길 글들: 첫 글이면 같은 묶음 전체, 답글이면 그 글만 (첫 글이 되어)
+	bool root = atoi(a["STEP"].c_str()) == 0;
+	rows_t list = root ? rows_of("SELECT NO FROM " + from.id + " WHERE FAMILY=" + a["FAMILY"] + " ORDER BY ORDERBY")
+		: rows_of("SELECT NO FROM " + from.id + " WHERE NO=" + TO_STRING(no));
+	if ( !confirm(TO_STRING(list.size()) + " 개의 글을 '" + display_text(to.name) + "' 로 옮길까요?") ) return;
+
+	int new_family = 0;
+	for ( unsigned int i = 0; i < list.size(); i++ ) {
+		std::string o = list[i]["NO"];
+		std::string q = "INSERT INTO " + to.id + " (FAMILY, ORDERBY, STEP, USER_ID, DATE_TIME, HIT, RECOMMEND, TITLE, CONTENT) "
+			"SELECT 0, " + std::string(root ? "ORDERBY, STEP" : "0, 0") + ", USER_ID, DATE_TIME, HIT, RECOMMEND, TITLE, CONTENT FROM " +
+			from.id + " WHERE NO=" + o;
+		if ( mysql_query(mysql, q.c_str()) != 0 ) { msg(S_RED, "옮기지 못했습니다."); wait_enter(); return; }
+		int nn = (int)mysql_insert_id(mysql);
+		if ( i == 0 ) new_family = nn;
+		std::string n = TO_STRING(nn);
+		mysql_query(mysql, ("UPDATE " + to.id + " SET FAMILY=" + TO_STRING(new_family) + " WHERE NO=" + n).c_str());
+		mysql_query(mysql, ("UPDATE comments SET BOARD='" + esc(to.id) + "', ARTICLE=" + n + " WHERE BOARD='" + esc(from.id) +
+					"' AND ARTICLE=" + o).c_str());
+		mysql_query(mysql, ("UPDATE attachment SET FAMILY_TABLE='" + esc(to.id) + "', FAMILY_ID=" + n + " WHERE FAMILY_TABLE='" +
+					esc(from.id) + "' AND FAMILY_ID=" + o).c_str());
+		mysql_query(mysql, ("DELETE FROM board_pin WHERE BOARD='" + esc(from.id) + "' AND NO=" + o).c_str());
+		mysql_query(mysql, ("DELETE FROM " + from.id + " WHERE NO=" + o).c_str());
+	}
+	msg(S_GREEN, "옮겼습니다. 새 번호는 " + TO_STRING(new_family) + " 번입니다.");
+	wait_enter();
+}
+
+static void delete_articles(void)
+{
+	print_header(S_CYAN "운영자 - 게시물 지우기" S_WHITE);
+	printf("\r\n  " S_RED "지운 글은 되살릴 수 없습니다." S_WHITE " 꼬리말과 첨부 파일도 함께 지웁니다.\r\n");
+	board_info b;
+	if ( !choose_board("게시판", b) ) return;
+	std::string r = ask("글 번호 (예: 3 또는 3-5) >> ", 15);
+	int a = 0, z = 0;
+	int n = sscanf(r.c_str(), "%d-%d", &a, &z);
+	if ( n < 1 ) return;
+	if ( n == 1 ) z = a;
+	if ( z < a || z - a > 200 ) { msg(S_RED, "번호가 잘못되었습니다 (한 번에 200 개까지)."); wait_enter(); return; }
+	rows_t list = rows_of("SELECT NO, FAMILY, STEP, USER_ID, DATE_TIME, TITLE FROM " + b.id + " WHERE NO BETWEEN " +
+			TO_STRING(a) + " AND " + TO_STRING(z) + " ORDER BY NO");
+	if ( list.empty() ) { msg(S_RED, "그런 글이 없습니다."); wait_enter(); return; }
+	printf("\r\n");
+	for ( unsigned int i = 0; i < list.size() && i < 10; i++ ) print_article_line(list[i]);
+	if ( list.size() > 10 ) printf("  " S_GRAY "... 그 밖에 %d 개" S_WHITE "\r\n", (int)list.size() - 10);
+	if ( !confirm(TO_STRING(list.size()) + " 개의 글을 지울까요?") ) return;
+	for ( unsigned int i = 0; i < list.size(); i++ ) remove_article(b, atoi(list[i]["NO"].c_str()));
+	msg(S_GREEN, "지웠습니다.");
+	wait_enter();
+}
+
+static void pins(void)
+{
+	board_info b;
+	print_header(S_CYAN "운영자 - 공지 고정" S_WHITE);
+	printf("\r\n  고정한 글은 게시판 첫 쪽 맨 위에 [공지] 로 보입니다. 게시판마다 %d 개까지.\r\n", MAX_PINS);
+	if ( !choose_board("게시판", b) ) return;
+	while ( 1 ) {
+		print_header((S_CYAN "운영자 - 공지 고정: " S_WHITE + display_text(b.name)).c_str());
+		rows_t p = rows_of("SELECT P.NO, A.USER_ID, A.DATE_TIME, A.TITLE FROM board_pin P JOIN " + b.id +
+				" A ON A.NO = P.NO WHERE P.BOARD='" + esc(b.id) + "' ORDER BY P.DATE_TIME DESC");
+		printf("\r\n");
+		if ( p.empty() ) printf("  " S_GRAY "고정한 글이 없습니다." S_WHITE "\r\n");
+		for ( unsigned int i = 0; i < p.size(); i++ ) print_article_line(p[i]);
+		std::string c = ask("A 번호: 고정하기  R 번호: 풀기  Enter: 돌아가기 >> ", 12);
+		if ( c.empty() ) return;
+		char op = toupper(c[0]);
+		int no = atoi(trim(c.substr(1)).c_str());
+		if ( no <= 0 ) no = atoi(ask("글 번호 >> ", 8).c_str());
+		if ( op == 'A' ) {
+			if ( (int)p.size() >= MAX_PINS ) { msg(S_RED, "더 고정할 수 없습니다. 먼저 하나를 푸세요."); wait_enter(); continue; }
+			if ( article(b, no).empty() ) { msg(S_RED, "그런 글이 없습니다."); wait_enter(); continue; }
+			mysql_query(mysql, ("REPLACE INTO board_pin (BOARD, NO, DATE_TIME) VALUES ('" + esc(b.id) + "', " +
+						TO_STRING(no) + ", NOW())").c_str());
+		} else if ( op == 'R' ) {
+			mysql_query(mysql, ("DELETE FROM board_pin WHERE BOARD='" + esc(b.id) + "' AND NO=" + TO_STRING(no)).c_str());
+		}
+	}
+}
+
+static void delete_comments(void)
+{
+	print_header(S_CYAN "운영자 - 꼬리말 지우기" S_WHITE);
+	board_info b;
+	printf("\r\n");
+	if ( !choose_board("게시판", b) ) return;
+	int no = atoi(ask("글 번호 >> ", 8).c_str());
+	std::map<std::string, std::string> a = article(b, no);
+	if ( a.empty() ) { msg(S_RED, "그런 글이 없습니다."); wait_enter(); return; }
+	while ( 1 ) {
+		print_header(S_CYAN "운영자 - 꼬리말 지우기" S_WHITE);
+		printf("\r\n");
+		print_article_line(a);
+		rows_t r = rows_of("SELECT * FROM comments WHERE BOARD='" + esc(b.id) + "' AND ARTICLE=" + TO_STRING(no) +
+				" ORDER BY NO LIMIT 15");
+		printf("\r\n");
+		if ( r.empty() ) printf("  " S_GRAY "꼬리말이 없습니다." S_WHITE "\r\n");
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			printf("  %3d. " S_CYAN "%-10s" S_WHITE " %s\r\n", i + 1, string_truncate(nick_of(r[i]["USER_ID"]), 10, "").c_str(),
+					string_truncate(display_text(r[i]["TEXT"]), 58, "").c_str());
+		}
+		std::string c = ask("지울 번호 (Enter: 돌아가기) >> ", 3);
+		int k = atoi(c.c_str());
+		if ( k < 1 || k > (int)r.size() ) return;
+		if ( confirm("이 꼬리말을 지울까요?") ) {
+			mysql_query(mysql, ("DELETE FROM comments WHERE NO=" + r[k - 1]["NO"]).c_str());
+		}
+	}
+}
+
+static void polls(void)
+{
+	while ( 1 ) {
+		print_header(S_CYAN "운영자 - 투표 관리" S_WHITE);
+		rows_t r = rows_of("SELECT P.*, (SELECT COUNT(*) FROM poll_vote V WHERE V.POLL = P.NO) AS VOTES FROM poll P "
+				"ORDER BY P.NO DESC LIMIT 15");
+		printf("\r\n  " S_GRAY "%5s  %-44s %6s  %s" S_WHITE "\r\n", "번호", "질문", "표", "상태");
+		if ( r.empty() ) printf("  " S_GRAY "      투표가 없습니다." S_WHITE "\r\n");
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			bool closed = atoi(r[i]["CLOSED"].c_str()) != 0;
+			printf("  %5s  %-44s %6s  %s\r\n", r[i]["NO"].c_str(), string_truncate(display_text(r[i]["QUESTION"]), 44, "").c_str(),
+					r[i]["VOTES"].c_str(), closed ? S_GRAY "마감" S_WHITE : S_GREEN "진행" S_WHITE);
+		}
+		std::string c = ask("E 번호: 마감  D 번호: 지우기  Enter: 돌아가기 >> ", 10);
+		if ( c.empty() ) return;
+		char op = toupper(c[0]);
+		std::string no = TO_STRING(atoi(trim(c.substr(1)).c_str()));
+		if ( no == "0" ) continue;
+		if ( op == 'E' ) {
+			mysql_query(mysql, ("UPDATE poll SET CLOSED=1 WHERE NO=" + no).c_str());
+		} else if ( op == 'D' && confirm(no + " 번 투표를 지울까요? (표도 함께)") ) {
+			mysql_query(mysql, ("DELETE FROM poll_vote WHERE POLL=" + no).c_str());
+			mysql_query(mysql, ("DELETE FROM poll WHERE NO=" + no).c_str());
+		}
+	}
+}
+
+// ------------------------------------------------------------------
+// 서버 정리와 점검
+// ------------------------------------------------------------------
+static std::string run1(const std::string &cmd)
+{
+	bool ok;
+	std::vector<std::string> l = exec_command((char*)cmd.c_str(), &ok);
+	return l.empty() ? "" : trim(l[0]);
+}
+
+// file/ 에 있지만 첨부 표에 없는 파일들
+static std::vector<std::string> orphan_files(long *bytes)
+{
+	std::set<std::string> known;
+	rows_t r = rows_of("SELECT FILENAME FROM attachment");
+	for ( unsigned int i = 0; i < r.size(); i++ ) known.insert(r[i]["FILENAME"]);
+	std::vector<std::string> out;
+	*bytes = 0;
+	std::vector<std::string> files = find_files((hanulso() + "/file/file*").c_str());
+	for ( unsigned int i = 0; i < files.size(); i++ ) {
+		std::string name = split_file_name(files[i]);
+		if ( known.count(name) ) continue;
+		struct stat st;
+		if ( stat(files[i].c_str(), &st) != 0 || !S_ISREG(st.st_mode) ) continue;
+		// 지금 올리는 중일 수 있는 새 파일은 빼고 (하루 지난 것만)
+		if ( time(NULL) - st.st_mtime < 86400 ) continue;
+		*bytes += st.st_size;
+		out.push_back(files[i]);
+	}
+	return out;
+}
+
+static std::string human(long b)
+{
+	char s[32];
+	if ( b >= 1024L * 1024 * 1024 ) snprintf(s, sizeof(s), "%.1fG", b / 1024.0 / 1024 / 1024);
+	else if ( b >= 1024L * 1024 ) snprintf(s, sizeof(s), "%.1fM", b / 1024.0 / 1024);
+	else if ( b >= 1024 ) snprintf(s, sizeof(s), "%.1fK", b / 1024.0);
+	else snprintf(s, sizeof(s), "%ldB", b);
+	return s;
+}
+
+static void maintenance(void)
+{
+	while ( 1 ) {
+		std::string h = shell_quote(hanulso());
+		print_header(S_CYAN "운영자 - 정리와 점검" S_WHITE);
+
+		printf("\r\n  " S_YELLOW "◆ 디스크" S_WHITE "\r\n");
+		std::string df = run1("df -hP " + h + " | tail -1 | awk '{print $2\" 중 \"$3\" 사용 (\"$5\"), 남은 곳 \"$4}'");
+		printf("      %s\r\n", df.c_str());
+		printf("      BBS 폴더 %s,  첨부 (file) %s\r\n", run1("du -sh " + h + " 2>/dev/null | cut -f1").c_str(),
+				run1("du -sh " + h + "/file 2>/dev/null | cut -f1").c_str());
+
+		printf("\r\n  " S_YELLOW "◆ 임시 파일 (tmp)" S_WHITE "\r\n");
+		std::string all = run1("find " + h + "/tmp -mindepth 1 -maxdepth 1 | wc -l");
+		std::string old = run1("find " + h + "/tmp -mindepth 1 -maxdepth 1 ! -name '*.tty' ! -name '.*' ! -name 'stats.cache' "
+				"! -name 'mailsend.log' -mmin +1440 | wc -l");
+		printf("      모두 %s 개 (%s),  하루 지난 것 %s 개\r\n", all.c_str(),
+				run1("du -sh " + h + "/tmp 2>/dev/null | cut -f1").c_str(), old.c_str());
+
+		long ob;
+		std::vector<std::string> orphans = orphan_files(&ob);
+		printf("\r\n  " S_YELLOW "◆ 주인 없는 첨부 파일" S_WHITE "\r\n");
+		printf("      %d 개 (%s)  " S_GRAY "글이 지워졌는데 남은 파일" S_WHITE "\r\n", (int)orphans.size(), human(ob).c_str());
+
+		// AI 와 이야기: 오늘 물은 수 (data/aichat/<아이디> 의 "날짜 수")
+		std::vector<std::string> ai = find_files((hanulso() + "/data/aichat/*").c_str());
+		char today[16];
+		time_t t = time(NULL);
+		strftime(today, sizeof(today), "%Y-%m-%d", localtime(&t));
+		int ai_total = 0, ai_users = 0, ai_top = 0;
+		std::string ai_top_id;
+		for ( unsigned int i = 0; i < ai.size(); i++ ) {
+			char d[16] = "";
+			int n = 0;
+			if ( sscanf(read_file(ai[i].c_str()).c_str(), "%15s %d", d, &n) == 2 && today == std::string(d) ) {
+				ai_total += n;
+				ai_users++;
+				if ( n > ai_top ) { ai_top = n; ai_top_id = split_file_name(ai[i]); }
+			}
+		}
+		printf("\r\n  " S_YELLOW "◆ AI 와 이야기 (오늘)" S_WHITE "\r\n");
+		printf("      %d 명이 %d 번 물었습니다.", ai_users, ai_total);
+		if ( ai_top > 0 ) printf("  가장 많이: %s (%d 번)", nick_of(ai_top_id).c_str(), ai_top);
 		printf("\r\n");
 
-		char cmd[1024];
-		prompt(cmd);
-
-		/* 입력이 숫자 */
-		if( is_number(cmd) ) {
-			if ( !strcmp(cmd, "1") ) {
-				find_user();
-
-			} else if ( !strcmp(cmd, "2") ) {
-				modify_user_info();
-
-			} else if ( !strcmp(cmd, "3") ) {
-				delete_user();
-
-			} else if ( !strcmp(cmd, "4") ) {
-				delete_article();
+		std::string c = ask("T: 임시 파일 정리  F: 주인 없는 첨부 지우기  Enter: 돌아가기 >> ", 2);
+		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "t") ) {
+			unlink((hanulso() + "/tmp/.sweep").c_str());		// 한 시간 막음 풀기
+			sweep_stale_tmp();
+			msg(S_GREEN, "하루 지난 임시 파일을 정리했습니다.");
+			wait_enter();
+		} else if ( !strcasecmp(c.c_str(), "f") && !orphans.empty() ) {
+			if ( confirm(TO_STRING(orphans.size()) + " 개 (" + human(ob) + ") 를 지울까요?") ) {
+				for ( unsigned int i = 0; i < orphans.size(); i++ ) unlink(orphans[i].c_str());
+				msg(S_GREEN, "지웠습니다.");
+				wait_enter();
 			}
+		}
+	}
+}
+
+// ------------------------------------------------------------------
+// 차림표
+// ------------------------------------------------------------------
+static void main_menu(void)
+{
+	while ( 1 ) {
+		print_header(S_CYAN "운영자 메뉴" S_WHITE);
+		int online = online_users().size();
+		int susp = query_int("SELECT COUNT(*) FROM member_suspend WHERE UNTIL IS NULL OR UNTIL > NOW()");
+		printf("\r\n");
+		printf("  " S_YELLOW "◆ 접속자" S_WHITE "  " S_GRAY "(지금 %d 명)" S_WHITE "\r\n", online);
+		printf("       1. 지금 접속자 / 강제 종료       2. 전체 공지 방송\r\n");
+		printf("       3. 로그인 공지 고치기\r\n");
+		printf("  " S_YELLOW "◆ 회원" S_WHITE "  " S_GRAY "(정지 %d 명)" S_WHITE "\r\n", susp);
+		printf("       4. 회원 찾기 / 등급 / 비밀번호   5. 이용 정지 / 풀기\r\n");
+		printf("       6. 가입 / 접속 통계              7. 회원 삭제\r\n");
+		printf("  " S_YELLOW "◆ 게시판" S_WHITE "\r\n");
+		printf("       8. 게시물 옮기기                 9. 게시물 지우기\r\n");
+		printf("      10. 공지 고정 / 풀기             11. 꼬리말 지우기\r\n");
+		printf("      12. 투표 마감 / 지우기\r\n");
+		printf("  " S_YELLOW "◆ 서버" S_WHITE "\r\n");
+		printf("      13. 정리와 점검 " S_GRAY "(디스크, 임시 파일, 주인 없는 첨부, AI 사용량)" S_WHITE "\r\n");
+
+		std::string c = ask("번호 (끝내기: X) >> ", 3);
+		if ( !strcasecmp(c.c_str(), "x") || !strcasecmp(c.c_str(), "p") || !strcasecmp(c.c_str(), "q") ) return;
+		switch ( atoi(c.c_str()) ) {
+		case 1: show_online(); break;
+		case 2: broadcast(); break;
+		case 3: login_notice(); break;
+		case 4: members(); break;
+		case 5: suspensions(); break;
+		case 6: member_stats(); break;
+		case 7: delete_member(); break;
+		case 8: move_articles(); break;
+		case 9: delete_articles(); break;
+		case 10: pins(); break;
+		case 11: delete_comments(); break;
+		case 12: polls(); break;
+		case 13: maintenance(); break;
 		}
 	}
 }
 
 int main(int argc, char **argv)
 {
-	sprintf(tty, "%s", argv[1]);
+	snprintf(tty, sizeof(tty), "%s", argc > 1 ? argv[1] : "");
 
     signal(SIGQUIT, SIG_IGN);
     signal(SIGINT, SIG_IGN);
@@ -300,15 +913,25 @@ int main(int argc, char **argv)
 
     ioctl(0,TCGETA, &sys_term);
 	raw_mode();
-	
-    umask(0111);
 
-	// DB open ...
+    umask(0022);
+
 	if ( database::open() == false )
 		exit(1);
+	create_tables();
+
+	// 운영자 아이디: 이 접속의 접속자 파일에서
+	std::string me;
+	read_tty_file(hanulso() + "/tmp/" + tty + ".tty", me);
+	snprintf(login_user_id, sizeof(login_user_id), "%s", me.c_str());
+	if ( me.empty() || !is_sysop(me) ) {
+		printf("\r\n운영자만 쓸 수 있습니다.");
+		wait_enter();
+		host_close();
+	}
 
 	main_menu();
 
 	host_close();
+	return 0;
 }
-

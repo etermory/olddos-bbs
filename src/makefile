@@ -51,8 +51,8 @@ pass: pass.o database.o utility.o textutil.o settings.o menu.o pugixml.o
 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 
-sysop: sysop.o database.o utility.o textutil.o settings.o menu.o re.o pugixml.o
-	$(CXX) -o ../bin/$@ pugixml.o sysop.o database.o utility.o textutil.o settings.o menu.o \
+sysop: sysop.o database.o utility.o textutil.o settings.o menu.o re.o pugixml.o lineeditor.o
+	$(CXX) -o ../bin/$@ pugixml.o sysop.o database.o utility.o textutil.o settings.o menu.o re.o lineeditor.o \
 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 

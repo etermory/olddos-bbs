@@ -50,6 +50,14 @@ int main(int argc, char **argv)
 	// Ã·ºÎ ÆÄÀÏ Å×ÀÌºí »ý¼º
 	database::create_attachment();
 
+	// ¿î¿µÀÚ ¸Þ´ºÀÇ °øÁö °íÁ¤ / ÀÌ¿ë Á¤Áö / ·Î±×ÀÎ ±â·Ï
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS board_pin ( BOARD VARCHAR(64) NOT NULL, NO INT NOT NULL, "
+			"DATE_TIME DATETIME NOT NULL, PRIMARY KEY (BOARD, NO) )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS member_suspend ( USER_ID VARCHAR(50) NOT NULL PRIMARY KEY, "
+			"UNTIL DATETIME NULL, REASON VARCHAR(255) NOT NULL, BY_ID VARCHAR(50) NOT NULL, DATE_TIME DATETIME NOT NULL )");
+	mysql_query(mysql, "CREATE TABLE IF NOT EXISTS login_log ( NO INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+			"USER_ID VARCHAR(50) NOT NULL, NODE VARCHAR(16) NOT NULL, DATE_TIME DATETIME NOT NULL, KEY IDX_DATE (DATE_TIME) )");
+
 	// ·£´ý ´ë¹® Ãâ·Â
 	std::vector<std::string> door_files = find_files("txt/door/*");
 	if ( door_files.size() > 0 ) {
@@ -131,6 +139,21 @@ int main(int argc, char **argv)
 		retry+=1;
 	}
 
+	// ÀÌ¿ë Á¤Áö (¿î¿µÀÚ ¸Þ´º): ±â°£°ú »çÀ¯¸¦ º¸¿© ÁÖ°í ²÷´Â´Ù
+	if ( std::find(sysop_users.begin(), sysop_users.end(), login_user_id) == sysop_users.end() ) {
+		std::string q = "SELECT REASON, IFNULL(DATE_FORMAT(UNTIL, '%Y-%m-%d %H:%i'), '') AS U FROM member_suspend "
+			"WHERE USER_ID='" + database::escape(login_user_id) + "' AND (UNTIL IS NULL OR UNTIL > NOW())";
+		std::vector<std::map<std::string, std::string> > s = database::fetch_rows((char*)q.c_str());
+		if ( s.size() > 0 ) {
+			printf("\r\n\r\n \033[=12FÀÌ¿ëÀÌ Á¤ÁöµÈ ¾ÆÀÌµðÀÔ´Ï´Ù.\033[=15F");
+			printf("\r\n ±â°£ : %s", s[0]["U"].empty() ? "¿µ±¸" : (s[0]["U"] + " ±îÁö").c_str());
+			printf("\r\n »çÀ¯ : %s", display_text(s[0]["REASON"]).c_str());
+			printf("\r\n\r\n [Enter] ¸¦ ´©¸£¼¼¿ä.");
+			press_enter();
+			host_close();
+		}
+	}
+
 	// Àüº¸ (Á¢¼ÓÀÚ ÆÄÀÏ¿¡ pid ¸¦ Àû±â Àü¿¡ ½Ã±×³Î Ã³¸®¸¦ ÁØºñ)
 	telegram_init();
 
@@ -151,6 +174,11 @@ int main(int argc, char **argv)
 
 	// ¿À´Ã ÃÖ°í µ¿½Ã Á¢¼Ó ±â·Ï
 	stats_record_online();
+	{
+		std::string q = "INSERT INTO login_log (USER_ID, NODE, DATE_TIME) VALUES ('" + database::escape(login_user_id) +
+			"', '" + database::escape(tty) + "', NOW())";
+		mysql_query(mysql, q.c_str());
+	}
 
 	// °­Á¦ Á¾·á µîÀ¸·Î ³²Àº ¿À·¡µÈ ÀÓ½Ã ÆÄÀÏ Á¤¸® (ÇÑ ½Ã°£¿¡ ÇÑ ¹ø)
 	sweep_stale_tmp();
@@ -205,6 +233,18 @@ int main(int argc, char **argv)
 
 	// ÇÑÁÙ ³«¼­Àå ÃÖ±Ù ÇÑ ÁÙ
 	graffiti_login_info();
+
+	// ·Î±×ÀÎ °øÁö (¿î¿µÀÚ ¸Þ´º¿¡¼­ °íÄ£´Ù): ¾ÕÀÇ 5 ÁÙ
+	{
+		std::vector<std::string> nl = split_string(read_file("txt/login_notice.txt"), '\n');
+		int shown = 0;
+		for ( unsigned int i = 0; i < nl.size() && shown < 5; i++ ) {
+			std::string l = display_text(trim(nl[i]));
+			if ( l.empty() ) continue;
+			printf("\r\n %s \033[=14F%s\033[=15F", shown == 0 ? "[°ø    Áö] :" : "            ", string_truncate(l, 64, "").c_str());
+			shown++;
+		}
+	}
 
 	// ¹ÙÀÌ¿À¸®µë Ãâ·Â
 	printf("\r\n\r\n");
@@ -456,6 +496,17 @@ void show_board(pugi::xml_node node)
 			total_count = database::article_count(table_name);
 		}
 
+		// ¿î¿µÀÚ°¡ °íÁ¤ÇÑ ±Û (°Ë»öÀÌ ¾Æ´Ò ¶§ Ã¹ ÂÊ ¸Ç À§¿¡): ±×¸¸Å­ Ã¹ ÂÊÀÇ ±ÛÀÌ ÁÙ°í µÚÂÊÀº ¹Ð¸°´Ù
+		std::vector<std::map<std::string, std::string> > pins;
+		if ( strlen(search_lt) == 0 && strlen(search_li) == 0 && strlen(search_ln) == 0 ) {
+			std::string pq = std::string("SELECT A.* FROM board_pin P JOIN ") + table_name + " A ON A.NO = P.NO WHERE P.BOARD='" +
+				database::escape(table_name) + "' ORDER BY P.DATE_TIME DESC LIMIT 3";
+			pins = database::fetch_rows((char*)pq.c_str());
+			for ( unsigned int i = 0; i < pins.size(); i++ ) pins[i]["_PIN"] = "1";
+			total_count += pins.size();
+		}
+		int npin = pins.size();
+
 		// ÀüÃ¼ ÆäÀÌÁö ¼ö
 		int page_count = total_count / show_max_line;
 		if ( total_count % show_max_line >= 1 ) {
@@ -508,8 +559,8 @@ void show_board(pugi::xml_node node)
             }
 
 		} else {
-			sprintf(sql, "SELECT * FROM %s ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d", 
-					table_name, offset, show_max_line);
+			sprintf(sql, "SELECT * FROM %s ORDER BY FAMILY DESC, ORDERBY ASC LIMIT %d, %d",
+					table_name, offset == 0 ? 0 : offset - npin, offset == 0 ? show_max_line - npin : show_max_line);
 		}
 
 		printf(ESC_CLEAR);
@@ -532,6 +583,7 @@ void show_board(pugi::xml_node node)
 		printf("%s\r\n", repeat("¦¡", 40).c_str());
 
 		std::vector<std::map<std::string, std::string> > rows = database::fetch_rows(sql);
+		if ( offset == 0 && npin > 0 ) rows.insert(rows.begin(), pins.begin(), pins.end());
 
 		if ( rows.size() == 0 ) {
 			if ( strlen(search_lt) > 0 || strlen(search_li) > 0 || strlen(search_ln) ) {
@@ -596,6 +648,8 @@ void show_board(pugi::xml_node node)
 				}
 
 #endif
+				bool pinned = row["_PIN"] == "1";
+				if ( pinned ) title << "[°øÁö] ";
 				title << row[std::string("TITLE")];
 
 				// ³¯Â¥¸¦ YY-MM-DD ·Î ´Ã¸° ¸¸Å­ Á¦¸ñÀ» ÁÙÀÓ (ÇÑ ÁÙ 79 ÀÚ)
@@ -614,8 +668,11 @@ void show_board(pugi::xml_node node)
 					centered(recommend, 5).c_str());
 
                 bool color_changed = false;
-				// ´ä±ÛÀ» °æ¿ì È¸»öÀ¸·Î Ç¥½Ã
-				if(step > 0) {
+				// °íÁ¤ÇÑ ±ÛÀº ³ë¶õ»ö, ´ä±ÛÀ» °æ¿ì È¸»öÀ¸·Î Ç¥½Ã
+				if ( pinned ) {
+					printf("[=1G[=14F");
+					color_changed = true;
+				} else if(step > 0) {
                     printf("[=1G[=7F");
                     color_changed = true;
                 } else {
