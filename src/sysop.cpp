@@ -317,6 +317,128 @@ static std::string find_member(const std::string &key)
 	return exist ? u["USER_ID"] : "";
 }
 
+// ------------------------------------------------------------------
+// 아이디 바꾸기
+// 카페에서 가져온 회원(coma****, 비밀번호 '!')을 본인이 요청하면 진짜 아이디로 바꿔 줄 때 쓴다.
+// 아이디가 들어 있는 모든 테이블의 칸을 함께 바꾼다 (information_schema 에서 찾는다:
+// USER_ID, ..._USER_ID, BY_ID, BLACK_ID, WHITE_ID). 게시판, 첨부, 쪽지, 꼬리말, 게임 기록 등.
+// 새 아이디가 이미 BBS 회원이면, 카페에서 가져온 회원만 그 회원에 합칠 수 있다.
+// ------------------------------------------------------------------
+static rows_t id_columns(void)
+{
+	return rows_of("SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+			"AND (COLUMN_NAME = 'USER_ID' OR COLUMN_NAME LIKE '%\\_USER\\_ID' OR COLUMN_NAME IN ('BY_ID', 'BLACK_ID', 'WHITE_ID'))");
+}
+
+static bool valid_new_id(const std::string &id)
+{
+	if ( id.size() < 5 || id.size() > 40 ) return false;
+	for ( unsigned int i = 0; i < id.size(); i++ ) {
+		if ( !isalnum((unsigned char)id[i]) && id[i] != '_' ) return false;
+	}
+	return true;
+}
+
+static void change_id(const std::string &from)
+{
+	if ( is_sysop(from) ) { msg(S_RED, "운영자 아이디는 바꿀 수 없습니다 (hanulso.cfg 의 sysop)."); wait_enter(); return; }
+	bool cafe = query_int("SELECT COUNT(*) FROM member WHERE USER_ID='" + esc(from) + "' AND PASSWORD='!'") > 0;
+	printf("\r\n  %s (%s)%s", from.c_str(), nick_of(from).c_str(), cafe ? " " S_GRAY "- 카페에서 가져온 회원" S_WHITE : "");
+	printf("\r\n  " S_GRAY "새 아이디: 영문, 숫자, _ 로 5 자 이상.");
+	if ( cafe ) printf("\r\n  이미 가입한 BBS 아이디를 넣으면 이 회원의 글을 그 회원에 합칩니다.");
+	printf(S_WHITE "\r\n");
+	std::string to = trim(ask("새 아이디 (Enter: 취소) >> ", 40));
+	if ( to.empty() || to == from ) return;
+	if ( !valid_new_id(to) ) { msg(S_RED, "영문, 숫자, _ 로 5 자 이상이어야 합니다."); wait_enter(); return; }
+
+	rows_t cols = id_columns();
+	if ( cols.empty() ) { msg(S_RED, "아이디 칸을 찾지 못했습니다 (information_schema)."); wait_enter(); return; }
+	bool merge = database::exist_user_id((char*)to.c_str());
+	if ( merge ) {
+		if ( !cafe ) { msg(S_RED, to + " 는 이미 있는 아이디입니다. (합치기는 카페에서 가져온 회원만 됩니다)"); wait_enter(); return; }
+		if ( !confirm(from + " 의 글/첨부를 모두 " + nick_of(to) + " (" + to + ") 회원 것으로 합치고 " + from + " 은 지울까요?") ) return;
+	} else {
+		// 지운 회원이 남긴 기록이 새 아이디로 남아 있으면 섞이므로 멈춘다
+		std::string left;
+		for ( unsigned int i = 0; i < cols.size(); i++ ) {
+			if ( cols[i]["TABLE_NAME"] == "member" ) continue;
+			if ( query_int("SELECT COUNT(*) FROM " + cols[i]["TABLE_NAME"] + " WHERE " + cols[i]["COLUMN_NAME"] + "='" + esc(to) + "'") > 0 )
+				left += " " + cols[i]["TABLE_NAME"];
+		}
+		if ( !left.empty() ) { msg(S_RED, "새 아이디로 남아 있는 기록이 있어 바꿀 수 없습니다:" + left); wait_enter(); return; }
+		if ( !confirm(from + " -> " + to + " 로 아이디를 바꿀까요?") ) return;
+	}
+	disconnect_user(from, "◆ 운영자가 아이디를 바꿉니다. 새 아이디로 다시 접속해 주세요.");
+
+	int n = 0;
+	for ( unsigned int i = 0; i < cols.size(); i++ ) {
+		const std::string &t = cols[i]["TABLE_NAME"], &c = cols[i]["COLUMN_NAME"];
+		if ( merge && t == "member" ) continue;
+		// IGNORE: 합칠 때 같은 기록(게임 점수 등)이 겹치면 새 아이디 것을 남긴다
+		std::string q = "UPDATE IGNORE " + t + " SET " + c + "='" + esc(to) + "' WHERE " + c + "='" + esc(from) + "'";
+		if ( mysql_query(mysql, q.c_str()) == 0 && t != "member" && t != "login_log" ) n += (int)mysql_affected_rows(mysql);
+	}
+	if ( merge ) {
+		// 겹쳐서 못 옮긴 기록과 회원 정보
+		for ( unsigned int i = 0; i < cols.size(); i++ ) {
+			mysql_query(mysql, ("DELETE FROM " + cols[i]["TABLE_NAME"] + " WHERE " + cols[i]["COLUMN_NAME"] + "='" + esc(from) + "'").c_str());
+		}
+	}
+
+	// 파일: AI 대화 기록
+	std::string ai = hanulso() + "/data/aichat/";
+	if ( !merge && access((ai + from).c_str(), F_OK) == 0 && access((ai + to).c_str(), F_OK) != 0 ) rename((ai + from).c_str(), (ai + to).c_str());
+	// 카페: 이 회원으로 연결된 카페 회원은 새 아이디로 (다음에 받는 글도 새 아이디로 올라간다)
+	std::string cd = hanulso() + "/data/cafe";
+	bool ok;
+	std::vector<std::string> fs = exec_command((char*)("grep -lxF -e " + shell_quote(from) + " " + cd + "/links/* " + cd + "/members/* 2>/dev/null").c_str(), &ok);
+	for ( unsigned int i = 0; i < fs.size(); i++ ) {
+		std::string f = trim(fs[i]);
+		size_t s = f.rfind('/');
+		if ( f.empty() || s == std::string::npos ) continue;
+		std::string link = cd + "/links/" + f.substr(s + 1);
+		if ( f != link && access(link.c_str(), F_OK) == 0 ) continue;	// 이미 다른 회원과 연결됨
+		FILE *fp = fopen(link.c_str(), "w");
+		if ( fp ) { fputs(to.c_str(), fp); fclose(fp); }
+	}
+
+	msg(S_GREEN, std::string(merge ? "합쳤습니다." : "바꿨습니다.") + " 옮긴 기록 " + TO_STRING(n) + " 개 (게시글, 첨부, 꼬리말, 쪽지 등)");
+	if ( !merge && cafe ) {
+		printf("\r\n  " S_GRAY "카페에서 가져온 회원은 비밀번호가 없어 로그인할 수 없습니다." S_WHITE);
+		std::string pw = ask("새 비밀번호 (Enter: 나중에) >> ", 20);
+		if ( !pw.empty() ) {
+			database::set_user_password((char*)to.c_str(), (char*)pw.c_str());
+			msg(S_GREEN, "비밀번호를 정했습니다. 이제 " + to + " 로 로그인할 수 있습니다.");
+		}
+	}
+	wait_enter();
+}
+
+// 운영자 메뉴: 아이디나 닉네임으로 찾아서 아이디 바꾸기
+static void rename_member(void)
+{
+	print_header(S_CYAN "운영자 - 아이디 바꾸기" S_WHITE);
+	printf("\r\n  아이디나 닉네임으로 찾습니다. 일부만 넣으면 비슷한 회원을 보여 줍니다.");
+	printf("\r\n  " S_GRAY "카페에서 가져온 회원(coma****)을 본인 요청에 따라 진짜 아이디로 바꿀 때 씁니다." S_WHITE "\r\n");
+	std::string key = ask("아이디 / 닉네임 (Enter: 돌아가기) >> ", 30, true);
+	if ( key.empty() ) return;
+	std::string id = find_member(key);
+	if ( id.empty() ) {
+		rows_t r = rows_of("SELECT USER_ID, NICK_NAME, PASSWORD FROM member WHERE USER_ID LIKE '%" + esc(key) + "%' OR NICK_NAME LIKE '%" +
+				esc(key) + "%' ORDER BY USER_ID LIMIT 15");
+		if ( r.empty() ) { msg(S_RED, "찾는 회원이 없습니다."); wait_enter(); return; }
+		printf("\r\n");
+		for ( unsigned int i = 0; i < r.size(); i++ ) {
+			printf("  %3d. %-20s %s%s\r\n", i + 1, r[i]["USER_ID"].c_str(), display_text(r[i]["NICK_NAME"]).c_str(),
+					r[i]["PASSWORD"] == "!" ? " " S_GRAY "(카페)" S_WHITE : "");
+		}
+		int k = atoi(ask("번호 (Enter: 돌아가기) >> ", 3).c_str());
+		if ( k < 1 || k > (int)r.size() ) return;
+		id = r[k - 1]["USER_ID"];
+	}
+	change_id(id);
+}
+
 static void suspend_member(const std::string &id)
 {
 	if ( is_sysop(id) ) { msg(S_RED, "운영자는 정지할 수 없습니다."); return; }
@@ -361,8 +483,12 @@ static void member_card(const std::string &id)
 			printf("  %-10s: " S_GREEN "정상" S_WHITE "\r\n", "상태");
 		}
 
-		std::string c = ask("L: 등급  W: 비밀번호  S: 정지  U: 정지 풀기  Enter: 돌아가기 >> ", 2);
+		std::string c = ask("L: 등급  W: 비밀번호  I: 아이디  S: 정지  U: 정지 풀기  Enter: 돌아가기 >> ", 2);
 		if ( c.empty() ) return;
+		if ( !strcasecmp(c.c_str(), "i") ) {
+			change_id(id);
+			return;	// 아이디가 바뀌었을 수 있다
+		}
 		if ( !strcasecmp(c.c_str(), "l") ) {
 			printf("\r\n  ");
 			for ( unsigned int i = 0; i < level_nums.size(); i++ ) printf("[%d]%s ", level_nums[i], level_names[i].c_str());
@@ -1237,6 +1363,7 @@ static void main_menu(void)
 		printf("  " S_YELLOW "◆ 회원" S_WHITE "  " S_GRAY "(정지 %d 명)" S_WHITE "\r\n", susp);
 		printf("       4. 회원 찾기 / 등급 / 비밀번호   5. 이용 정지 / 풀기\r\n");
 		printf("       6. 가입 / 접속 통계              7. 회원 삭제\r\n");
+		printf("      15. 아이디 바꾸기 " S_GRAY "(아이디나 닉네임으로 찾기, 카페 회원을 진짜 아이디로)" S_WHITE "\r\n");
 		printf("  " S_YELLOW "◆ 게시판" S_WHITE "\r\n");
 		printf("       8. 게시물 옮기기                 9. 게시물 지우기\r\n");
 		printf("      10. 공지 고정 / 풀기             11. 꼬리말 지우기\r\n");
@@ -1261,6 +1388,7 @@ static void main_menu(void)
 		case 12: polls(); break;
 		case 13: maintenance(); break;
 		case 14: cafe_menu(); break;
+		case 15: rename_member(); break;
 		}
 	}
 }
