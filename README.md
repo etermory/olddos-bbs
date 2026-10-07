@@ -75,6 +75,9 @@
 - 바이오리듬, 성격 유형 검사 (MBTI), 오늘의 운세 (`LUCK`)
 - 로또 당첨번호, 코인 시세, 해와 달, 세계 시각, 오늘의 영어 한 문장
 - 사랑의 별점 (이름 획수 궁합, 별자리 + 띠 궁합, 회원과 궁합), 토정비결 (144 괘, 올해 / 내년)
+- AI 와 이야기 (`go ai`): 구글 Gemini 와 한 줄씩 묻고 답하기. 무료 키를 `hanulso.cfg` 에
+  `<ai><key>AIza...</key></ai>` 로 넣는다 (https://aistudio.google.com 의 Get API key).
+  `<model>`, `<url>` (OpenAI 방식이면 다른 곳도), 한 사람의 하루 질문 수 `<daily>` (기본 50) 도 바꿀 수 있다
 
 <img width="850" alt="생활정보 화면" src="docs/screenshots/life_info.png" />
 <img width="850" alt="날씨 정보 화면" src="docs/screenshots/weather.png" />

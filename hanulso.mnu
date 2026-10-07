@@ -108,6 +108,11 @@
 			<item type="program" prog="tojeong" go="tojeong" door="15" access_level="1">
 				<name>토정비결 (tojeong)</name>
 			</item>
+
+			<!-- 인터넷의 무료 AI 와 묻고 답하기 (설정은 hanulso.cfg 의 <ai>) -->
+			<item type="program" prog="aichat" go="ai" door="16" access_level="1">
+				<name>AI 와 이야기 (ai)</name>
+			</item>
 		</item>
 
 		<item type="menu" text="txt/game_info.txt" go="game" door="7">
