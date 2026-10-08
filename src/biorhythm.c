@@ -17,19 +17,23 @@
 #define C_DARK   "\033[=8F"
 #define C_YELLOW "\033[=14F"
 #define C_RED    "\033[=12F"
+// 배경색: 이야기 확장 ESC[=nG (0~15). 칠한 뒤에는 ESC[0m 으로 기본 배경으로 되돌린다
+#define BG_OFF   "\033[0m"
+#define BG_TRACK 8		// 막대의 빈 칸 (어두운 회색)
 
 struct rhythm {
 	const char *name;
 	int days;
 	const char *color;
+	int bg;				// 칠할 배경색 번호
 	const char *good, *bad;		// 좋은 날, 나쁜 날 풀이
 };
 
 static const struct rhythm R[4] = {
-	{ "신체", 23, "\033[=12F", "몸이 가벼운 날. 운동이나 바깥 일 하기 좋아요.", "몸이 무거운 날. 무리하지 말고 푹 쉬세요." },
-	{ "감성", 28, "\033[=10F", "기분이 좋은 날. 사람 만나고 이야기하기 좋아요.", "예민해지기 쉬운 날. 말 한마디 조심하세요." },
-	{ "지성", 33, "\033[=11F", "머리가 맑은 날. 공부나 프로그래밍하기 좋아요.", "집중이 잘 안 되는 날. 큰 결정은 미뤄 두세요." },
-	{ "지각", 38, "\033[=13F", "눈치와 직감이 빠른 날. 감을 믿어 보세요.", "직감이 흐린 날. 한 번 더 확인하세요." },
+	{ "신체", 23, "\033[=12F", 12, "몸이 가벼운 날. 운동이나 바깥 일 하기 좋아요.", "몸이 무거운 날. 무리하지 말고 푹 쉬세요." },
+	{ "감성", 28, "\033[=10F", 10, "기분이 좋은 날. 사람 만나고 이야기하기 좋아요.", "예민해지기 쉬운 날. 말 한마디 조심하세요." },
+	{ "지성", 33, "\033[=11F", 11, "머리가 맑은 날. 공부나 프로그래밍하기 좋아요.", "집중이 잘 안 되는 날. 큰 결정은 미뤄 두세요." },
+	{ "지각", 38, "\033[=13F", 13, "눈치와 직감이 빠른 날. 감을 믿어 보세요.", "직감이 흐린 날. 한 번 더 확인하세요." },
 };
 
 // 서기 1 년 1 월 1 일부터 센 날 수 (그레고리력)
@@ -66,34 +70,39 @@ static const char *state(int k, long t)
 	return "바닥";
 }
 
-// -100 ~ +100 을 20 칸 막대로 (가운데가 0)
+// 배경색 칠하기: 같은 색이 이어지면 코드를 다시 보내지 않는다 (cur: 지금 배경, -1 = 기본)
+static void paint(int *cur, int bg, char c)
+{
+	if ( bg != *cur ) {
+		if ( bg < 0 ) printf(BG_OFF);
+		else printf("\033[=%dG", bg);
+		*cur = bg;
+	}
+	putchar(c);
+}
+
+// -100 ~ +100 을 칠한 막대로: 왼쪽 20 칸(-), 가운데 |, 오른쪽 20 칸(+)
 static void bar(int k, double v)
 {
-	int n = (int)floor(fabs(v) * 10 + 0.5), i;
-	if ( n > 10 ) n = 10;
-	printf(C_DARK);
-	for ( i = 0; i < 10; i++ ) {
-		if ( v < 0 && i >= 10 - n ) printf("%s■", R[k].color);
-		else printf(C_DARK "□");
-	}
-	printf(C_GRAY "│");
-	for ( i = 0; i < 10; i++ ) {
-		if ( v > 0 && i < n ) printf("%s■", R[k].color);
-		else printf(C_DARK "□");
-	}
-	printf(C_WHITE);
+	int n = (int)floor(fabs(v) * 20 + 0.5), i, cur = -1;
+	if ( n > 20 ) n = 20;
+	for ( i = 0; i < 20; i++ ) paint(&cur, (v < 0 && i >= 20 - n) ? R[k].bg : BG_TRACK, ' ');
+	paint(&cur, -1, ' ');
+	printf(C_GRAY "|" C_WHITE);
+	for ( i = 0; i < 20; i++ ) paint(&cur, (v > 0 && i < n) ? R[k].bg : BG_TRACK, ' ');
+	paint(&cur, -1, ' ');
 }
 
 static void today_lines(long t)
 {
 	int k;
-	printf(" " C_GRAY "     -100" "                 0" "                  +100" C_WHITE "\r\n");
+	printf(" " C_GRAY "     -100                 0                 +100" C_WHITE "\r\n");
 	for ( k = 0; k < 4; k++ ) {
 		double v = value(k, t);
 		const char *arrow = value(k, t + 1) > v ? C_YELLOW "▲" C_WHITE : C_GRAY "▼" C_WHITE;
 		printf(" %s%s" C_WHITE " ", R[k].color, R[k].name);
 		bar(k, v);
-		printf(" %4d%% %s %s\r\n", (int)floor(v * 100 + (v < 0 ? -0.5 : 0.5)), arrow, state(k, t));
+		printf("%4d%% %s %s\r\n", (int)floor(v * 100 + (v < 0 ? -0.5 : 0.5)), arrow, state(k, t));
 	}
 }
 
@@ -132,47 +141,41 @@ static int shift_date(int y, int m, int d, int n, int *mon)
 	return tmv.tm_mday;
 }
 
-// 앞뒤 2 주 그래프: 2 일 전 ~ 12 일 뒤 (15 일). 하루를 4 칸으로 나눠 선처럼 그린다.
-// 세로 9 줄, 한 줄 안에서도 높이에 따라 ~ - _ 로 3 단계 (모두 27 단계)
+// 앞뒤 2 주 그래프: 2 일 전 ~ 10 일 뒤 (13 일).
+// 날마다 신체/감성/지성/지각 막대 4 개를 0 줄 위아래로 칠한다 (한 칸 = 20%).
 static void chart(long t, int y, int m, int d)
 {
-	enum { FROM = -2, DAYS = 15, STEP = 4, COLS = DAYS * STEP, ROWS = 9, SUB = 3 };
-	static const char subch[SUB] = { '~', '-', '_' };
-	signed char who[ROWS][COLS];
-	char ch[ROWS][COLS];
-	int r, x, k;
-	memset(who, -1, sizeof(who));
-	for ( x = 0; x < COLS; x++ ) {
-		double tt = (double)t + FROM + (double)x / STEP;
-		for ( k = 3; k >= 0; k-- ) {	// 겹치면 앞의 리듬(신체)이 보인다
-			double v = sin(2 * PI * tt / R[k].days);
-			int lv = (int)floor((1 - v) / 2 * (ROWS * SUB - 1) + 0.5);
-			who[lv / SUB][x] = (signed char)k;
-			ch[lv / SUB][x] = subch[lv % SUB];
-		}
-	}
+	enum { FROM = -2, DAYS = 13, HALF = 5, ROWS = HALF * 2 + 1 };
+	int r, i, k;
 	for ( r = 0; r < ROWS; r++ ) {
-		const char *label = r == 0 ? "+100" : r == ROWS / 2 ? "   0" : r == ROWS - 1 ? "-100" : "    ";
-		int last = -2;
-		printf(" " C_GRAY "%s |", label);
-		for ( x = 0; x < COLS; x++ ) {
-			int c = who[r][x];
-			// 색이 바뀔 때만 색 코드를 보낸다 (전송량 줄이기)
-			int color = c >= 0 ? c : -1;
-			if ( color != last ) { printf("%s", c >= 0 ? R[c].color : C_DARK); last = color; }
-			if ( c >= 0 ) putchar(ch[r][x]);
-			else if ( x == -FROM * STEP ) putchar(':');		// 오늘
-			else if ( r == ROWS / 2 ) putchar(x % 2 ? ' ' : '.');	// 0 줄
-			else putchar(' ');
+		const char *label = r == 0 ? "+100" : r == HALF ? "   0" : r == ROWS - 1 ? "-100" : "    ";
+		int cur = -1;
+		printf(" " C_GRAY "%s " C_WHITE, label);
+		if ( r == HALF ) {
+			// 0 줄
+			printf(C_DARK);
+			for ( i = 0; i < DAYS; i++ ) printf(i == -FROM ? C_YELLOW "----" C_DARK "-" : "-----");
+			printf(C_WHITE "\r\n");
+			continue;
 		}
+		for ( i = 0; i < DAYS; i++ ) {
+			for ( k = 0; k < 4; k++ ) {
+				double v = value(k, t + FROM + i);
+				int n = (int)floor(fabs(v) * HALF + 0.5);
+				int on = r < HALF ? (v > 0 && HALF - r <= n) : (v < 0 && r - HALF <= n);
+				paint(&cur, on ? R[k].bg : -1, ' ');
+			}
+			paint(&cur, -1, ' ');
+		}
+		paint(&cur, -1, ' ');
 		printf(C_WHITE "\r\n");
 	}
-	// 날짜 줄: 그날이 시작하는 칸 아래
-	printf(" " C_GRAY "      ");
-	for ( x = 0; x < DAYS; x++ ) {
-		int dd = shift_date(y, m, d, FROM + x, NULL);
-		if ( x == -FROM ) printf(C_YELLOW "%-4d" C_GRAY, dd);
-		else printf("%-4d", dd);
+	// 날짜 줄: 막대 4 개 아래 가운데
+	printf("      " C_GRAY);
+	for ( i = 0; i < DAYS; i++ ) {
+		int dd = shift_date(y, m, d, FROM + i, NULL);
+		if ( i == -FROM ) printf(C_YELLOW " %2d  " C_GRAY, dd);
+		else printf(" %2d  ", dd);
 	}
 	printf(C_WHITE "\r\n");
 }
@@ -228,12 +231,15 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	printf(" %d년 %d월 %d일생, 오늘은 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째입니다. " C_GRAY "(%d년 %d월 %d일)" C_WHITE "\r\n",
-		uy, um, ud, t, ty, tm_, td);
+	{
+		int k;
+		printf(" %d년 %d월 %d일생, 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째   " C_GRAY "그래프:", uy, um, ud, t);
+		for ( k = 0; k < 4; k++ ) printf(" \033[=%dG  " BG_OFF "%s%s", R[k].bg, R[k].color, R[k].name);
+		printf(C_WHITE "\r\n");
+	}
 	today_lines(t);
-	printf("\r\n");
 	chart(t, ty, tm_, td);
 	criticals(t, ty, tm_, td);
-	advice(t, 2);
+	advice(t, 1);
 	return 0;
 }
