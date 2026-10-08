@@ -132,37 +132,47 @@ static int shift_date(int y, int m, int d, int n, int *mon)
 	return tmv.tm_mday;
 }
 
-// 앞뒤 2 주 그래프: 2 일 전 ~ 12 일 뒤 (15 일), 세로 7 칸
+// 앞뒤 2 주 그래프: 2 일 전 ~ 12 일 뒤 (15 일). 하루를 4 칸으로 나눠 선처럼 그린다.
+// 세로 9 줄, 한 줄 안에서도 높이에 따라 ~ - _ 로 3 단계 (모두 27 단계)
 static void chart(long t, int y, int m, int d)
 {
-	const int FROM = -2, DAYS = 15, ROWS = 7;
-	signed char cell[7][15];
-	int r, i, k;
-	memset(cell, -1, sizeof(cell));
-	for ( i = 0; i < DAYS; i++ ) {
+	enum { FROM = -2, DAYS = 15, STEP = 4, COLS = DAYS * STEP, ROWS = 9, SUB = 3 };
+	static const char subch[SUB] = { '~', '-', '_' };
+	signed char who[ROWS][COLS];
+	char ch[ROWS][COLS];
+	int r, x, k;
+	memset(who, -1, sizeof(who));
+	for ( x = 0; x < COLS; x++ ) {
+		double tt = (double)t + FROM + (double)x / STEP;
 		for ( k = 3; k >= 0; k-- ) {	// 겹치면 앞의 리듬(신체)이 보인다
-			int row = (int)floor((1 - value(k, t + FROM + i)) * (ROWS - 1) / 2 + 0.5);
-			cell[row][i] = (signed char)k;
+			double v = sin(2 * PI * tt / R[k].days);
+			int lv = (int)floor((1 - v) / 2 * (ROWS * SUB - 1) + 0.5);
+			who[lv / SUB][x] = (signed char)k;
+			ch[lv / SUB][x] = subch[lv % SUB];
 		}
 	}
 	for ( r = 0; r < ROWS; r++ ) {
 		const char *label = r == 0 ? "+100" : r == ROWS / 2 ? "   0" : r == ROWS - 1 ? "-100" : "    ";
-		printf(" " C_GRAY "%s ┤" C_WHITE, label);
-		for ( i = 0; i < DAYS; i++ ) {
-			int c = cell[r][i];
-			if ( c >= 0 ) printf("%s %s ", R[c].color, i == -FROM ? "◆" : "●");
-			else if ( r == ROWS / 2 ) printf(C_DARK "──");
-			else if ( i == -FROM ) printf(C_DARK " ： ");
-			else printf("    ");
+		int last = -2;
+		printf(" " C_GRAY "%s |", label);
+		for ( x = 0; x < COLS; x++ ) {
+			int c = who[r][x];
+			// 색이 바뀔 때만 색 코드를 보낸다 (전송량 줄이기)
+			int color = c >= 0 ? c : -1;
+			if ( color != last ) { printf("%s", c >= 0 ? R[c].color : C_DARK); last = color; }
+			if ( c >= 0 ) putchar(ch[r][x]);
+			else if ( x == -FROM * STEP ) putchar(':');		// 오늘
+			else if ( r == ROWS / 2 ) putchar(x % 2 ? ' ' : '.');	// 0 줄
+			else putchar(' ');
 		}
 		printf(C_WHITE "\r\n");
 	}
-	// 날짜 줄
-	printf(" " C_GRAY "       ");
-	for ( i = 0; i < DAYS; i++ ) {
-		int dd = shift_date(y, m, d, FROM + i, NULL);
-		if ( i == -FROM ) printf(C_YELLOW " %2d " C_GRAY, dd);
-		else printf(" %2d ", dd);
+	// 날짜 줄: 그날이 시작하는 칸 아래
+	printf(" " C_GRAY "      ");
+	for ( x = 0; x < DAYS; x++ ) {
+		int dd = shift_date(y, m, d, FROM + x, NULL);
+		if ( x == -FROM ) printf(C_YELLOW "%-4d" C_GRAY, dd);
+		else printf("%-4d", dd);
 	}
 	printf(C_WHITE "\r\n");
 }
@@ -188,7 +198,7 @@ static void criticals(long t, int y, int m, int d)
 
 int main(int argc, char **argv)
 {
-	int uy, um, ud, ty, tm_, td, full, k;
+	int uy, um, ud, ty, tm_, td, full;
 	long t;
 	time_t now;
 	struct tm *lt;
@@ -218,14 +228,11 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	printf(" %d년 %d월 %d일생, 오늘은 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째입니다. " C_GRAY "(%d년 %d월 %d일)" C_WHITE "\r\n\r\n",
+	printf(" %d년 %d월 %d일생, 오늘은 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째입니다. " C_GRAY "(%d년 %d월 %d일)" C_WHITE "\r\n",
 		uy, um, ud, t, ty, tm_, td);
 	today_lines(t);
 	printf("\r\n");
 	chart(t, ty, tm_, td);
-	printf(" " C_GRAY "      ");
-	for ( k = 0; k < 4; k++ ) printf("%s●" C_GRAY " %s(%d일)  ", R[k].color, R[k].name, R[k].days);
-	printf(C_YELLOW "◆" C_GRAY " 오늘" C_WHITE "\r\n");
 	criticals(t, ty, tm_, td);
 	advice(t, 2);
 	return 0;
