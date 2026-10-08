@@ -1,0 +1,3042 @@
+# 조크 I 한글 번역표 (UTF-8). 형식과 조사 표시는 zork1.cpp 머리말을 보세요.
+# 원문: Zork I (Infocom, 1980), https://github.com/historicalsource/zork1 (MIT License, Copyright (c) 2025 Microsoft)
+# 앞부분은 물건/장소 이름, 그 뒤는 게임 파일에 나오는 차례. 맨 뒤는 줄 단위 문장 틀 (%o 물건, %n 숫자)
+
+@@ forest
+== 숲
+@@ Temple
+== 신전
+@@ Coal Mine
+== 탄광
+@@ Atlantis Room
+== 아틀란티스 방
+@@ Up a Tree
+== 나무 위
+@@ water
+== 물
+@@ pair of hands
+== 두 손
+@@ Timber Room
+== 목재 창고
+@@ control panel
+== 조종판
+@@ jade figurine
+== 비취 조각상
+@@ Dome Room
+== 둥근 지붕 방
+@@ torch
+== 횃불
+@@ Land of the Dead
+== 죽은 자의 땅
+@@ lunch
+== 점심 도시락
+@@ Round Room
+== 둥근 방
+@@ Ladder Top
+== 사다리 위
+@@ matchbook
+== 성냥갑
+@@ Torch Room
+== 횃불 방
+@@ Maze
+== 미로
+@@ you
+== 당신
+@@ Rocky Ledge
+== 바위 턱
+@@ Canyon View
+== 협곡 전망대
+@@ crystal trident
+== 수정 삼지창
+@@ ancient map
+== 오래된 지도
+@@ Damp Cave
+== 축축한 동굴
+@@ pair of candles
+== 양초 한 쌍
+@@ Kitchen
+== 부엌
+@@ granite wall
+== 화강암 벽
+@@ grating
+== 쇠창살
+@@ Sandy Beach
+== 모래 해변
+@@ Slide Room
+== 미끄럼틀 방
+@@ Forest
+== 숲
+@@ Cellar
+== 지하실
+@@ altar
+== 제단
+@@ bloody axe
+== 피 묻은 도끼
+@@ Frigid River
+== 얼음장 강
+@@ Entrance to Hades
+== 저승 입구
+@@ Shore
+== 강기슭
+@@ ZORK owner's manual
+== 조크 사용 설명서
+@@ chimney
+== 굴뚝
+@@ cretin
+== 얼간이
+@@ Gas Room
+== 가스 방
+@@ Aragain Falls
+== 아라게인 폭포
+@@ leak
+== 새는 곳
+@@ Mirror Room
+== 거울 방
+@@ carpet
+== 양탄자
+@@ songbird
+== 노래하는 새
+@@ wooden railing
+== 나무 난간
+@@ rope
+== 밧줄
+@@ rainbow
+== 무지개
+@@ small pile of coal
+== 작은 석탄 더미
+@@ Cave
+== 동굴
+@@ yellow button
+== 노란 단추
+@@ West of House
+== 집 서쪽
+@@ white house
+== 하얀 집
+@@ random object
+== 아무 물건
+@@ Stream View
+== 개울 전망대
+@@ punctured boat
+== 구멍 난 배
+@@ Engravings Cave
+== 조각 동굴
+@@ bat
+== 박쥐
+@@ prayer
+== 기도문
+@@ Ladder Bottom
+== 사다리 아래
+@@ passage
+== 통로
+@@ Canyon Bottom
+== 협곡 바닥
+@@ Living Room
+== 거실
+@@ leaflet
+== 전단지
+@@ board
+== 판자
+@@ Cyclops Room
+== 외눈박이 거인의 방
+@@ pedestal
+== 받침대
+@@ golden clockwork canary
+== 황금 태엽 카나리아
+@@ Treasure Room
+== 보물 방
+@@ brass bell
+== 놋쇠 종
+@@ wall with engravings
+== 조각이 새겨진 벽
+@@ Behind House
+== 집 뒤
+@@ Stream
+== 개울
+@@ wooden ladder
+== 나무 사다리
+@@ Machine Room
+== 기계실
+@@ burned-out lantern
+== 다 닳은 램프
+@@ painting
+== 그림
+@@ Smelly Room
+== 냄새나는 방
+@@ large bag
+== 큰 자루
+@@ Reservoir
+== 저수지
+@@ skeleton key
+== 만능 열쇠
+@@ leather bag of coins
+== 동전 가죽 주머니
+@@ cliff
+== 절벽
+@@ brown sack
+== 갈색 자루
+@@ wooden door
+== 나무 문
+@@ switch
+== 스위치
+@@ Twisting Passage
+== 구불구불한 통로
+@@ white cliffs
+== 하얀 절벽
+@@ jewel-encrusted egg
+== 보석 박힌 알
+@@ Chasm
+== 깊은 틈
+@@ tree
+== 나무
+@@ basket
+== 바구니
+@@ hand-held air pump
+== 손 공기 펌프
+@@ Dam Base
+== 댐 아래
+@@ stone barrow
+== 돌무덤
+@@ screwdriver
+== 드라이버
+@@ broken jewel-encrusted egg
+== 깨진 보석 박힌 알
+@@ zorkmid
+== 조크미드
+@@ Strange Passage
+== 이상한 통로
+@@ mountain range
+== 산맥
+@@ large emerald
+== 큰 에메랄드
+@@ Dam Lobby
+== 댐 로비
+@@ door
+== 문
+@@ Gallery
+== 화랑
+@@ Reservoir South
+== 저수지 남쪽
+@@ sailor
+== 뱃사람
+@@ End of Rainbow
+== 무지개 끝
+@@ beautiful jeweled scarab
+== 아름다운 보석 풍뎅이
+@@ The Troll Room
+== 트롤의 방
+@@ Clearing
+== 빈터
+@@ Altar
+== 제단
+@@ East-West Passage
+== 동서 통로
+@@ sand
+== 모래
+@@ shovel
+== 삽
+@@ beautiful brass bauble
+== 아름다운 놋쇠 장신구
+@@ bird's nest
+== 새 둥지
+@@ viscous material
+== 끈적한 물질
+@@ North of House
+== 집 북쪽
+@@ glass bottle
+== 유리병
+@@ Cold Passage
+== 차가운 통로
+@@ crystal skull
+== 수정 해골
+@@ Dead End
+== 막다른 곳
+@@ small piece of vitreous slag
+== 작은 유리질 찌꺼기
+@@ pile of bodies
+== 시체 더미
+@@ Winding Passage
+== 꼬불꼬불한 통로
+@@ brass lantern
+== 놋쇠 램프
+@@ blessings
+== 축복
+@@ broken clockwork canary
+== 망가진 태엽 카나리아
+@@ troll
+== 트롤
+@@ brown button
+== 갈색 단추
+@@ pot of gold
+== 금 단지
+@@ Sandy Cave
+== 모래 동굴
+@@ pile of leaves
+== 낙엽 더미
+@@ blast of air
+== 돌풍
+@@ Deep Canyon
+== 깊은 협곡
+@@ broken lantern
+== 깨진 램프
+@@ thief
+== 도둑
+@@ nasty knife
+== 험악한 칼
+@@ White Cliffs Beach
+== 하얀 절벽 해변
+@@ red hot brass bell
+== 시뻘겋게 달아오른 놋쇠 종
+@@ kitchen table
+== 부엌 식탁
+@@ Squeaky Room
+== 끽끽 방
+@@ lurking grue
+== 숨어 있는 그루
+@@ North-South Passage
+== 남북 통로
+@@ stairs
+== 계단
+@@ Dam
+== 댐
+@@ gold coffin
+== 황금 관
+@@ tan label
+== 황갈색 딱지
+@@ broken timber
+== 부러진 각목
+@@ mirror
+== 거울
+@@ red buoy
+== 빨간 부표
+@@ quantity of water
+== 물
+@@ Attic
+== 다락방
+@@ Mine Entrance
+== 탄광 입구
+@@ ground
+== 땅
+@@ stone door
+== 돌문
+@@ Reservoir North
+== 저수지 북쪽
+@@ huge diamond
+== 커다란 다이아몬드
+@@ such thing
+== 그런 것
+@@ tube
+== 튜브
+@@ black book
+== 검은 책
+@@ trophy case
+== 트로피 진열장
+@@ number
+== 숫자
+@@ cyclops
+== 외눈박이 거인
+@@ green bubble
+== 초록 거품
+@@ platinum bar
+== 백금 막대
+@@ On the Rainbow
+== 무지개 위
+@@ sceptre
+== 홀
+@@ Loud Room
+== 시끄러운 방
+@@ skeleton
+== 해골
+@@ machine
+== 기계
+@@ magic boat
+== 마법 배
+@@ South of House
+== 집 남쪽
+@@ bolt
+== 볼트
+@@ number of ghosts
+== 유령 무리
+@@ red button
+== 빨간 단추
+@@ boarded window
+== 판자로 막힌 창문
+@@ sapphire-encrusted bracelet
+== 사파이어 박힌 팔찌
+@@ tour guidebook
+== 관광 안내서
+@@ Grating Room
+== 쇠창살 방
+@@ clove of garlic
+== 마늘 한 쪽
+@@ pile of plastic
+== 플라스틱 더미
+@@ Studio
+== 화실
+@@ crack
+== 틈
+@@ dam
+== 댐
+@@ Maintenance Room
+== 정비실
+@@ blue button
+== 파란 단추
+@@ river
+== 강
+@@ sword
+== 검
+@@ Narrow Passage
+== 좁은 통로
+@@ trunk of jewels
+== 보석 상자
+@@ small mailbox
+== 작은 우편함
+@@ chute
+== 미끄럼 통로
+@@ rusty knife
+== 녹슨 칼
+@@ set of teeth
+== 이빨
+@@ Bat Room
+== 박쥐 방
+@@ wrench
+== 렌치
+@@ group of tool chests
+== 공구 상자 무더기
+@@ Forest Path
+== 숲길
+@@ surrounding wall
+== 둘러싼 벽
+@@ trap door
+== 뚜껑 문
+@@ Egyptian Room
+== 이집트 방
+@@ chalice
+== 성배
+@@ kitchen window
+== 부엌 창문
+@@ Stone Barrow
+== 돌무덤
+@@ Shaft Room
+== 수직굴 방
+@@ stiletto
+== 단검
+@@ East of Chasm
+== 깊은 틈 동쪽
+@@ pseudo
+== 그것
+@@ Drafty Room
+== 바람 부는 방
+@@ table
+== 식탁
+@@ The grating is closed!
+== 쇠창살이 닫혀 있습니다!
+@@ You can't go that way.
+== 그쪽으로는 갈 수 없습니다.
+@@ Those things aren't here!
+== 그런 것들은 여기 없습니다!
+@@ You can't see any 
+== 여기에는 
+@@  here!
+== {이} 보이지 않습니다!
+@@ The 
+== {}
+@@  seems confused. "I don't see any 
+== {은} 어리둥절한 얼굴입니다. "여기엔 
+@@  here!"
+== {이} 안 보이는데!"
+@@ You should say whether you want to go up or down.
+== 위로 갈지 아래로 갈지 말씀해 주셔야 합니다.
+@@ You can't talk to the sailor that way.
+== 뱃사람에게 그런 식으로 말을 걸 수는 없습니다.
+@@ There is no sailor to be seen.
+== 뱃사람은 어디에도 보이지 않습니다.
+@@ You seem to be repeating yourself.
+== 같은 말을 되풀이하고 계신 것 같군요.
+@@ I think that phrase is getting a bit worn out.
+== 그 말도 이제 좀 닳고 닳은 것 같습니다.
+@@ Nothing happens here.
+== 여기서는 아무 일도 일어나지 않습니다.
+@@ The ground is too hard for digging here.
+== 여기는 땅이 너무 단단해서 팔 수가 없습니다.
+@@ The grue is a sinister, lurking presence in the dark places of the earth. Its favorite diet is adventurers, but its insatiable appetite is tempered by its fear of light. No grue has ever been seen by the light of day, and few have survived its fearsome jaws to tell the tale.
+== 그루는 이 땅의 어두운 곳에 숨어 도사리고 있는 불길한 존재입니다. 가장 좋아하는 먹이는 모험가이지만, 그 끝없는 식욕도 빛에 대한 두려움 앞에서는 누그러집니다. 대낮의 빛 아래에서 그루를 본 자는 아무도 없으며, 그 무시무시한 턱에서 살아남아 이야기를 전한 자도 거의 없습니다.
+@@ There is no grue here, but I'm sure there is at least one lurking in the darkness nearby. I wouldn't let my light go out if I were you!
+== 여기에 그루는 없지만, 분명 근처 어둠 속 어딘가에 적어도 한 마리는 숨어 있을 겁니다. 제가 당신이라면 불이 꺼지게 두지는 않겠습니다!
+@@ It makes no sound but is always lurking in the darkness nearby.
+== 그것은 아무 소리도 내지 않지만, 언제나 가까운 어둠 속에 도사리고 있습니다.
+@@ Talking to yourself is said to be a sign of impending mental collapse.
+== 혼잣말은 정신이 곧 무너질 징조라고들 하지요.
+@@ Only you can do that.
+== 그건 당신만 할 수 있는 일입니다.
+@@ You'll have to do that on your own.
+== 그건 혼자 힘으로 하셔야 합니다.
+@@ Auto-cannibalism is not the answer.
+== 자기 몸을 먹는다고 해결되는 건 없습니다.
+@@ Suicide is not the answer.
+== 자살은 해답이 아닙니다.
+@@ Why don't you just walk like normal people?
+== 그냥 남들처럼 걸어 다니시는 게 어떻습니까?
+@@ How romantic!
+== 참 낭만적이군요!
+@@ Your image in the mirror looks tired.
+== 거울 속 당신의 모습은 지쳐 보입니다.
+@@ That's difficult unless your eyes are prehensile.
+== 눈으로 물건을 집을 수 있다면 모를까, 그건 어렵습니다.
+@@ You must specify a direction to go.
+== 갈 방향을 말씀해 주셔야 합니다.
+@@ I can't help you there....
+== 그건 저도 도와드릴 수가 없군요....
+@@ Not a chance.
+== 어림도 없습니다.
+@@ The zorkmid is the unit of currency of the Great Underground Empire.
+== 조크미드는 위대한 지하 제국의 화폐 단위입니다.
+@@ The best way to find zorkmids is to go out and look for them.
+== 조크미드를 찾는 가장 좋은 방법은 밖으로 나가서 찾아보는 것입니다.
+@@ It's too dark to see.
+== 너무 어두워서 보이지 않습니다.
+@@ It's not clear what you're referring to.
+== 무엇을 가리키시는지 분명하지 않습니다.
+@@ other 
+== 그 밖의 
+@@ object
+== 말씀하신 물건
+@@  that you mentioned 
+== {은} 
+@@ are
+== 모두 
+@@ is
+== {}
+@@ n't here.
+== 여기 없습니다.
+@@ There's nothing here you can take.
+== 여기에는 가질 수 있는 것이 없습니다.
+@@ : 
+== : 
+@@ I don't see what you are referring to.
+== 무엇을 말씀하시는지 모르겠습니다.
+@@ I beg your pardon?
+== 뭐라고 하셨습니까?
+@@ I can't help your clumsiness.
+== 당신의 서투름은 저도 어쩔 수가 없습니다.
+@@ Sorry, you can't correct mistakes in quoted text.
+== 죄송하지만 따옴표 안의 글은 고칠 수 없습니다.
+@@ Warning: only the first word after OOPS is used.
+== 경고: OOPS 다음의 첫 단어만 사용됩니다.
+@@ There was no word to replace!
+== 바꿀 단어가 없습니다!
+@@ Beg pardon?
+== 네? 뭐라고요?
+@@ It's difficult to repeat fragments.
+== 문장의 일부만 되풀이하기는 어렵습니다.
+@@ That would just repeat a mistake.
+== 그러면 실수를 되풀이할 뿐입니다.
+@@ I couldn't understand that sentence.
+== 그 문장을 이해하지 못했습니다.
+@@ There were too many nouns in that sentence.
+== 그 문장에는 명사가 너무 많습니다.
+@@ Please consult your manual for the correct way to talk to other people or creatures.
+== 다른 사람이나 생물에게 말을 거는 올바른 방법은 설명서를 참고하십시오.
+@@ Nothing happens.
+== 아무 일도 일어나지 않습니다.
+@@ I don't know the word "
+== 모르는 단어입니다: "
+@@ ".
+== ".
+@@ You used the word "
+== 다음 단어를 어떻게 쓰신 건지 이해하지 못했습니다: "
+@@ " in a way that I don't understand.
+== ".
+@@ There was no verb in that sentence!
+== 그 문장에는 동사가 없습니다!
+@@ That sentence isn't one I recognize.
+== 알아들을 수 없는 문장입니다.
+@@ That question can't be answered.
+== 그 질문에는 대답할 수 없습니다.
+@@ What do you want to 
+== 무엇을 
+@@ tell
+== tell
+@@ "I don't understand! What are you referring to?"
+== "무슨 말인지 모르겠어! 뭘 가리키는 거야?"
+@@ , 
+== , 
+@@ the 
+== {}
+@@  of
+==  of
+@@ your hands
+== 두 손
+@@ There seems to be a noun missing in that sentence!
+== 그 문장에는 명사가 하나 빠진 것 같습니다!
+@@ (How about the 
+== ( 
+@@ ?)
+== {은} 어떻습니까?)
+@@ It's too dark to see!
+== 너무 어두워서 아무것도 보이지 않습니다!
+@@ Which 
+== 어느 
+@@  do you mean, 
+== {을} 말씀하시는 겁니까, 
+@@  or 
+==  아니면 
+@@ ?
+== ?
+@@ I don't see what you're referring to.
+== 무엇을 말씀하시는지 모르겠습니다.
+@@ You don't have that!
+== 그건 가지고 있지 않습니다!
+@@ You don't have the 
+== 가지고 있지 않습니다: 
+@@ (Taken)
+== (먼저 집어 들었습니다)
+@@ You can't use multiple 
+== 여러 개의 
+@@ in
+== {}
+@@ direct objects with "
+== 목적어를 함께 쓸 수 없는 명령입니다: "
+@@ Maximum verbosity.
+== 최대한 자세히 묘사합니다.
+@@ Brief descriptions.
+== 간단히 묘사합니다.
+@@ Superbrief descriptions.
+== 아주 간단히 묘사합니다.
+@@ You are empty-handed.
+== 빈손입니다.
+@@ Would you like to restart the game from the beginning, restore a saved game position, or end this session of the game?\n(Type RESTART, RESTORE, or QUIT):\n>
+== 게임을 처음부터 다시 시작하시겠습니까, 저장한 게임을 불러오시겠습니까, 아니면 이번 게임을 끝내시겠습니까?\n(RESTART, RESTORE, QUIT 중 하나를 입력하십시오):\n>
+@@ Ok.
+== 알겠습니다.
+@@ Failed.
+== 실패했습니다.
+@@ Do you wish to leave the game? (Y is affirmative): 
+== 게임을 그만두시겠습니까? (Y 는 예): 
+@@ Do you wish to restart? (Y is affirmative): 
+== 다시 시작하시겠습니까? (Y 는 예): 
+@@ Restarting.
+== 다시 시작합니다.
+@@ Here begins a transcript of interaction with
+== 다음 게임의 진행 기록을 시작합니다:
+@@ Here ends a transcript of interaction with
+== 다음 게임의 진행 기록을 마칩니다:
+@@ ZORK I: The Great Underground Empire\nInfocom interactive fiction - a fantasy story\nCopyright (c) 1981, 1982, 1983, 1984, 1985, 1986
+== ZORK I: The Great Underground Empire\nInfocom interactive fiction - a fantasy story\nCopyright (c) 1981, 1982, 1983, 1984, 1985, 1986
+@@  Infocom, Inc. All rights reserved.
+==  Infocom, Inc. All rights reserved.
+@@ ZORK is a registered trademark of Infocom, Inc.\nRelease 
+== ZORK is a registered trademark of Infocom, Inc.\nRelease 
+@@  / Serial number 
+==  / Serial number 
+@@ Verifying disk...
+== 디스크를 검사하는 중...
+@@ The disk is correct.
+== 디스크에 이상이 없습니다.
+@@ ** Disk Failure **
+== ** 디스크 오류 **
+@@ Illegal call to #RND.
+== #RND 를 잘못 호출했습니다.
+@@ A hollow voice says "Fool."
+== 공허한 목소리가 말합니다. "바보."
+@@  is rudely awakened.
+== {이} 거칠게 잠에서 깨어났습니다.
+@@ He's wide awake, or haven't you noticed...
+== 그는 말똥말똥 깨어 있습니다. 눈치 못 채셨습니까...
+@@  isn't sleeping.
+== {은} 자고 있지 않습니다.
+@@ Nobody seems to be awaiting your answer.
+== 아무도 당신의 대답을 기다리고 있지 않은 것 같습니다.
+@@ I've known strange people, but fighting a 
+== 별난 사람은 많이 봤지만, 싸울 상대가 
+@@ Trying to attack a 
+== {}
+@@  with your bare hands is suicidal.
+== {을} 맨손으로 공격하겠다니 자살 행위입니다.
+@@ You aren't even holding the 
+== 들고 있지도 않은 물건입니다: 
+@@ .
+== .
+@@ Trying to attack the 
+== {}
+@@  with a 
+== {을} 
+@@  is suicidal.
+== {으로} 공격하겠다니 자살 행위입니다.
+@@ Sorry, my memory is poor. Please give a direction.
+== 죄송하지만 기억력이 나빠서요. 방향을 말씀해 주십시오.
+@@ You can't blast anything by using words.
+== 말만으로는 아무것도 날려 버릴 수 없습니다.
+@@  must be on the ground to be boarded.
+== {을} 타려면 땅 위에 놓여 있어야 합니다.
+@@ You are already in the 
+== 이미 타고 있습니다: 
+@@ You have a theory on how to board a 
+== {}
+@@ , perhaps?
+== 에 올라탈 묘안이라도 있으신 겁니까?
+@@ You are now in the 
+== 탑승했습니다: 
+@@ If you wish, but heaven only knows why.
+== 원하신다면야. 왜 그러시는지는 하늘만 알겠지만요.
+@@ Bug? Not in a flawless program like this! (Cough, cough).
+== 버그요? 이렇게 완벽한 프로그램에요! (콜록, 콜록).
+@@ You didn't say with what!
+== 무엇으로 하라는 건지 말씀하지 않으셨습니다!
+@@ With a 
+== 고작 
+@@ ??!?
+== {으로}??!?
+@@  catches fire. Unfortunately, you were 
+== 에 불이 붙었습니다. 불행히도 그때 당신은 그것과 너무 가까이 
+@@ holding
+== {}
+@@  catches fire and is consumed.
+== 에 불이 붙더니 다 타 버렸습니다.
+@@ You can't burn a 
+== 태울 수 없습니다: 
+@@ Preposterous!
+== 말도 안 됩니다!
+@@ You can't climb onto the 
+== 올라갈 수 없습니다: 
+@@  do
+== {은}
+@@ es
+== {}
+@@ n't lead 
+==  
+@@ up
+== 위
+@@ down
+== 아래
+@@ ward.
+== 쪽으로 이어지지 않습니다.
+@@ Climbing the walls is to no avail.
+== 벽을 기어오르려 해 봐야 소용없습니다.
+@@ There are no climbable trees here.
+== 여기에는 올라갈 만한 나무가 없습니다.
+@@ You can't do that!
+== 그렇게 할 수 없습니다!
+@@ You must tell me how to do that to a 
+== 그걸 어떻게 하라는 건지 알려 주셔야 합니다: 
+@@ Closed.
+== 닫았습니다.
+@@ It is now pitch black.
+== 이제 칠흑같이 어둡습니다.
+@@ It is already closed.
+== 이미 닫혀 있습니다.
+@@  is now closed.
+== {이} 닫혔습니다.
+@@ You cannot close that.
+== 그건 닫을 수 없습니다.
+@@  pays no attention.
+== {은} 들은 척도 하지 않습니다.
+@@ You cannot talk to that!
+== 그것에게는 말을 걸 수 없습니다!
+@@ Well, for one, you are playing Zork...
+== 글쎄요, 우선 하나는 지금 조크를 하고 계시다는 거죠...
+@@ You have lost your mind.
+== 정신이 나가셨군요.
+@@ You can't cross that!
+== 그건 건널 수 없습니다!
+@@ Insults of this nature won't help you.
+== 그런 식으로 욕해 봐야 도움이 안 됩니다.
+@@ What a loony!
+== 정신 나간 양반 같으니!
+@@ Such language in a high-class establishment like this!
+== 이렇게 고상한 곳에서 그런 험한 말을!
+@@ Not a bright idea, especially since you're in it.
+== 좋은 생각이 아닙니다. 더구나 당신이 그 안에 있는데요.
+@@ Your skillful 
+== 당신의 능숙한 
+@@ smanship slices the 
+==  솜씨로 단번에 
+@@  into innumerable slivers which blow away.
+== {을} 셀 수 없이 많은 조각으로 베어 냈고, 조각들은 바람에 날려 흩어졌습니다.
+@@ The "cutting edge" of a 
+== "날"로 치자면, 
+@@  is hardly adequate.
+== {은} 영 쓸모가 없습니다.
+@@ Strange concept, cutting the 
+== 이상한 발상이군요. 자르겠다니요, 
+@@ ....
+== ....
+@@ Come on, now!
+== 아이고, 그만 좀 하시죠!
+@@ There's no reason to be digging here.
+== 여기를 팔 이유가 없습니다.
+@@ Digging with the 
+== {}
+@@  is slow and tedious.
+== {으로} 땅을 파는 건 느리고 지루한 일입니다.
+@@ Digging with a 
+== {}
+@@  is silly.
+== {으로} 땅을 파다니 어리석은 짓입니다.
+@@ You're not in that!
+== 그 안에 있지도 않은데요!
+@@ You are on your own feet again.
+== 다시 두 발로 섰습니다.
+@@ You realize that getting out here would be fatal.
+== 여기서 내렸다가는 목숨이 위험하다는 것을 깨닫습니다.
+@@ How peculiar!
+== 참 별나군요!
+@@ Dropped.
+== 내려놓았습니다.
+@@ You're not holding that.
+== 그것을 들고 있지 않습니다.
+@@ How can you drink that?
+== 그걸 어떻게 마신다는 겁니까?
+@@ Thank you very much. It really hit the spot.
+== 정말 고맙습니다. 딱 먹고 싶던 참이었어요.
+@@ There isn't any water here.
+== 여기에는 물이 없습니다.
+@@ You have to be holding the 
+== 먼저 손에 들고 있어야 합니다: 
+@@  first.
+== .
+@@ You'll have to open the 
+== 먼저 열어야 합니다: 
+@@ I don't think that the 
+== {}
+@@  would agree with you.
+== {이} 당신 뜻에 동의할 것 같지는 않군요.
+@@ Thank you very much. I was rather thirsty (from all this talking, probably).
+== 정말 고맙습니다. 마침 목이 좀 말랐거든요 (아마 이렇게 말을 많이 해서겠지요).
+@@ ...
+== ...
+@@ echo echo ...
+== echo echo ...
+@@ You are left in the dark...
+== 어둠 속에 남겨졌습니다...
+@@ There's nothing special about the 
+== 특별할 것 없는 평범한 
+@@ What a bizarre concept!
+== 참으로 기이한 발상이군요!
+@@ There is nothing to fill it with.
+== 채울 만한 것이 없습니다.
+@@ There's nothing to fill it with.
+== 채울 만한 것이 없습니다.
+@@ You may know how to do that, but I don't.
+== 당신은 그 방법을 아실지 몰라도, 저는 모릅니다.
+@@ Within six feet of your head, assuming you haven't left that somewhere.
+== 당신 머리에서 2 미터 안쪽에 있습니다. 어디 두고 오지 않으셨다면요.
+@@ You're around here somewhere...
+== 당신은 이 근처 어딘가에 있습니다...
+@@ You find it.
+== 찾았습니다.
+@@ You have it.
+== 당신이 가지고 있습니다.
+@@ It's right here.
+== 바로 여기 있습니다.
+@@  has it.
+== {이} 가지고 있습니다.
+@@ It's on the 
+== 그건 이 위에 있습니다: 
+@@ It's in the 
+== 그건 이 안에 있습니다: 
+@@ Beats me.
+== 글쎄요, 모르겠습니다.
+@@ You're nuts!
+== 제정신이 아니시군요!
+@@ The FROBOZZ Corporation created, owns, and operates this dungeon.
+== 이 던전은 프로보즈 회사가 만들었고, 소유하고 있으며, 운영하고 있습니다.
+@@ That's easy for you to say since you don't even have the 
+== 말이야 쉽지요. 정작 가지고 있지도 않으시면서. 그 물건은: 
+@@ You can't give a 
+== {}
+@@  to a 
+== {을} 줄 수 없는 상대입니다: 
+@@ !
+== !
+@@  refuses it politely.
+== {은} 정중히 사양합니다.
+@@ Bizarre!
+== 기괴하군요!
+@@  bows his head to you in greeting.
+== {이} 고개를 숙여 당신에게 인사합니다.
+@@ It's a well known fact that only schizophrenics say "Hello" to a 
+== "Hello"라고 인사하는 건 정신 나간 사람들뿐이라는 건 잘 알려진 사실입니다. 그것도 상대가 
+@@ The incantation echoes back faintly, but nothing else happens.
+== 주문이 희미하게 메아리쳐 돌아올 뿐, 아무 일도 일어나지 않습니다.
+@@ How can you inflate that?
+== 그걸 무슨 수로 부풀린단 말입니까?
+@@ I'd sooner kiss a pig.
+== 차라리 돼지한테 입을 맞추겠습니다.
+@@ Nobody's home.
+== 아무도 없습니다.
+@@ Why knock on a 
+== 노크라니요, 그것도 
+@@ It is already off.
+== 이미 꺼져 있습니다.
+@@  is now off.
+== {이} 꺼졌습니다.
+@@ You can't turn that off.
+== 그건 끌 수 없습니다.
+@@ It is already on.
+== 이미 켜져 있습니다.
+@@  is now on.
+== {이} 켜졌습니다.
+@@ If you wish to burn the 
+== {}
+@@ , you should say so.
+== {을} 태우고 싶다면 그렇다고 말씀하십시오.
+@@ You can't turn that on.
+== 그건 켤 수 없습니다.
+@@ You can't launch that by saying "launch"!
+== "launch"라고 말한다고 그게 띄워지지는 않습니다!
+@@ That's pretty weird.
+== 거참 이상한 짓이군요.
+@@ Getting tired?
+== 피곤하십니까?
+@@  is too big to jump over.
+== {은} 너무 커서 뛰어넘을 수 없습니다.
+@@ That would be a good trick.
+== 그게 된다면 대단한 묘기겠군요.
+@@ This was not a very safe place to try jumping.
+== 이곳은 뛰어내리기에 그다지 안전한 장소가 아니었습니다.
+@@ In a feat of unaccustomed daring, you manage to land on your feet without killing yourself.
+== 평소답지 않은 대담함을 발휘하여, 당신은 죽지 않고 두 발로 무사히 착지하는 데 성공합니다.
+@@  makes no sound.
+== {은} 아무 소리도 내지 않습니다.
+@@ It doesn't seem to work.
+== 잘 안 되는 것 같습니다.
+@@ There is nothing behind the 
+== 뒤를 살펴봤지만 아무것도 없습니다: 
+@@  is open, but I can't tell what's beyond it.
+== {은} 열려 있지만, 그 너머에 무엇이 있는지는 알 수 없습니다.
+@@  is closed.
+== {은} 닫혀 있습니다.
+@@ There is nothing special to be seen.
+== 특별히 보이는 것이 없습니다.
+@@  is empty.
+== {은} 비어 있습니다.
+@@ You can't look inside a 
+== 안을 들여다볼 수 없는 물건입니다: 
+@@ Look on a 
+== {}
+@@ ???
+==  위를 보라고요???
+@@ There is nothing but dust there.
+== 거기에는 먼지밖에 없습니다.
+@@  b an hg gs 
+==  b an hg gs 
+@@ You can't do that.
+== 그렇게 할 수 없습니다.
+@@ It's not clear that a 
+== {}
+@@  can be melted.
+== {이} 녹는 물건인지는 잘 모르겠습니다.
+@@ You aren't an accomplished enough juggler.
+== 당신은 그 정도로 솜씨 좋은 저글링 곡예사가 아닙니다.
+@@ Moving the 
+== {}
+@@  reveals nothing.
+== {을} 움직여 봐도 아무것도 나오지 않습니다.
+@@ You can't move the 
+== 움직일 수 없는 물건입니다: 
+@@ You'll have to speak up if you expect me to hear you!
+== 제가 알아듣길 바란다면 좀 더 크게 말씀하셔야 합니다!
+@@ Trying to destroy the 
+== {}
+@@  with 
+== {을} 
+@@ your bare hands
+== 맨손
+@@ a 
+== {}
+@@  is futile.
+== {으로} 부수려 해 봐야 헛수고입니다.
+@@ Nice try.
+== 시도는 좋았습니다.
+@@ The cyclops, hearing the name of his father's deadly nemesis, flees the room by knocking down the wall on the east of the room.
+== 아버지의 철천지원수의 이름을 듣자, 외눈박이 거인은 방 동쪽 벽을 들이받아 무너뜨리고 허둥지둥 달아납니다.
+@@ Wasn't he a sailor?
+== 그 사람은 뱃사람 아니었나요?
+@@ You probably put spinach in your gas tank, too.
+== 자동차 기름 탱크에도 시금치를 넣으시겠군요.
+@@ It is already open.
+== 이미 열려 있습니다.
+@@ Opened.
+== 열었습니다.
+@@  opens.
+== {이} 열립니다.
+@@ Opening the 
+== {}
+@@  reveals 
+== {을} 열자 안에 든 것이 드러납니다: 
+@@ Ahoy -- 
+== 어이쿠 -- 
+@@  overboard!
+== {이} 배 밖으로 떨어졌습니다!
+@@ You're not in anything!
+== 당신은 아무것에도 타고 있지 않습니다!
+@@ Huh?
+== 네?
+@@ You can't pick that.
+== 그건 딸 수 없습니다.
+@@ You become so engrossed in the role of the 
+== 당신은 
+@@  that you kill yourself, just as he might have done!
+==  역할에 너무 몰입한 나머지, 그가 했을 법한 대로 스스로 목숨을 끊고 말았습니다!
+@@ That's silly!
+== 바보 같은 소리!
+@@ This has no effect.
+== 아무 효과도 없습니다.
+@@  is extinguished.
+== {이} 꺼졌습니다.
+@@ The water spills over the 
+== 물이 
+@@ , to the floor, and evaporates.
+== {을} 타고 넘쳐 바닥으로 흘러내리더니 증발해 버립니다.
+@@ If you pray enough, your prayers may be answered.
+== 충분히 기도하면 기도가 응답받을지도 모릅니다.
+@@ Pump it up with a 
+== 그걸로 바람을 넣겠다고요? 
+@@ It's really not clear how.
+== 어떻게 해야 할지 도무지 모르겠습니다.
+@@ You can't push things to that.
+== 그쪽으로는 물건을 밀 수 없습니다.
+@@  isn't open.
+== {은} 열려 있지 않습니다.
+@@ How can you do that?
+== 그걸 어떻게 하겠다는 겁니까?
+@@  is already in the 
+== {은} 이미 이 안에 들어 있습니다: 
+@@ There's no room.
+== 들어갈 자리가 없습니다.
+@@ Done.
+== 했습니다.
+@@ That hiding place is too obvious.
+== 그 숨길 곳은 너무 뻔합니다.
+@@ There's no good surface on the 
+== 물건을 올려놓을 만한 평평한 곳이 없습니다: 
+@@ What a (ahem!) strange idea.
+== 거참 (에헴!) 별난 생각이군요.
+@@ It is impossible to read in the dark.
+== 어둠 속에서는 글을 읽을 수 없습니다.
+@@ How does one look through a 
+== 그걸 통해 무슨 수로 본단 말입니까? 
+@@ How does one read a 
+== 그걸 무슨 수로 읽는단 말입니까? 
+@@ It could very well be too late!
+== 이미 너무 늦었을지도 모릅니다!
+@@ It is hardly likely that the 
+== {}
+@@  is interested.
+== {이} 관심을 보일 것 같지는 않습니다.
+@@ How, exactly, can you ring that?
+== 그걸 정확히 어떻게 울린다는 겁니까?
+@@ Say what?
+== 뭐라고요?
+@@ You must address the 
+== 직접 
+@@  directly.
+== 에게 말을 거셔야 합니다.
+@@ Talking to yourself is a sign of impending mental collapse.
+== 혼잣말은 정신 붕괴가 임박했다는 신호입니다.
+@@ You find nothing unusual.
+== 별다른 것은 찾지 못했습니다.
+@@ Why would you send for the 
+== 뭐 하러 부른다는 겁니까? 
+@@ That doesn't make sends.
+== 그건 말이 안 됩니다. 보낼 말도 없고요.
+@@ Foo!
+== 푸!
+@@ This seems to have no effect.
+== 아무 효과도 없는 것 같습니다.
+@@ You can't take it; thus, you can't shake it!
+== 들 수가 없으니, 흔들 수도 없습니다!
+@@ The contents of the 
+== {}
+@@  spill 
+== 에 든 것들이 
+@@ out and disappears
+== 쏟아져 나와 사라집니다
+@@ to the ground
+== 땅바닥에 쏟아집니다
+@@ Shaken.
+== 흔들었습니다.
+@@ It sounds like there is something inside the 
+== 안에 뭔가 들어 있는 소리가 납니다: 
+@@  sounds empty.
+== {은} 텅 빈 소리가 납니다.
+@@ It smells like a 
+== 냄새를 맡아 보니 영락없는 
+@@ You can't spin that!
+== 그건 돌릴 수 없습니다!
+@@  does not understand this.
+== {은} 무슨 뜻인지 알아듣지 못합니다.
+@@ How singularly useless.
+== 참으로 쓸데없는 짓이군요.
+@@ No doubt you propose to stab the 
+== 설마 
+@@  with your pinky?
+== {을} 새끼손가락으로 찌르실 생각입니까?
+@@ You are already standing, I think.
+== 이미 서 있는 것 같은데요.
+@@ You will be lost without me!
+== 제가 없으면 당신은 길을 잃을 겁니다!
+@@ Since you aren't versed in hand-to-hand combat, you'd better attack the 
+== 당신은 맨손 격투에 익숙하지 않으니, 
+@@  with a weapon.
+== {을} 무기로 공격하는 편이 좋겠습니다.
+@@ Swimming isn't usually allowed in the 
+== 이곳에서 수영은 보통 허용되지 않습니다: 
+@@ dungeon.
+== 지하 던전.
+@@ Go jump in a lake!
+== 호수에나 가서 뛰어드시지요!
+@@ Whoosh!
+== 휘익!
+@@ You are already wearing it.
+== 이미 그것을 착용하고 있습니다.
+@@ You already have that!
+== 이미 가지고 있습니다!
+@@ You can't reach something that's inside a closed container.
+== 닫힌 용기 안에 든 것에는 손이 닿지 않습니다.
+@@  isn't in the 
+== {은} 이 안에 없습니다: 
+@@ You're inside of it!
+== 당신은 그 안에 들어가 있습니다!
+@@ You are now wearing the 
+== 착용했습니다: 
+@@ Taken.
+== 집었습니다.
+@@  pauses for a moment, perhaps thinking that you should reread the manual.
+== {은} 잠시 멈칫합니다. 아무래도 당신이 설명서를 다시 읽어야 한다고 생각하는 모양입니다.
+@@ You can't talk to the 
+== 말을 걸 수 없는 상대입니다: 
+@@ You hit your head against the 
+== 이 묘기를 시도하다가 
+@@  as you attempt this feat.
+== 에 머리를 찧고 말았습니다.
+@@ That would involve quite a contortion!
+== 그러려면 몸을 꽤나 기괴하게 비틀어야 할 겁니다!
+@@ A terrific throw! The 
+== 멋진 투구입니다! 
+@@  ducks as the 
+== {이} 몸을 숙이자 
+@@  flies by and crashes to the ground.
+== {이} 머리 위로 날아가 땅바닥에 처박힙니다.
+@@ Thrown.
+== 던졌습니다.
+@@ You can't throw anything off of that!
+== 거기서는 아무것도 던져 버릴 수 없습니다!
+@@ You can't tie anything to yourself.
+== 자기 몸에 무언가를 묶을 수는 없습니다.
+@@ You can't tie the 
+== {}
+@@  to that.
+== {은} 거기에 묶을 수 없습니다.
+@@ You could certainly never tie it with that!
+== 그걸로는 절대 묶을 수 없습니다!
+@@ Your bare hands don't appear to be enough.
+== 맨손으로는 역부족인 것 같습니다.
+@@ You can't turn that!
+== 그건 돌릴 수 없습니다!
+@@ This cannot be tied, so it cannot be untied!
+== 이건 묶을 수 없는 물건이니, 풀 수도 없습니다!
+@@ Time passes...
+== 시간이 흐릅니다...
+@@ There are odd noises in the darkness, and there is no exit in that direction.
+== 어둠 속에서 이상한 소리가 들리고, 그쪽으로는 출구가 없습니다.
+@@ Use compass directions for movement.
+== 이동할 때는 나침반 방향(north, south, east, west 등)을 쓰십시오.
+@@ It's here!
+== 바로 여기 있습니다!
+@@ You should supply a direction!
+== 방향을 말씀해 주셔야 합니다!
+@@ You can't wear the 
+== 착용할 수 없는 물건입니다: 
+@@ Naturally!
+== 물론이죠!
+@@ You cannot wind up a 
+== 태엽을 감을 수 없는 물건입니다: 
+@@ With luck, your wish will come true.
+== 운이 좋다면 소원이 이루어질 겁니다.
+@@ Aaaarrrrgggghhhh!
+== 으아아아아아아악!
+@@ At your service!
+== 분부만 내리십시오!
+@@ It is pitch black.
+== 칠흑같이 어둡습니다.
+@@  You are likely to be eaten by a grue.
+==  그루에게 잡아먹힐지도 모릅니다.
+@@ , in the 
+==  - 타고 있는 것: 
+@@ Only bats can see in the dark. And you're not one.
+== 어둠 속에서 볼 수 있는 건 박쥐뿐입니다. 그리고 당신은 박쥐가 아닙니다.
+@@ There is a 
+== 여기에 
+@@  here
+== {이} 있습니다
+@@  (providing light)
+==  (빛을 내는 중)
+@@ A 
+== {}
+@@  (being worn)
+==  (착용 중)
+@@  (outside the 
+==  (밖에 있음: 
+@@ and 
+== 그리고 
+@@ Your collection of treasures consists of:
+== 당신이 모은 보물은 다음과 같습니다:
+@@ You are carrying:
+== 가지고 있는 물건:
+@@ Sitting on the 
+== {}
+@@  is: 
+==  위에 있는 것: 
+@@  is holding: 
+== {이} 들고 있는 것: 
+@@  contains:
+==  안에 든 것:
+@@ An almost inaudible voice whispers in your ear, "Look to your treasures for the final secret."
+== 거의 들리지 않는 목소리가 당신의 귓가에 속삭입니다. "마지막 비밀은 네 보물들에게서 찾아라."
+@@ Your hand passes through its object.
+== 손이 대상을 그냥 통과해 버립니다.
+@@ Your load is too heavy
+== 짐이 너무 무겁습니다
+@@ , especially in light of your condition.
+== . 지금 몸 상태로는 더더욱 그렇습니다.
+@@ You're holding too many things already!
+== 이미 너무 많은 것을 들고 있습니다!
+@@ You're not carrying the 
+== 가지고 있지 않습니다: 
+@@  isn't here!
+== {은} 여기 없습니다!
+@@ You can't go there in a 
+== 이것을 타고는 그곳에 갈 수 없습니다: 
+@@ You can't go there without a vehicle.
+== 탈것 없이는 그곳에 갈 수 없습니다.
+@@  comes to a rest on the shore.
+== {이} 강기슭에 닿아 멈춥니다.
+@@ There are sinister gurgling noises in the darkness all around you!
+== 사방의 어둠 속에서 불길하게 꾸르륵거리는 소리가 들립니다!
+@@ You have moved into a dark place.
+== 어두운 곳으로 들어왔습니다.
+@@  leaves the room.
+== {이} 방을 나갑니다.
+@@ Oh, no! A lurking grue slithered into the 
+== 이런! 숨어 있던 그루가 
+@@ room
+== 방 안
+@@ You are standing in an open field west of a white house, with a boarded front door.
+== 당신은 하얀 집 서쪽의 탁 트인 들판에 서 있습니다. 집의 현관문은 판자로 막혀 있습니다.
+@@  A secret path leads southwest into the forest.
+==  비밀 오솔길이 남서쪽 숲속으로 이어져 있습니다.
+@@ You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is 
+== 당신은 하얀 집 뒤에 있습니다. 동쪽으로 숲으로 들어가는 길이 나 있습니다. 집 한쪽 구석에 작은 창문이 하나 있는데, 
+@@ open.
+== 열려 있습니다.
+@@ slightly ajar.
+== 살짝 열려 있습니다.
+@@ The boards are securely fastened.
+== 판자들이 단단히 박혀 있습니다.
+@@ Dental hygiene is highly recommended, but I'm not sure what you want to brush them with.
+== 치아 위생은 매우 바람직하지만, 무엇으로 닦으려는 건지 모르겠습니다.
+@@ A nice idea, but with a 
+== 좋은 생각이긴 한데, 그걸로요? 
+@@ The west wall is solid granite here.
+== 이곳의 서쪽 벽은 단단한 화강암입니다.
+@@ It's solid granite.
+== 단단한 화강암입니다.
+@@ The east wall is solid granite here.
+== 이곳의 동쪽 벽은 단단한 화강암입니다.
+@@ It only SAYS "Granite Wall".
+== 이름만 "화강암 벽"일 뿐입니다.
+@@ The wall isn't granite.
+== 이 벽은 화강암이 아닙니다.
+@@ There is no granite wall here.
+== 여기에는 화강암 벽이 없습니다.
+@@ The songbird is not here but is probably nearby.
+== 노래하는 새는 여기 없지만, 아마 근처에 있을 겁니다.
+@@ You can't hear the songbird now.
+== 지금은 노래하는 새 소리가 들리지 않습니다.
+@@ It can't be followed.
+== 따라갈 수 없습니다.
+@@ You can't see any songbird here.
+== 여기에는 노래하는 새가 보이지 않습니다.
+@@ Why not find your brains?
+== 차라리 정신부터 찾으시지요?
+@@ It seems to be to the west.
+== 서쪽에 있는 것 같습니다.
+@@ It was here just a minute ago....
+== 방금 전까지만 해도 여기 있었는데....
+@@ You're not at the house.
+== 당신은 집에 있지 않습니다.
+@@ It's right here! Are you blind or something?
+== 바로 여기 있잖습니까! 눈이 멀기라도 했습니까?
+@@ The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy.
+== 이 집은 하얗게 칠한 아름다운 식민지풍 저택입니다. 주인이 대단한 부자였음이 분명합니다.
+@@ The window is closed.
+== 창문이 닫혀 있습니다.
+@@ I can't see how to get in from here.
+== 여기서는 어떻게 들어가야 할지 모르겠습니다.
+@@ You must be joking.
+== 농담하시는 거죠.
+@@ You aren't even in the forest.
+== 당신은 숲에 있지도 않습니다.
+@@ You will have to specify a direction.
+== 방향을 지정하셔야 합니다.
+@@ You cannot see the forest for the trees.
+== 나무만 보이고 숲은 보이지 않습니다.
+@@ The pines and the hemlocks seem to be murmuring.
+== 소나무와 솔송나무들이 속삭이는 것 같습니다.
+@@ Don't you believe me? The mountains are impassable!
+== 제 말을 못 믿으시는 겁니까? 산맥은 넘을 수 없다니까요!
+@@ There is now a puddle in the bottom of the 
+== 이제 바닥에 물이 조금 고였습니다: 
+@@ The water leaks out of the 
+== 물이 
+@@  and evaporates immediately.
+== 에서 새어 나와 곧바로 증발합니다.
+@@ The bottle is closed.
+== 병이 닫혀 있습니다.
+@@ The bottle is now full of water.
+== 이제 병에 물이 가득 찼습니다.
+@@ The water slips through your fingers.
+== 물이 손가락 사이로 빠져나갑니다.
+@@ It's in the bottle. Perhaps you should take that instead.
+== 물은 병 안에 있습니다. 차라리 병을 집는 게 어떨까요.
+@@ The water spills to the floor and evaporates immediately.
+== 물이 바닥에 쏟아지더니 곧바로 증발합니다.
+@@ The water splashes on the walls and evaporates immediately.
+== 물이 벽에 튀더니 곧바로 증발합니다.
+@@ The window is slightly ajar, but not enough to allow entry.
+== 창문이 살짝 열려 있지만, 들어갈 수 있을 만큼은 아닙니다.
+@@ You can see 
+== 보이는 것은 
+@@ a clear area leading towards a forest.
+== 숲 쪽으로 트인 빈 땅입니다.
+@@ what appears to be a kitchen.
+== 부엌처럼 보이는 곳입니다.
+@@ The spirits jeer loudly and ignore you.
+== 영혼들은 큰 소리로 야유하며 당신을 무시합니다.
+@@ Only the ceremony itself has any effect.
+== 오직 의식 그 자체만이 효과가 있습니다.
+@@ How can you attack a spirit with material objects?
+== 물질로 된 물건으로 어떻게 영혼을 공격하겠습니까?
+@@ You seem unable to interact with these spirits.
+== 이 영혼들과는 아무것도 주고받을 수 없는 것 같습니다.
+@@ The basket is raised to the top of the shaft.
+== 바구니가 수직굴 꼭대기까지 올라갑니다.
+@@ The basket is lowered to the bottom of the shaft.
+== 바구니가 수직굴 바닥까지 내려갑니다.
+@@ The basket is at the other end of the chain.
+== 바구니는 사슬의 반대쪽 끝에 있습니다.
+@@ The cage is securely fastened to the iron chain.
+== 바구니는 쇠사슬에 단단히 묶여 있습니다.
+@@ You can't reach him; he's on the ceiling.
+== 손이 닿지 않습니다. 녀석은 천장에 붙어 있습니다.
+@@ The bat grabs you by the scruff of your neck and lifts you away....
+== 박쥐가 당신의 목덜미를 움켜쥐고 휙 들어 올려 데려갑니다....
+@@     Fweep!
+==     삐익!
+@@ Ding, dong.
+== 딩, 동.
+@@ The bell is very hot and cannot be taken.
+== 종이 너무 뜨거워서 집을 수 없습니다.
+@@  burns and is consumed.
+== {이} 타서 없어집니다.
+@@ The bell is too hot to touch.
+== 종이 너무 뜨거워서 만질 수 없습니다.
+@@ The heat from the bell is too intense.
+== 종에서 나오는 열기가 너무 강합니다.
+@@ The water cools the bell and is evaporated.
+== 물이 종을 식히고 증발해 버립니다.
+@@ The bell is too hot to reach.
+== 종이 너무 뜨거워서 손을 댈 수 없습니다.
+@@ The windows are boarded and can't be opened.
+== 창문은 판자로 막혀 있어 열 수 없습니다.
+@@ You can't break the windows open.
+== 창문을 부수고 열 수는 없습니다.
+@@ The nails, deeply imbedded in the door, cannot be removed.
+== 문에 깊이 박힌 못은 뽑아낼 수 없습니다.
+@@ You can't fit through the crack.
+== 틈이 너무 좁아 지나갈 수 없습니다.
+@@ You are in the kitchen of the white house. A table seems to have been used recently for the preparation of food. A passage leads to the west and a dark staircase can be seen leading upward. A dark chimney leads down and to the east is a small window which is 
+== 이곳은 하얀 집의 부엌입니다. 식탁은 최근에 음식을 만드는 데 쓰인 것 같습니다. 서쪽으로 통로가 나 있고, 위로 올라가는 어두운 계단이 보입니다. 어두운 굴뚝이 아래로 나 있고, 동쪽에는 작은 창문이 있는데, 
+@@ There are no stairs leading down.
+== 내려가는 계단은 없습니다.
+@@ Inside the Barrow\nAs you enter the barrow, the door closes inexorably behind you. Around you it is dark, but ahead is an enormous cavern, brightly lit. Through its center runs a wide stream. Spanning the stream is a small wooden footbridge, and beyond a path leads into a dark tunnel. Above the bridge, floating in the air, is a large sign. It reads:  All ye who stand before this bridge have completed a great and perilous adventure which has tested your wit and courage. You have mastered
+== 무덤 안\n무덤 안으로 들어서자 등 뒤에서 문이 가차 없이 닫힙니다. 주위는 어둡지만, 앞쪽에는 환하게 밝혀진 거대한 동굴이 있습니다. 동굴 한가운데로 넓은 개울이 흐르고, 개울 위로 작은 나무 다리가 걸려 있으며, 그 너머로 난 길은 어두운 굴로 이어집니다. 다리 위 허공에 커다란 표지판이 떠 있습니다. 거기에는 이렇게 쓰여 있습니다:  이 다리 앞에 선 모든 자여, 그대는 그대의 지혜와 용기를 시험한 위대하고 위험한 모험을 마쳤도다. 그대가 정복한 것은
+@@  the first part of the ZORK trilogy. Those who pass over this bridge must be prepared to undertake an even greater adventure that will severely test your skill and bravery!\n\nThe ZORK trilogy continues with "ZORK II: The Wizard of Frobozz" and is completed in "ZORK III: The Dungeon Master."
+==  조크 3부작의 제1부로다. 이 다리를 건너는 자는 그대의 솜씨와 용기를 더욱 혹독하게 시험할 더 위대한 모험에 나설 각오를 해야 하리라!\n\n조크 3부작은 "ZORK II: The Wizard of Frobozz"(프로보즈의 마법사)로 이어지며 "ZORK III: The Dungeon Master"(던전 마스터)로 완결됩니다.
+@@  ZORK: The Great Underground Empire.\n
+==  조크: 위대한 지하 제국이로다.\n
+@@ The door is too heavy.
+== 문이 너무 무겁습니다.
+@@ The trophy case is securely fastened to the wall.
+== 트로피 진열장은 벽에 단단히 고정되어 있습니다.
+@@ You are in the living room. There is a doorway to the east
+== 이곳은 거실입니다. 동쪽으로 문간이 있고
+@@ . To the west is a cyclops-shaped opening in an old wooden door, above which is some strange gothic lettering, 
+== , 서쪽에는 낡은 나무 문에 외눈박이 거인 모양의 구멍이 뚫려 있는데, 그 위에는 이상한 고딕 글씨가 새겨져 있습니다. 또 
+@@ , a wooden door with strange gothic lettering to the west, which appears to be nailed shut, 
+== , 서쪽에는 이상한 고딕 글씨가 새겨진 나무 문이 있는데 못으로 박아 막아 놓은 것 같습니다. 또 
+@@ a trophy case, 
+== 트로피 진열장이 있고, 
+@@ and a rug lying beside an open trap door.
+== 열린 뚜껑 문 옆에 양탄자가 놓여 있습니다.
+@@ and a closed trap door at your feet.
+== 발밑에 닫힌 뚜껑 문이 있습니다.
+@@ and an open trap door at your feet.
+== 발밑에 열린 뚜껑 문이 있습니다.
+@@ and a large oriental rug in the center of the room.
+== 방 한가운데에 커다란 동양풍 양탄자가 깔려 있습니다.
+@@ You see a rickety staircase descending into darkness.
+== 어둠 속으로 내려가는 삐걱거리는 계단이 보입니다.
+@@ It's closed.
+== 닫혀 있습니다.
+@@ The door is locked from above.
+== 문은 위쪽에서 잠겨 있습니다.
+@@ The door closes and locks.
+== 문이 닫히고 잠깁니다.
+@@ You are in a dark and damp cellar with a narrow passageway leading north, and a crawlway to the south. On the west is the bottom of a steep metal ramp which is unclimbable.
+== 어둡고 축축한 지하실입니다. 북쪽으로 좁은 통로가, 남쪽으로 기어가야 하는 길이 나 있습니다. 서쪽에는 가파른 금속 경사로의 아래쪽 끝이 있는데, 올라갈 수는 없습니다.
+@@ The trap door crashes shut, and you hear someone barring it.
+== 뚜껑 문이 쾅 닫히고, 누군가 빗장을 지르는 소리가 들립니다.
+@@ The chimney leads 
+== 굴뚝은 
+@@ ward, and looks climbable.
+== 쪽으로 이어져 있고, 타고 지나갈 수 있을 것 같습니다.
+@@ Going up empty-handed is a bad idea.
+== 빈손으로 올라가는 건 좋은 생각이 아닙니다.
+@@ You can't get up there with what you're carrying.
+== 지금 들고 있는 것들을 가지고는 저기로 올라갈 수 없습니다.
+@@ The trap door is closed.
+== 뚜껑 문이 닫혀 있습니다.
+@@ The rug is too heavy to lift
+== 양탄자는 너무 무거워 들어 올릴 수 없습니다
+@@ , but in trying to take it you have noticed an irregularity beneath it.
+== . 하지만 들어 보려다가 그 밑이 울퉁불퉁하다는 것을 알아챘습니다.
+@@ Having moved the carpet previously, you find it impossible to move it again.
+== 이미 한 번 양탄자를 옮겼기 때문에, 다시 옮기는 것은 불가능합니다.
+@@ With a great effort, the rug is moved to one side of the room, revealing the dusty cover of a closed trap door.
+== 있는 힘을 다해 양탄자를 방 한쪽으로 밀어내자, 먼지 쌓인 닫힌 뚜껑 문이 드러납니다.
+@@ The rug is extremely heavy and cannot be carried.
+== 양탄자는 너무 무거워서 들고 다닐 수 없습니다.
+@@ Underneath the rug is a closed trap door. As you drop the corner of the rug, the trap door is once again concealed from view.
+== 양탄자 밑에 닫힌 뚜껑 문이 있습니다. 양탄자 귀퉁이를 내려놓자, 뚜껑 문은 다시 보이지 않게 가려집니다.
+@@ As you sit, you notice an irregularity underneath it. Rather than be uncomfortable, you stand up again.
+== 앉아 보니 밑이 울퉁불퉁하다는 것을 알아챘습니다. 불편하게 앉아 있느니 다시 일어섭니다.
+@@ I suppose you think it's a magic carpet?
+== 설마 이게 마법 양탄자라고 생각하시는 건 아니겠죠?
+@@  swings it out of your reach.
+== {이} 도끼를 휘둘러 당신의 손이 닿지 않게 합니다.
+@@  seems white-hot. You can't hold on to it.
+== {은} 시뻘겋게 달아오른 것 같습니다. 도저히 쥐고 있을 수 없습니다.
+@@ The troll isn't much of a conversationalist.
+== 트롤은 그다지 말상대가 될 만한 녀석이 아닙니다.
+@@ The troll, angered and humiliated, recovers his weapon. He appears to have an axe to grind with you.
+== 화가 나고 창피를 당한 트롤이 무기를 되찾습니다. 도끼눈을 뜨고 당신을 노려보는 것이, 단단히 벼르고 있는 모양입니다.
+@@ The troll, disarmed, cowers in terror, pleading for his life in the guttural tongue of the trolls.
+== 무기를 잃은 트롤이 겁에 질려 웅크린 채, 트롤 특유의 걸걸한 말로 목숨을 구걸합니다.
+@@ The troll stirs, quickly resuming a fighting stance.
+== 트롤이 꿈틀하더니 재빨리 싸울 자세를 다시 잡습니다.
+@@ The troll scratches his head in confusion, then takes the axe.
+== 트롤은 어리둥절해서 머리를 긁적이더니, 도끼를 받아 듭니다.
+@@ You would have to get the 
+== 그러려면 먼저 
+@@  first, and that seems unlikely.
+== {을} 손에 넣어야 할 텐데, 그럴 것 같지는 않군요.
+@@ The troll, who is remarkably coordinated, catches the 
+== 놀랍도록 몸놀림이 날랜 트롤이 
+@@ The troll, who is not overly proud, graciously accepts the gift
+== 그다지 자존심이 세지 않은 트롤이 고맙게도 선물
+@@  and eats it hungrily. Poor troll, he dies from an internal hemorrhage and his carcass disappears in a sinister black fog.
+== {을} 받아 들더니 게걸스럽게 먹어 치웁니다. 불쌍한 트롤, 내출혈로 죽고 맙니다. 그 시체는 불길한 검은 안개 속으로 사라집니다.
+@@  and, being for the moment sated, throws it back. Fortunately, the troll has poor control, and the 
+== {을} 받아 들더니, 당장은 배가 불렀는지 도로 던집니다. 다행히 트롤은 던지는 솜씨가 형편없어서 
+@@  falls to the floor. He does not look pleased.
+== {이} 바닥에 떨어집니다. 트롤은 기분이 별로 좋아 보이지 않습니다.
+@@  and not having the most discriminating tastes, gleefully eats it.
+== {을} 받아 들더니, 입맛이 그리 까다롭지 않은지 신이 나서 먹어 치웁니다.
+@@ The troll spits in your face, grunting "Better luck next time" in a rather barbarous accent.
+== 트롤이 당신의 얼굴에 침을 뱉고는 꽤나 야만스러운 억양으로 "다음엔 운이 좋길 바란다"라고 툴툴거립니다.
+@@ The troll laughs at your puny gesture.
+== 트롤은 당신의 하찮은 몸짓을 비웃습니다.
+@@ Every so often the troll says something, probably uncomplimentary, in his guttural tongue.
+== 트롤은 이따금 걸걸한 트롤 말로 무언가를 지껄입니다. 아마 칭찬은 아닐 겁니다.
+@@ Unfortunately, the troll can't hear you.
+== 안타깝게도 트롤은 당신 말을 들을 수 없습니다.
+@@ In disturbing the pile of leaves, a grating is revealed.
+== 낙엽 더미를 헤집자, 쇠창살이 드러납니다.
+@@ With the leaves moved, a grating is revealed.
+== 낙엽을 치우자, 쇠창살이 드러납니다.
+@@ There are 69,105 leaves here.
+== 여기에는 낙엽이 69,105 장 있습니다.
+@@ The leaves burn.
+== 낙엽이 탑니다.
+@@ You rustle the leaves around, making quite a mess.
+== 낙엽을 바스락바스락 헤집어 온통 엉망으로 만들었습니다.
+@@ Underneath the pile of leaves is a grating. As you release the leaves, the grating is once again concealed from view.
+== 낙엽 더미 밑에 쇠창살이 있습니다. 낙엽을 놓자, 쇠창살은 다시 보이지 않게 가려집니다.
+@@ You are in a clearing, with a forest surrounding you on all sides. A path leads south.
+== 이곳은 빈터로, 사방이 숲으로 둘러싸여 있습니다. 남쪽으로 길이 나 있습니다.
+@@ There is an open grating, descending into darkness.
+== 어둠 속으로 내려가는 열린 쇠창살이 있습니다.
+@@ There is a grating securely fastened into the ground.
+== 땅에 단단히 박힌 쇠창살이 있습니다.
+@@ You are in a small room near the maze. There are twisty passages in the immediate vicinity.
+== 미로 근처의 작은 방입니다. 바로 주변에 구불구불한 통로들이 있습니다.
+@@ Above you is an open grating with sunlight pouring in.
+== 머리 위로 열린 쇠창살이 있고, 햇빛이 쏟아져 들어옵니다.
+@@ Above you is a grating.
+== 머리 위에 쇠창살이 있습니다.
+@@ Above you is a grating locked with a skull-and-crossbones lock.
+== 머리 위에 해골 무늬 자물쇠로 잠긴 쇠창살이 있습니다.
+@@ The grate is locked.
+== 쇠창살이 잠겼습니다.
+@@ You can't lock it from this side.
+== 이쪽에서는 잠글 수 없습니다.
+@@ The grate is unlocked.
+== 쇠창살의 자물쇠가 풀렸습니다.
+@@ You can't reach the lock from here.
+== 여기서는 자물쇠에 손이 닿지 않습니다.
+@@ Can you unlock a grating with a 
+== 쇠창살 자물쇠를 이걸로 열겠다고요? 이 
+@@ You can't pick the lock.
+== 자물쇠를 딸 수 없습니다.
+@@ A pile of leaves falls onto your head and to the ground.
+== 낙엽 더미가 당신 머리 위로 쏟아져 땅에 떨어집니다.
+@@ The grating is locked.
+== 쇠창살이 잠겨 있습니다.
+@@ It won't fit through the grating.
+== 쇠창살 사이로 들어가지 않습니다.
+@@  goes through the grating into the darkness below.
+== {이} 쇠창살 사이로 빠져 아래 어둠 속으로 떨어집니다.
+@@ You won't be able to get back up to the tunnel you are going through when it gets to the next room.
+== 지금 지나가고 있는 이 굴로는 다음 방에 도착한 뒤 다시 올라올 수 없을 것입니다.
+@@ As you touch the rusty knife, your sword gives a single pulse of blinding blue light.
+== 녹슨 칼에 손을 대자, 당신의 검이 눈부신 푸른 빛을 한 번 번쩍입니다.
+@@ A ghost appears in the room and is appalled at your desecration of the remains of a fellow adventurer. He casts a curse on your valuables and banishes them to the Land of the Living Dead. The ghost leaves, muttering obscenities.
+== 방에 유령이 나타나, 동료 모험가의 유해를 모독한 당신의 행동에 경악합니다. 유령은 당신의 귀중품에 저주를 걸어 죽은 자의 땅으로 추방해 버립니다. 유령은 욕설을 중얼거리며 떠나갑니다.
+@@ The torch is burning.
+== 횃불이 타오르고 있습니다.
+@@ The water evaporates before it gets close.
+== 물이 가까이 가기도 전에 증발해 버립니다.
+@@ You nearly burn your hand trying to extinguish the flame.
+== 불을 끄려다 손을 데일 뻔했습니다.
+@@ You are in a large square room with tall ceilings. On the south wall is an enormous mirror which fills the entire wall. There are exits on the other three sides of the room.
+== 천장이 높은 커다란 정사각형 방입니다. 남쪽 벽에는 벽 전체를 가득 채운 거대한 거울이 있습니다. 나머지 세 방향으로 출구가 있습니다.
+@@ Unfortunately, the mirror has been destroyed by your recklessness.
+== 안타깝게도 당신의 무모함 때문에 거울은 이미 부서졌습니다.
+@@ You feel a faint tingling transmitted through the 
+== 다음 물건을 통해 희미한 저릿함이 전해져 옵니다: 
+@@ There is a rumble from deep within the earth and the room shakes.
+== 땅속 깊은 곳에서 우르릉 소리가 나더니 방이 흔들립니다.
+@@ The mirror is broken into many pieces.
+== 거울은 산산조각이 나 있습니다.
+@@ There is an ugly person staring back at you.
+== 못생긴 사람 하나가 당신을 마주 바라보고 있습니다.
+@@ The mirror is many times your size. Give up.
+== 거울은 당신보다 몇 배나 큽니다. 포기하십시오.
+@@ Haven't you done enough damage already?
+== 그만하면 충분히 망가뜨리지 않았습니까?
+@@ You have broken the mirror. I hope you have a seven years' supply of good luck handy.
+== 거울을 깨뜨렸습니다. 7 년 치 행운을 넉넉히 준비해 두셨기를 바랍니다.
+@@ This is a large room with a prominent doorway leading to a down staircase. Above you is a large dome. Up around the edge of the dome (20 feet up) is a wooden railing. In the center of the room sits a white marble pedestal.
+== 아래로 내려가는 계단으로 이어지는 눈에 띄는 출입구가 있는 큰 방입니다. 머리 위에는 커다란 둥근 지붕이 있습니다. 둥근 지붕 가장자리 위쪽(20 피트 높이)에 나무 난간이 둘러져 있습니다. 방 한가운데에는 하얀 대리석 받침대가 놓여 있습니다.
+@@ A piece of rope descends from the railing above, ending some five feet above your head.
+== 위쪽 난간에서 밧줄 하나가 내려와 있는데, 당신 머리 위 5 피트쯤에서 끝납니다.
+@@ You are at the periphery of a large dome, which forms the ceiling of another room below. Protecting you from a precipitous drop is a wooden railing which circles the dome.
+== 당신은 커다란 둥근 지붕의 가장자리에 있습니다. 이 지붕은 아래쪽 다른 방의 천장을 이룹니다. 둥근 지붕을 빙 두른 나무 난간이 아찔한 낭떠러지로부터 당신을 지켜 줍니다.
+@@ Hanging down from the railing is a rope which ends about ten feet from the floor below.
+== 난간에 밧줄이 매달려 있는데, 아래쪽 바닥에서 10 피트쯤 위에서 끝납니다.
+@@ As you enter the dome you feel a strong pull as if from a wind drawing you over the railing and down.
+== 둥근 지붕 방에 들어서자, 마치 바람이 당신을 난간 너머 아래로 끌어당기는 듯한 강한 힘이 느껴집니다.
+@@ You are outside a large gateway, on which is inscribed\n\n  Abandon every hope all ye who enter here!\n\nThe gate is open; through it you can see a desolation, with a pile of mangled bodies in one corner. Thousands of voices, lamenting some hideous fate, can be heard.
+== 당신은 커다란 문 바깥에 서 있습니다. 문에는 이렇게 새겨져 있습니다.\n\n  여기 들어오는 자, 모든 희망을 버려라!\n\n문은 열려 있고, 그 너머로 황량한 풍경이 보이며 한쪽 구석에는 짓이겨진 시체가 쌓여 있습니다. 어떤 끔찍한 운명을 한탄하는 수천의 목소리가 들려옵니다.
+@@ The way through the gate is barred by evil spirits, who jeer at your attempts to pass.
+== 문을 지나가려는 길을 사악한 영혼들이 가로막고, 지나가려는 당신을 비웃습니다.
+@@ You must perform the ceremony.
+== 의식을 치러야 합니다.
+@@ You aren't equipped for an exorcism.
+== 당신은 퇴마를 할 채비가 되어 있지 않습니다.
+@@ The bell suddenly becomes red hot and falls to the ground. The wraiths, as if paralyzed, stop their jeering and slowly turn to face you. On their ashen faces, the expression of a long-forgotten terror takes shape.
+== 갑자기 종이 시뻘겋게 달아오르더니 땅에 떨어집니다. 망령들은 마비된 듯 야유를 멈추고 천천히 당신 쪽으로 돌아섭니다. 잿빛 얼굴에 오래전 잊었던 공포의 표정이 떠오릅니다.
+@@ In your confusion, the candles drop to the ground (and they are out).
+== 당황한 사이에 양초가 땅에 떨어집니다(그리고 불이 꺼졌습니다).
+@@ Each word of the prayer reverberates through the hall in a deafening confusion. As the last word fades, a voice, loud and commanding, speaks: "Begone, fiends!" A heart-stopping scream fills the cavern, and the spirits, sensing a greater power, flee through the walls.
+== 기도문의 한 마디 한 마디가 귀를 찢을 듯한 혼란 속에 홀 안을 울립니다. 마지막 말이 잦아들자, 크고 위엄 있는 목소리가 울려 퍼집니다: "물러가라, 악귀들아!" 심장이 멎을 듯한 비명이 동굴을 가득 채우고, 더 큰 힘을 느낀 영혼들은 벽을 뚫고 달아납니다.
+@@ The flames flicker wildly and appear to dance. The earth beneath your feet trembles, and your legs nearly buckle beneath you. The spirits cower at your unearthly power.
+== 불꽃이 미친 듯이 흔들리며 춤추는 것 같습니다. 발밑의 땅이 떨리고, 다리가 휘청거려 하마터면 주저앉을 뻔합니다. 영혼들은 당신의 초자연적인 힘 앞에 움츠러듭니다.
+@@ The tension of this ceremony is broken, and the wraiths, amused but shaken at your clumsy attempt, resume their hideous jeering.
+== 의식의 긴장이 깨지고, 당신의 어설픈 시도에 재미있어하면서도 동요한 망령들은 다시 그 끔찍한 야유를 시작합니다.
+@@ The bell appears to have cooled down.
+== 종이 식은 것 같습니다.
+@@ You are standing on the top of the Flood Control Dam #3, which was quite a tourist attraction in times far distant. There are paths to the north, south, and west, and a scramble down.
+== 당신은 3호 홍수 조절 댐 꼭대기에 서 있습니다. 머나먼 옛날에는 꽤 유명한 관광 명소였던 곳입니다. 북쪽, 남쪽, 서쪽으로 길이 있고, 아래로 기어 내려갈 수 있는 비탈이 있습니다.
+@@ The water level behind the dam is low: The sluice gates have been opened. Water rushes through the dam and downstream.
+== 댐 뒤쪽의 수위가 낮습니다: 수문이 열려 있습니다. 물이 댐을 지나 하류로 세차게 흘러갑니다.
+@@ The sluice gates are open, and water rushes through the dam. The water level behind the dam is still high.
+== 수문이 열려 있고, 물이 댐을 지나 세차게 흘러갑니다. 댐 뒤쪽의 수위는 아직 높습니다.
+@@ The sluice gates are closed. The water level in the reservoir is quite low, but the level is rising quickly.
+== 수문이 닫혀 있습니다. 저수지의 수위는 꽤 낮지만, 빠르게 올라가고 있습니다.
+@@ The sluice gates on the dam are closed. Behind the dam, there can be seen a wide reservoir. Water is pouring over the top of the now abandoned dam.
+== 댐의 수문이 닫혀 있습니다. 댐 뒤쪽으로 넓은 저수지가 보입니다. 이제는 버려진 댐 꼭대기 위로 물이 넘쳐흐르고 있습니다.
+@@ There is a control panel here, on which a large metal bolt is mounted. Directly above the bolt is a small green plastic bubble
+== 여기에는 커다란 금속 볼트가 달린 조종판이 있습니다. 볼트 바로 위에는 작은 초록 플라스틱 거품이 달려 있습니다
+@@  which is glowing serenely
+== . 거품은 평온하게 빛나고 있습니다
+@@ The sluice gates close and water starts to collect behind the dam.
+== 수문이 닫히고 댐 뒤쪽에 물이 고이기 시작합니다.
+@@ The sluice gates open and water pours through the dam.
+== 수문이 열리고 물이 댐을 지나 쏟아져 나갑니다.
+@@ The bolt won't turn with your best effort.
+== 있는 힘을 다해 봐도 볼트가 돌아가지 않습니다.
+@@ The bolt won't turn using the 
+== 다음 것으로는 볼트가 돌아가지 않습니다: 
+@@ Hmm. It appears the tube contained glue, not oil. Turning the bolt won't get any easier....
+== 흠. 튜브에 든 것은 기름이 아니라 접착제였던 모양입니다. 볼트 돌리기가 쉬워지기는커녕....
+@@ It is an integral part of the control panel.
+== 그것은 조종판에 붙어 있는 부품입니다.
+@@ The boat lifts gently out of the mud and is now floating on the reservoir.
+== 배가 진흙에서 살며시 떠올라 이제 저수지 위에 떠 있습니다.
+@@ A sound, like that of flowing water, starts to come from below.
+== 흐르는 물소리 같은 소리가 아래쪽에서 들려오기 시작합니다.
+@@ All of a sudden, an alarmingly loud roaring sound fills the room. Filled with fear, you scramble away.
+== 갑자기 귀청이 떨어질 듯한 굉음이 방을 가득 채웁니다. 겁에 질린 당신은 허둥지둥 달아납니다.
+@@ You notice that the water level has risen to the point that it is impossible to cross.
+== 물이 불어나 이제는 건너갈 수 없을 정도가 되었습니다.
+@@ The water level has dropped to the point at which the boat can no longer stay afloat. It sinks into the mud.
+== 수위가 낮아져 배가 더 이상 떠 있을 수 없게 되었습니다. 배는 진흙 속에 가라앉습니다.
+@@ The roar of rushing water is quieter now.
+== 세차게 흐르는 물소리가 이제 잦아들었습니다.
+@@ The water level is now quite low here and you could easily cross over to the other side.
+== 이곳의 수위가 이제 꽤 낮아져서 반대편으로 쉽게 건너갈 수 있겠습니다.
+@@ They're greek to you.
+== 무슨 글자인지 도무지 알 수가 없습니다. 그리스어 같군요.
+@@ There is a rumbling sound and a stream of water appears to burst from the east wall of the room (apparently, a leak has occurred in a pipe).
+== 우르릉 소리가 나더니 방의 동쪽 벽에서 물줄기가 터져 나옵니다(보아하니 배관에 구멍이 난 모양입니다).
+@@ The blue button appears to be jammed.
+== 파란 단추가 꽉 끼어서 움직이지 않는 것 같습니다.
+@@ The lights within the room 
+== 방 안의 불이 
+@@ shut off.
+== 꺼집니다.
+@@ come on.
+== 켜집니다.
+@@ Click.
+== 딸깍.
+@@ The chests are all empty.
+== 상자들은 모두 비어 있습니다.
+@@ The chests are so rusty and corroded that they crumble when you touch them.
+== 상자들은 녹이 슬고 부식이 심해서, 손을 대자 바스러집니다.
+@@ The chests are already open.
+== 상자들은 이미 열려 있습니다.
+@@ The water level here is now 
+== 이곳의 물이 이제 
+@@ By some miracle of Zorkian technology, you have managed to stop the leak in the dam.
+== 조크 기술의 기적이라도 일어났는지, 당신은 댐에 새는 곳을 막는 데 성공했습니다.
+@@ The all-purpose gunk isn't a lubricant.
+== 만능 접착제는 윤활유가 아닙니다.
+@@ The tube refuses to accept anything.
+== 튜브에 아무것도 들어가지 않습니다.
+@@ The viscous material oozes into your hand.
+== 끈적한 물질이 당신 손으로 스며 나옵니다.
+@@ The tube is apparently empty.
+== 튜브는 비어 있는 것 같습니다.
+@@ The tube is closed.
+== 튜브가 닫혀 있습니다.
+@@ Sounds reasonable, but this isn't how.
+== 그럴듯하지만, 그렇게 하는 게 아닙니다.
+@@ Are you the little Dutch boy, then? Sorry, this is a big dam.
+== 그럼 당신이 그 네덜란드 꼬마라도 됩니까? 미안하지만 이건 큰 댐입니다.
+@@ ? Do you know how big this dam is? You could only stop a tiny leak with that.
+== {으로}요? 이 댐이 얼마나 큰지 알기나 하십니까? 그걸로는 아주 조그만 구멍밖에 못 막습니다.
+@@ You are in a long room, to the north of which was formerly a lake. However, with the water level lowered, there is merely a wide stream running through the center of the room.
+== 기다란 방입니다. 방의 북쪽은 예전에 호수였습니다. 하지만 수위가 낮아진 지금은 방 한가운데로 넓은 개울 하나가 흐를 뿐입니다.
+@@ You are in a long room. To the north is a large lake, too deep to cross. You notice, however, that the water level appears to be dropping at a rapid rate. Before long, it might be possible to cross to the other side from here.
+== 기다란 방입니다. 북쪽에는 너무 깊어서 건널 수 없는 큰 호수가 있습니다. 그런데 수위가 빠르게 내려가고 있는 것 같습니다. 머지않아 여기서 반대편으로 건너갈 수 있을지도 모릅니다.
+@@ You are in a long room, to the north of which is a wide area which was formerly a reservoir, but now is merely a stream. You notice, however, that the level of the stream is rising quickly and that before long it will be impossible to cross here.
+== 기다란 방입니다. 북쪽으로는 예전에 저수지였지만 지금은 개울에 불과한 넓은 지대가 있습니다. 그런데 개울의 수위가 빠르게 올라가고 있어서, 머지않아 여기서는 건널 수 없게 될 것 같습니다.
+@@ You are in a long room on the south shore of a large lake, far too deep and wide for crossing.
+== 큰 호수의 남쪽 기슭에 있는 기다란 방입니다. 호수는 너무 깊고 넓어서 건널 수 없습니다.
+@@ There is a path along the stream to the east or west, a steep pathway climbing southwest along the edge of a chasm, and a path leading into a canyon to the southeast.
+== 개울을 따라 동쪽과 서쪽으로 길이 있고, 깊은 틈 가장자리를 따라 남서쪽으로 올라가는 가파른 오솔길, 그리고 남동쪽 협곡으로 이어지는 길이 있습니다.
+@@ You notice that the water level here is rising rapidly. The currents are also becoming stronger. Staying here seems quite perilous!
+== 이곳의 수위가 빠르게 올라가고 있습니다. 물살도 점점 거세지고 있습니다. 여기 있는 것은 꽤 위험해 보입니다!
+@@ You are on what used to be a large lake, but which is now a large mud pile. There are "shores" to the north and south.
+== 당신은 예전에 큰 호수였지만 지금은 커다란 진흙 더미가 된 곳 위에 있습니다. 북쪽과 남쪽에 "기슭"이 있습니다.
+@@ You are on the lake. Beaches can be seen north and south. Upstream a small stream enters the lake through a narrow cleft in the rocks. The dam can be seen downstream.
+== 당신은 호수 위에 있습니다. 북쪽과 남쪽으로 물가가 보입니다. 상류 쪽에서는 작은 개울이 바위 사이의 좁은 틈을 지나 호수로 흘러듭니다. 하류 쪽으로 댐이 보입니다.
+@@ You are in a large cavernous room, the south of which was formerly a lake. However, with the water level lowered, there is merely a wide stream running through there.
+== 커다란 동굴 같은 방입니다. 방의 남쪽은 예전에 호수였습니다. 하지만 수위가 낮아진 지금은 그곳에 넓은 개울 하나가 흐를 뿐입니다.
+@@ You are in a large cavernous area. To the south is a wide lake, whose water level appears to be falling rapidly.
+== 커다란 동굴 같은 곳입니다. 남쪽에는 넓은 호수가 있는데, 수위가 빠르게 내려가고 있는 것 같습니다.
+@@ You are in a cavernous area, to the south of which is a very wide stream. The level of the stream is rising rapidly, and it appears that before long it will be impossible to cross to the other side.
+== 동굴 같은 곳입니다. 남쪽으로는 아주 넓은 개울이 있습니다. 개울의 수위가 빠르게 올라가고 있어서, 머지않아 반대편으로 건너갈 수 없게 될 것 같습니다.
+@@ You are in a large cavernous room, north of a large lake.
+== 큰 호수의 북쪽에 있는 커다란 동굴 같은 방입니다.
+@@ There is a slimy stairway leaving the room to the north.
+== 방의 북쪽으로 끈적끈적한 계단이 나 있습니다.
+@@ The bottle hits the far wall and shatters.
+== 병이 맞은편 벽에 부딪혀 산산조각 납니다.
+@@ A brilliant maneuver destroys the bottle.
+== 기막힌 솜씨로 병을 박살 냈습니다.
+@@ The water spills to the floor and evaporates.
+== 물이 바닥에 쏟아지더니 증발합니다.
+@@ No use talking to him. He's fast asleep.
+== 말을 걸어 봐야 소용없습니다. 곤히 잠들어 있으니까요.
+@@ The cyclops prefers eating to making conversation.
+== 외눈박이 거인은 대화보다 먹는 쪽을 더 좋아합니다.
+@@ The cyclops is sleeping like a baby, albeit a very ugly one.
+== 외눈박이 거인이 아기처럼 곤히 자고 있습니다. 아주 못생긴 아기이긴 하지만요.
+@@ The cyclops yawns and stares at the thing that woke him up.
+== 외눈박이 거인이 하품을 하더니 자기를 깨운 것을 빤히 쳐다봅니다.
+@@ A hungry cyclops is standing at the foot of the stairs.
+== 배고픈 외눈박이 거인이 계단 아래에 서 있습니다.
+@@ The cyclops says "Mmm Mmm. I love hot peppers! But oh, could I use a drink. Perhaps I could drink the blood of that thing."  From the gleam in his eye, it could be surmised that you are "that thing".
+== 외눈박이 거인이 말합니다. "음냐 음냐. 난 매운 고추가 정말 좋아! 근데 아이고, 뭐 마실 게 있으면 좋겠는데. 저놈의 피라도 마셔 볼까."  그 눈빛으로 미루어 보아, "저놈"은 바로 당신인 것 같습니다.
+@@ The cyclops takes the bottle, checks that it's open, and drinks the water. A moment later, he lets out a yawn that nearly blows you over, and then falls fast asleep (what did you put in that drink, anyway?).
+== 외눈박이 거인이 병을 받아 열려 있는지 확인하더니 물을 마십니다. 잠시 후 당신이 날아갈 뻔할 만큼 커다란 하품을 하더니 곧 깊은 잠에 빠집니다(대체 그 물에 뭘 탄 겁니까?).
+@@ The cyclops apparently is not thirsty and refuses your generous offer.
+== 외눈박이 거인은 목이 마르지 않은지 당신의 너그러운 제안을 거절합니다.
+@@ The cyclops may be hungry, but there is a limit.
+== 외눈박이 거인이 배가 고프긴 해도, 한도라는 게 있습니다.
+@@ The cyclops is not so stupid as to eat THAT!
+== 외눈박이 거인은 '그런 걸' 먹을 만큼 멍청하지 않습니다!
+@@ "Do you think I'm as stupid as my father was?", he says, dodging.
+== "내가 우리 아버지처럼 멍청한 줄 아냐?" 그가 몸을 피하며 말합니다.
+@@ The cyclops shrugs but otherwise ignores your pitiful attempt.
+== 외눈박이 거인은 어깨를 으쓱할 뿐, 당신의 가련한 시도를 무시합니다.
+@@ The cyclops doesn't take kindly to being grabbed.
+== 외눈박이 거인은 붙잡히는 것을 좋아하지 않습니다.
+@@ You cannot tie the cyclops, though he is fit to be tied.
+== 외눈박이 거인을 묶을 수는 없습니다. 묶어 둬야 할 만큼 길길이 날뛰긴 하지만요.
+@@ You can hear his stomach rumbling.
+== 그의 배에서 꼬르륵 소리가 들립니다.
+@@ This room has an exit on the northwest, and a staircase leading up.
+== 이 방에는 북서쪽으로 출구가 있고, 위로 올라가는 계단이 있습니다.
+@@ The cyclops is sleeping blissfully at the foot of the stairs.
+== 외눈박이 거인이 계단 발치에서 행복하게 잠들어 있습니다.
+@@ The east wall, previously solid, now has a cyclops-sized opening in it.
+== 전에는 단단했던 동쪽 벽에 이제 외눈박이 거인 크기만 한 구멍이 뚫려 있습니다.
+@@ A cyclops, who looks prepared to eat horses (much less mere adventurers), blocks the staircase. From his state of health, and the bloodstains on the walls, you gather that he is not very friendly, though he likes people.
+== 말이라도 잡아먹을 기세인(하물며 모험가쯤이야) 외눈박이 거인이 계단을 가로막고 있습니다. 혈색이 좋은 데다 벽에 묻은 핏자국으로 보아, 사람을 좋아하기는 해도 그리 친절한 녀석은 아닌 듯합니다.
+@@ The cyclops is standing in the corner, eyeing you closely. I don't think he likes you very much. He looks extremely hungry, even for a cyclops.
+== 외눈박이 거인이 구석에 서서 당신을 뚫어지게 쳐다보고 있습니다. 아무래도 당신을 별로 좋아하지 않는 것 같습니다. 외눈박이 거인치고도 몹시 배가 고파 보입니다.
+@@ The cyclops, having eaten the hot peppers, appears to be gasping. His enflamed tongue protrudes from his man-sized mouth.
+== 고추를 먹은 외눈박이 거인이 헐떡이고 있습니다. 사람 하나는 들어갈 만한 입 밖으로 불타는 혀가 삐죽 나와 있습니다.
+@@ This is a large room with a ceiling which cannot be detected from the ground. There is a narrow passage from east to west and a stone stairway leading upward.
+== 바닥에서는 천장이 보이지 않을 만큼 높은 큰 방입니다. 동쪽에서 서쪽으로 좁은 통로가 나 있고, 위로 올라가는 돌계단이 있습니다.
+@@  The room is eerie in its quietness.
+==  방 안은 섬뜩할 만큼 고요합니다.
+@@  The room is deafeningly loud with an undetermined rushing sound. The sound seems to reverberate from all of the walls, making it difficult even to think.
+==  정체를 알 수 없는 콸콸거리는 소리로 방 안이 귀가 먹먹할 만큼 시끄럽습니다. 그 소리가 사방의 벽에 울려 퍼져서 생각조차 하기 어렵습니다.
+@@ It is unbearably loud here, with an ear-splitting roar seeming to come from all around you. There is a pounding in your head which won't stop. With a tremendous effort, you scramble out of the room.
+== 이곳은 견딜 수 없을 만큼 시끄럽습니다. 귀를 찢는 굉음이 사방에서 몰려오는 듯합니다. 머릿속이 멈추지 않고 쿵쾅거립니다. 안간힘을 써서 당신은 허둥지둥 방을 빠져나옵니다.
+@@ The rest of your commands have been lost in the noise.
+== 나머지 명령은 소음 속에 묻혀 버렸습니다.
+@@ That's only your opinion.
+== 그건 당신 생각일 뿐입니다.
+@@ The acoustics of the room change subtly.
+== 방의 울림이 미묘하게 달라집니다.
+@@ You are on the south edge of a deep canyon. Passages lead off to the east, northwest and southwest. A stairway leads down.
+== 당신은 깊은 협곡의 남쪽 가장자리에 서 있습니다. 동쪽, 북서쪽, 남서쪽으로 통로가 나 있습니다. 아래로 내려가는 계단이 있습니다.
+@@  You can hear a loud roaring sound, like that of rushing water, from below.
+==  아래쪽에서 세찬 물소리 같은 커다란 굉음이 들려옵니다.
+@@  You can hear the sound of flowing water from below.
+==  아래쪽에서 물 흐르는 소리가 들려옵니다.
+@@ Someone carrying a large bag is casually leaning against one of the walls here. He does not speak, but it is clear from his aspect that the bag will be taken only over his dead body.
+== 큰 자루를 멘 누군가가 벽 한쪽에 느긋하게 기대어 있습니다. 말은 한마디도 하지 않지만, 그 자루를 가져가려면 그를 쓰러뜨려야 한다는 것만은 표정만 봐도 분명합니다.
+@@ Your opponent, determining discretion to be the better part of valor, decides to terminate this little contretemps. With a rueful nod of his head, he steps backward into the gloom and disappears.
+== 상대는 용기보다 신중함이 낫다고 판단했는지 이 작은 실랑이를 끝내기로 합니다. 아쉽다는 듯 고개를 한 번 끄덕이더니, 뒷걸음질로 어둠 속으로 사라집니다.
+@@ The holder of the large bag just left, looking disgusted. Fortunately, he took nothing.
+== 큰 자루를 든 자가 질렸다는 표정으로 방금 떠났습니다. 다행히 아무것도 가져가지 않았습니다.
+@@ A seedy-looking individual with a large bag just wandered through the room. On the way through, he quietly abstracted some valuables from 
+== 큰 자루를 멘 수상쩍은 자가 방금 방을 어슬렁거리며 지나갔습니다. 지나가는 길에 그는 조용히 값진 물건 몇 개를 슬쩍했습니다. 털린 곳: 
+@@ the room
+== 이 방
+@@ your possession
+== 당신의 소지품
+@@ , mumbling something about "Doing unto others before..."
+== . "남이 내게 하기 전에 먼저..." 어쩌고 하고 중얼거리면서요.
+@@ The thief just left, still carrying his large bag. You may not have noticed that he 
+== 도둑이 여전히 큰 자루를 멘 채 방금 떠났습니다. 눈치채지 못하셨겠지만, 그는 
+@@ robbed you blind first.
+== 그 전에 당신을 탈탈 털어 갔습니다.
+@@ appropriated the valuables in the room.
+== 방 안의 값진 물건들을 챙겨 갔습니다.
+@@ The thief, finding nothing of value, left disgusted.
+== 도둑은 값나가는 것을 하나도 찾지 못하자 질렸다는 듯 떠났습니다.
+@@ A "lean and hungry" gentleman just wandered through, carrying a large bag. Finding nothing of value, he left disgruntled.
+== 큰 자루를 멘 "마르고 굶주린" 신사가 방금 어슬렁거리며 지나갔습니다. 값나가는 것을 찾지 못하자 그는 투덜거리며 떠났습니다.
+@@ The thief seems to have left you in the dark.
+== 도둑이 당신을 어둠 속에 남겨 두고 가 버린 것 같습니다.
+@@ You hear, off in the distance, someone saying "My, I wonder what this fine 
+== 멀리서 누군가 이렇게 말하는 소리가 들립니다. "어머나, 이 멋진 
+@@  is doing here."
+== {이} 왜 여기 있을까?"
+@@ The thief is a strong, silent type.
+== 도둑은 과묵하고 강인한 사나이입니다.
+@@ The thief, being temporarily incapacitated, is unable to acknowledge your greeting with his usual graciousness.
+== 도둑은 잠시 정신을 잃은 상태라 평소처럼 우아하게 당신의 인사에 답례할 수 없습니다.
+@@ You evidently frightened the robber, though you didn't hit him. He flees
+== 칼이 맞지는 않았지만 도둑은 확실히 겁을 먹은 모양입니다. 그는 도망칩니다
+@@ , but the contents of his bag fall on the floor.
+== . 하지만 그의 자루에 들어 있던 것들이 바닥에 쏟아집니다.
+@@ You missed. The thief makes no attempt to take the knife, though it would be a fine addition to the collection in his bag. He does seem angered by your attempt.
+== 빗나갔습니다. 도둑은 칼이 자기 자루 속 수집품에 꽤 어울릴 텐데도 집으려 하지 않습니다. 하지만 당신의 공격에 화가 난 것은 분명해 보입니다.
+@@ Your proposed victim suddenly recovers consciousness.
+== 당신이 노리던 상대가 갑자기 정신을 차립니다.
+@@ The thief is taken aback by your unexpected generosity, but accepts the 
+== 도둑은 당신의 뜻밖의 너그러움에 깜짝 놀라지만, 
+@@  and stops to admire its beauty.
+== {을} 받아 들고는 걸음을 멈춘 채 그 아름다움에 감탄합니다.
+@@ The thief places the 
+== 도둑은 
+@@  in his bag and thanks you politely.
+== {을} 자루에 넣고 정중하게 고맙다고 인사합니다.
+@@ Once you got him, what would you do with him?
+== 잡는다 치고, 잡은 다음엔 어쩌시려고요?
+@@ The thief is a slippery character with beady eyes that flit back and forth. He carries, along with an unmistakable arrogance, a large bag over his shoulder and a vicious stiletto, whose blade is aimed menacingly in your direction. I'd watch out if I were you.
+== 도둑은 눈알을 이리저리 굴리는 교활한 녀석입니다. 숨길 수 없는 거만함과 함께 어깨에는 큰 자루를, 손에는 칼날이 당신 쪽을 위협적으로 겨누고 있는 흉악한 단검을 들고 있습니다. 제가 당신이라면 조심하겠습니다.
+@@ The thief says nothing, as you have not been formally introduced.
+== 도둑은 아무 말도 하지 않습니다. 정식으로 인사를 나눈 사이가 아니니까요.
+@@ The robber, somewhat surprised at this turn of events, nimbly retrieves his stiletto.
+== 이 사태에 다소 놀란 도둑이 날렵하게 단검을 되찾습니다.
+@@ The chalice is now safe to take.
+== 이제 성배를 가져가도 안전합니다.
+@@ As the thief dies, the power of his magic decreases, and his treasures reappear:
+== 도둑이 죽자 그의 마법의 힘이 약해지면서 그의 보물들이 다시 나타납니다:
+@@   A 
+==   
+@@ , with 
+==  - 안에: 
+@@ His booty remains.
+== 그가 모은 전리품은 그대로 남아 있습니다.
+@@ The robber revives, briefly feigning continued unconsciousness, and, when he sees his moment, scrambles away from you.
+== 도둑이 정신을 차립니다. 잠시 여전히 기절한 척하더니, 기회를 엿보다가 허둥지둥 당신에게서 달아납니다.
+@@ Sadly for you, the robber collapsed on top of the bag. Trying to take it would wake him.
+== 안타깝게도 도둑이 자루 위로 쓰러져 버렸습니다. 자루를 가져가려 하면 그가 깨어날 겁니다.
+@@ The bag will be taken over his dead body.
+== 그의 눈에 흙이 들어가기 전에는 자루를 가져갈 수 없을 겁니다.
+@@ It would be a good trick.
+== 그거 참 대단한 묘기겠군요.
+@@ Getting close enough would be a good trick.
+== 그만큼 가까이 다가가는 것부터가 대단한 묘기겠군요.
+@@ The bag is underneath the thief, so one can't say what, if anything, is inside.
+== 자루가 도둑 밑에 깔려 있어서, 안에 무엇이 들었는지, 아니 무엇이 들어 있기는 한지조차 알 수 없습니다.
+@@ You'd be stabbed in the back first.
+== 그 전에 등에 칼을 맞을 겁니다.
+@@ You hear a scream of anguish as you violate the robber's hideaway. Using passages unknown to you, he rushes to its defense.
+== 당신이 도둑의 은신처를 침범하자 고뇌에 찬 비명이 들려옵니다. 당신이 모르는 통로를 지나 그가 은신처를 지키러 달려옵니다.
+@@ The thief gestures mysteriously, and the treasures in the room suddenly vanish.
+== 도둑이 알 수 없는 손짓을 하자 방 안의 보물들이 갑자기 사라집니다.
+@@ The door cannot be opened.
+== 문이 열리지 않습니다.
+@@ You cannot burn this door.
+== 이 문은 태울 수 없습니다.
+@@ You can't seem to damage the door.
+== 문에 흠집 하나 낼 수 없는 것 같습니다.
+@@ It won't open.
+== 열리지 않습니다.
+@@ A force keeps you from taking the bodies.
+== 어떤 힘이 시체를 가져가지 못하게 막습니다.
+@@ The book is already open to page 569.
+== 책은 이미 569쪽이 펼쳐져 있습니다.
+@@ As hard as you try, the book cannot be closed.
+== 아무리 애써도 책이 덮이지 않습니다.
+@@ Beside page 569, there is only one other page with any legible printing on it. Most of it is unreadable, but the subject seems to be the banishment of evil. Apparently, certain noises, lights, and prayers are efficacious in this regard.
+== 569쪽 말고 글씨를 읽을 수 있는 쪽은 딱 한 쪽뿐입니다. 대부분은 읽을 수 없지만, 악을 쫓아내는 일에 관한 내용인 듯합니다. 아무래도 어떤 소리와 빛과 기도문이 이 일에 효험이 있는 모양입니다.
+@@ Congratulations! Unlike the other vandals, who merely stole the artist's masterpieces, you have destroyed one.
+== 축하합니다! 화가의 걸작을 훔치기만 한 다른 반달들과 달리, 당신은 아예 하나를 망가뜨렸군요.
+@@ The lamp has smashed into the floor, and the light has gone out.
+== 램프가 바닥에 부딪혀 박살 나고 불이 꺼졌습니다.
+@@ A burned-out lamp won't light.
+== 다 닳은 램프는 켜지지 않습니다.
+@@ The lamp has already burned out.
+== 램프는 이미 다 닳았습니다.
+@@ The lamp 
+== 램프는 
+@@ has burned out.
+== 다 닳았습니다.
+@@ is on.
+== 켜져 있습니다.
+@@ is turned off.
+== 꺼져 있습니다.
+@@ It is securely anchored.
+== 단단히 고정되어 있습니다.
+@@ I'm afraid that you have run out of matches.
+== 유감이지만 성냥이 다 떨어졌습니다.
+@@ This room is drafty, and the match goes out instantly.
+== 이 방은 바람이 들이쳐서 성냥이 곧바로 꺼집니다.
+@@ One of the matches starts to burn.
+== 성냥 하나에 불이 붙습니다.
+@@ The match is out.
+== 성냥이 꺼졌습니다.
+@@ It's pitch black in here!
+== 여기는 칠흑같이 어둡습니다!
+@@ You have 
+== 당신에게는 
+@@ no
+== 0
+@@  match
+== 개비의 성냥이 있습니다
+@@ es.
+== .
+@@ The match is burning.
+== 성냥이 타고 있습니다.
+@@ The matchbook isn't very interesting, except for what's written on it.
+== 성냥갑은 거기 적힌 글귀 말고는 별로 흥미로울 것이 없습니다.
+@@ The match has gone out.
+== 성냥불이 꺼졌습니다.
+@@ You'd better have more light than from the 
+== 더 밝은 불빛이 있어야 할 겁니다. 이것만으로는 곤란합니다: 
+@@ Alas, there's not much left of the candles. Certainly not enough to burn.
+== 안타깝게도 양초가 거의 남지 않았습니다. 불을 붙이기에는 턱없이 모자랍니다.
+@@ (with the match)
+== (성냥으로)
+@@ You should say what to light them with.
+== 무엇으로 불을 붙일지 말씀하셔야죠.
+@@ The candles are 
+== 양초는 
+@@ already lit.
+== 이미 켜져 있습니다.
+@@ lit.
+== 켜졌습니다.
+@@ You realize, just in time, that the candles are already lighted.
+== 양초에 이미 불이 붙어 있다는 것을 당신은 아슬아슬하게 알아차립니다.
+@@ The heat from the torch is so intense that the candles are vaporized.
+== 횃불의 열기가 너무 강해서 양초가 증발해 버립니다.
+@@ You have to light them with something that's burning, you know.
+== 타고 있는 무언가로 불을 붙여야 하는 거 아시죠?
+@@ Let's see, how many objects in a pair? Don't tell me, I'll get it.
+== 어디 보자, 한 쌍이면 몇 개더라? 말하지 마세요, 제가 맞혀 볼게요.
+@@ The flame is extinguished.
+== 불꽃이 꺼집니다.
+@@  It's really dark in here....
+==  여기는 정말 어둡군요....
+@@ The candles are not lighted.
+== 양초에 불이 붙어 있지 않습니다.
+@@ That wouldn't be smart.
+== 그건 현명하지 않겠군요.
+@@ burning.
+== 타고 있습니다.
+@@ out.
+== 꺼져 있습니다.
+@@ A gust of wind blows out your candles!
+== 돌풍이 불어와 양초가 꺼져 버립니다!
+@@ It is now completely dark.
+== 이제 완전히 깜깜합니다.
+@@ Your sword is glowing with a faint blue glow.
+== 당신의 검이 희미하게 푸른빛을 내고 있습니다.
+@@ Your sword is glowing very brightly.
+== 당신의 검이 아주 밝게 빛나고 있습니다.
+@@ How sad for an aspiring adventurer to light a 
+== 장래가 촉망되던 모험가가 가스 냄새가 진동하는 방에서 
+@@  in a room which reeks of gas. Fortunately, there is justice in the world.
+== {을} 켜다니, 참으로 슬픈 일입니다. 다행히 세상에는 정의가 살아 있군요.
+@@ Oh dear. It appears that the smell coming from this room was coal gas. I would have thought twice about carrying flaming objects in here.
+== 이런 맙소사. 이 방에서 나던 냄새는 석탄 가스였나 봅니다. 저 같으면 불붙은 물건을 들고 이곳에 들어오기 전에 한 번 더 생각했을 겁니다.
+@@ In the corner of the room on the ceiling is a large vampire bat who is obviously deranged and holding his nose.
+== 방구석 천장에 커다란 흡혈박쥐가 매달려 있는데, 정신이 나간 게 분명한 데다 코를 틀어막고 있습니다.
+@@ A large vampire bat, hanging from the ceiling, swoops down at you!
+== 천장에 매달려 있던 커다란 흡혈박쥐가 당신에게 달려듭니다!
+@@ You are in a small room which has doors only to the east and south.
+== 당신은 동쪽과 남쪽에만 문이 있는 작은 방에 있습니다.
+@@ This is a large, cold room whose sole exit is to the north. In one corner there is a machine which is reminiscent of a clothes dryer. On its face is a switch which is labelled "START". The switch does not appear to be manipulable by any human hand (unless the fingers are about 1/16 by 1/4 inch). On the front of the machine is a large lid, which is 
+== 북쪽으로만 나갈 수 있는 크고 차가운 방입니다. 한쪽 구석에 빨래 건조기를 떠올리게 하는 기계가 있습니다. 기계 표면에는 "START"라고 적힌 스위치가 있습니다. 이 스위치는 사람 손으로는 조작할 수 없을 것 같습니다(손가락 굵기가 1/16인치에 길이가 1/4인치쯤이라면 모를까). 기계 앞면에는 커다란 뚜껑이 있는데, 지금 
+@@ closed.
+== 닫혀 있습니다.
+@@ It is far too large to carry.
+== 너무 커서 들고 다닐 수 없습니다.
+@@ The lid opens, revealing 
+== 뚜껑이 열리며 안에 든 것이 보입니다: 
+@@ The lid opens.
+== 뚜껑이 열립니다.
+@@ The lid closes.
+== 뚜껑이 닫힙니다.
+@@ It's not clear how to turn it on with your bare hands.
+== 맨손으로는 어떻게 켜야 할지 모르겠습니다.
+@@ The machine doesn't seem to want to do anything.
+== 기계는 아무것도 할 생각이 없어 보입니다.
+@@ The machine comes to life (figuratively) with a dazzling display of colored lights and bizarre noises. After a few moments, the excitement abates.
+== 기계가 (비유적으로) 살아나더니 눈부신 색색의 불빛과 기괴한 소리를 쏟아 냅니다. 잠시 후 소동이 가라앉습니다.
+@@ It seems that a 
+== 아무래도 
+@@  won't do.
+== {으로}는 안 되겠습니다.
+@@ The slag was rather insubstantial, and crumbles into dust at your touch.
+== 찌꺼기는 무척 부실해서 손을 대자마자 가루가 되어 부스러집니다.
+@@ Suddenly, the rainbow appears to become solid and, I venture, walkable (I think the giveaway was the stairs and bannister).
+== 갑자기 무지개가 단단해지더니, 감히 말씀드리자면 걸어 다닐 수 있게 된 것 같습니다(계단과 난간이 결정적인 단서였죠).
+@@ A shimmering pot of gold appears at the end of the rainbow.
+== 무지개 끝에 반짝이는 금 단지가 나타납니다.
+@@ The rainbow seems to have become somewhat run-of-the-mill.
+== 무지개가 어쩐지 평범한 무지개가 되어 버린 것 같습니다.
+@@ A dazzling display of color briefly emanates from the sceptre.
+== 홀에서 눈부신 색색의 빛이 잠깐 뿜어져 나옵니다.
+@@ You are at the top of Aragain Falls, an enormous waterfall with a drop of about 450 feet. The only path here is on the north end.
+== 당신은 아라게인 폭포 꼭대기에 있습니다. 높이가 450피트쯤 되는 거대한 폭포입니다. 이곳에서 나가는 길은 북쪽 끝에 있는 길 하나뿐입니다.
+@@ A solid rainbow spans the falls.
+== 단단한 무지개가 폭포 위에 걸쳐 있습니다.
+@@ A beautiful rainbow can be seen over the falls and to the west.
+== 폭포 위로 서쪽에 아름다운 무지개가 보입니다.
+@@ From here?!?
+== 여기서요?!?
+@@ You'll have to say which way...
+== 어느 쪽으로 갈지 말씀하셔야죠...
+@@ Can you walk on water vapor?
+== 수증기 위를 걸을 수 있으세요?
+@@ The Frigid River flows under the rainbow.
+== 얼음장 강이 무지개 아래로 흐릅니다.
+@@ No chance. Some moron punctured it.
+== 어림없습니다. 어떤 얼간이가 구멍을 내 버렸거든요.
+@@ Well done. The boat is repaired.
+== 잘했습니다. 배가 수리되었습니다.
+@@ You should get in the boat then launch it.
+== 먼저 배에 탄 다음 띄우셔야죠.
+@@  floats for a moment, then sinks.
+== {은} 잠시 둥둥 떠 있다가 가라앉습니다.
+@@  splashes into the water and is gone forever.
+== {은} 첨벙 물속으로 떨어져 영영 사라집니다.
+@@ A look before leaping reveals that the river is wide and dangerous, with swift currents and large, half-hidden rocks. You decide to forgo your swim.
+== 뛰어들기 전에 살펴보니 강은 넓고 위험하며, 물살이 빠르고 반쯤 잠긴 큰 바위들이 있습니다. 당신은 헤엄치기를 단념합니다.
+@@ The flow of the river carries you downstream.
+== 강물이 당신을 하류로 실어 갑니다.
+@@ Read the label for the boat's instructions.
+== 배 사용법은 딱지를 읽어 보세요.
+@@ You are on the 
+== 당신은 지금 
+@@ reservoir
+== 저수지
+@@ stream
+== 개울
+@@ , or have you forgotten?
+==  위에 떠 있습니다. 잊으셨나요?
+@@ You can't launch it here.
+== 여기서는 배를 띄울 수 없습니다.
+@@ It seems that the 
+== 아무래도 
+@@  didn't agree with the boat, as evidenced by the loud hissing noise issuing therefrom. With a pathetic sputter, the boat deflates, leaving you without.
+== {은} 배와 궁합이 맞지 않았나 봅니다. 배에서 쉭쉭 새어 나오는 요란한 소리가 그 증거입니다. 처량하게 푸드득거리더니 배는 바람이 빠져 버리고, 당신은 배를 잃고 말았습니다.
+@@ You're not in the boat!
+== 당신은 배에 타고 있지 않습니다!
+@@ Oops! Something sharp seems to have slipped and punctured the boat. The boat deflates to the sounds of hissing, sputtering, and cursing.
+== 이런! 뭔가 날카로운 것이 미끄러지면서 배에 구멍을 낸 것 같습니다. 쉭쉭, 푸드득, 그리고 욕설 소리와 함께 배의 바람이 빠집니다.
+@@ Inflating it further would probably burst it.
+== 더 부풀렸다가는 아마 터져 버릴 겁니다.
+@@ You can't deflate the boat while you're in it.
+== 배에 탄 채로는 바람을 뺄 수 없습니다.
+@@ The boat must be on the ground to be deflated.
+== 바람을 빼려면 배가 땅 위에 있어야 합니다.
+@@ The boat deflates.
+== 배의 바람이 빠집니다.
+@@ The boat must be on the ground to be inflated.
+== 바람을 넣으려면 배가 땅 위에 있어야 합니다.
+@@ The boat inflates and appears seaworthy.
+== 배가 부풀어 오르더니 물에 띄워도 괜찮아 보입니다.
+@@ A tan label is lying inside the boat.
+== 배 안에 황갈색 딱지가 놓여 있습니다.
+@@ You don't have enough lung power to inflate it.
+== 폐활량이 모자라 바람을 넣을 수 없습니다.
+@@ ? Surely you jest!
+== {으로}요? 설마 농담이시겠죠!
+@@ You notice something funny about the feel of the buoy.
+== 부표를 만져 보니 뭔가 느낌이 이상합니다.
+@@ You can see a scarab here in the sand.
+== 모래 속에 풍뎅이가 보입니다.
+@@ You are about 10 feet above the ground nestled among some large branches. The nearest branch above you is above your reach.
+== 당신은 땅에서 10피트쯤 위, 커다란 가지들 사이에 자리 잡고 있습니다. 바로 위의 가지는 손이 닿지 않습니다.
+@@ On the ground below you can see:  
+== 아래 땅에 보이는 것:  
+@@ The nest falls to the ground, and the egg spills out of it, seriously damaged.
+== 둥지가 땅으로 떨어지고, 알이 둥지에서 쏟아져 나와 심하게 망가집니다.
+@@ The egg falls to the ground and springs open, seriously damaged.
+== 알이 땅으로 떨어지면서 활짝 열려 심하게 망가집니다.
+@@  falls to the ground.
+== {이} 땅으로 떨어집니다.
+@@ The egg is already open.
+== 알은 이미 열려 있습니다.
+@@ You have neither the tools nor the expertise.
+== 당신에게는 도구도 전문 지식도 없습니다.
+@@ I doubt you could do that without damaging it.
+== 망가뜨리지 않고 그렇게 할 수 있을지 의문입니다.
+@@ The egg is now open, but the clumsiness of your attempt has seriously compromised its esthetic appeal.
+== 알이 열리긴 했지만, 서툰 솜씨 탓에 그 미적 가치가 심각하게 훼손되었습니다.
+@@ Not to say that using the 
+== 물론 
+@@  isn't original too...
+== {을} 쓰는 것도 독창적이지 않다는 말은 아닙니다만...
+@@ The concept of using a 
+== 알을 여는 데 
+@@  is certainly original.
+== {을} 쓴다는 발상은 확실히 독창적입니다.
+@@ There is a noticeable crunch from beneath you, and inspection reveals that the egg is lying open, badly damaged.
+== 발밑에서 뭔가 으스러지는 소리가 뚜렷하게 들립니다. 살펴보니 알이 심하게 망가진 채 열려 있습니다.
+@@ Your rather indelicate handling of the egg has caused it some damage, although you have succeeded in opening it.
+== 알을 다소 거칠게 다룬 탓에 열기는 했지만 알이 좀 망가졌습니다.
+@@ The canary chirps, slightly off-key, an aria from a forgotten opera. From out of the greenery flies a lovely songbird. It perches on a limb just over your head and opens its beak to sing. As it does so a beautiful brass bauble drops from its mouth, bounces off the top of your head, and lands glimmering in the grass. As the canary winds down, the songbird flies away.
+== 카나리아가 약간 음정이 어긋난 소리로 잊혀진 오페라의 아리아를 지저귑니다. 그러자 수풀 속에서 사랑스러운 노래하는 새가 날아옵니다. 새는 당신 머리 바로 위의 나뭇가지에 앉아 노래하려고 부리를 엽니다. 그 순간 새의 입에서 아름다운 놋쇠 장신구가 떨어져 당신의 정수리를 맞고 튕겨 나가더니 풀밭 위에 떨어져 반짝입니다. 카나리아의 태엽이 풀려 가자 노래하는 새는 날아가 버립니다.
+@@ The canary chirps blithely, if somewhat tinnily, for a short time.
+== 카나리아가 잠시 동안 즐겁게, 다만 조금 깡통 소리처럼 지저귑니다.
+@@ There is an unpleasant grinding noise from inside the canary.
+== 카나리아 속에서 듣기 거북하게 끼긱거리는 소리가 납니다.
+@@ You hear in the distance the chirping of a song bird.
+== 멀리서 노래하는 새의 지저귐이 들려옵니다.
+@@ The cliff is too steep for climbing.
+== 절벽이 너무 가팔라서 오를 수 없습니다.
+@@ That would be very unwise. Perhaps even fatal.
+== 그건 매우 어리석은 짓입니다. 어쩌면 목숨을 잃을 수도 있습니다.
+@@  tumbles into the river and is seen no more.
+== {은} 강으로 굴러떨어져 다시는 보이지 않습니다.
+@@ You can't tie the rope to that.
+== 밧줄을 거기에 묶을 수는 없습니다.
+@@ The rope is already tied to it.
+== 밧줄은 이미 거기에 묶여 있습니다.
+@@ The rope drops over the side and comes within ten feet of the floor.
+== 밧줄이 아래로 늘어지더니 바닥에서 10피트 정도 위까지 내려옵니다.
+@@ Your attempt to tie up the 
+== {}
+@@  awakens him.
+== {을} 묶으려 하자 그가 깨어납니다.
+@@  struggles and you cannot tie him up.
+== {이} 발버둥 쳐서 묶을 수가 없습니다.
+@@ Why would you tie up a 
+== 묶는다고요? 그깟 
+@@ The rope is now untied.
+== 밧줄이 풀렸습니다.
+@@ It is not tied to anything.
+== 아무 데도 묶여 있지 않습니다.
+@@ The rope drops gently to the floor below.
+== 밧줄이 아래 바닥으로 사뿐히 떨어집니다.
+@@ The rope is tied to the railing.
+== 밧줄이 난간에 묶여 있습니다.
+@@ You tumble down the slide....
+== 당신은 미끄럼틀을 따라 굴러떨어집니다....
+@@  falls into the slide and is gone.
+== {은} 미끄럼틀로 떨어져 사라집니다.
+@@ It smells of hot peppers.
+== 고추 냄새가 납니다.
+@@ You cannot enter in your condition.
+== 지금 같은 몸으로는 들어갈 수 없습니다.
+@@ All such attacks are vain in your condition.
+== 지금 같은 몸으로는 그런 공격은 모두 헛수고입니다.
+@@ Even such an action is beyond your capabilities.
+== 그런 일조차 지금의 당신에게는 무리입니다.
+@@ Might as well. You've got an eternity.
+== 그러시죠. 시간은 영원히 남아도니까요.
+@@ You need no light to guide you.
+== 당신에게는 이제 길을 비춰 줄 빛이 필요 없습니다.
+@@ You're dead! How can you think of your score?
+== 당신은 죽었습니다! 이 와중에 점수 생각이 나십니까?
+@@ You have no possessions.
+== 당신에게는 가진 것이 아무것도 없습니다.
+@@ You are dead.
+== 당신은 죽었습니다.
+@@ The room looks strange and unearthly
+== 방이 기묘하고 이 세상 것이 아닌 듯 보이며
+@@  and objects appear indistinct.
+==  물건들은 흐릿하게만 보입니다.
+@@ Although there is no light, the room seems dimly illuminated.
+== 빛은 없지만, 방이 어렴풋이 밝아 보입니다.
+@@ From the distance the sound of a lone trumpet is heard. The room becomes very bright and you feel disembodied. In a moment, the brightness fades and you find yourself rising as if from a long sleep, deep in the woods. In the distance you can faintly hear a songbird and the sounds of the forest.
+== 멀리서 외로운 나팔 소리가 들려옵니다. 방 안이 눈부시게 밝아지고 몸이 사라진 듯한 느낌이 듭니다. 잠시 후 빛이 사그라지고, 당신은 깊은 숲속에서 긴 잠에서 깨어나듯 일어납니다. 멀리서 노래하는 새 소리와 숲의 소리가 희미하게 들려옵니다.
+@@ Your prayers are not heard.
+== 당신의 기도는 들리지 않습니다.
+@@ You can't even do that.
+== 당신은 그것조차 할 수 없습니다.
+@@ There's not much lake left....
+== 호수는 거의 남아 있지 않습니다....
+@@ It's too wide to cross.
+== 너무 넓어서 건널 수 없습니다.
+@@ You can't swim in this lake.
+== 이 호수에서는 헤엄칠 수 없습니다.
+@@ You can't swim in the stream.
+== 개울에서는 헤엄칠 수 없습니다.
+@@ The other side is a sheer rock cliff.
+== 건너편은 깎아지른 바위 절벽입니다.
+@@ You look before leaping, and realize that you would never survive.
+== 뛰어들기 전에 살펴보니, 뛰었다가는 절대로 살아남지 못하겠다는 것을 깨닫습니다.
+@@ It's too far to jump, and there's no bridge.
+== 뛰어넘기에는 너무 멀고, 다리도 없습니다.
+@@  drops out of sight into the chasm.
+== {은} 깊은 틈 속으로 떨어져 보이지 않게 됩니다.
+@@ No.
+== 아니요.
+@@ The gate is protected by an invisible force. It makes your teeth ache to touch it.
+== 문은 보이지 않는 힘으로 보호되고 있습니다. 손을 대니 이가 시릴 지경입니다.
+@@ The door won't budge.
+== 문이 꿈쩍도 하지 않습니다.
+@@ Some paint chips away, revealing more paint.
+== 페인트가 조금 벗겨지더니, 그 밑에 또 페인트가 드러납니다.
+@@ There is too much gas to blow away.
+== 가스가 너무 많아서 불어서 날려 보낼 수 없습니다.
+@@ It smells like coal gas in here.
+== 이곳에서 석탄 가스 냄새가 납니다.
+@@  slowly regains his feet.
+== {이} 천천히 몸을 일으킵니다.
+@@ Fortunately, you still have a 
+== 다행히 당신에게는 아직 이것이 남아 있습니다: 
+@@ You are still recovering from that last blow, so your attack is ineffective.
+== 지난번 공격의 충격에서 아직 회복하지 못해서 당신의 공격은 효과가 없습니다.
+@@ Attacking the 
+== {}
+@@  is pointless.
+== {을} 공격해 봐야 아무 소용이 없습니다.
+@@ unconscious
+== 의식을 잃은
+@@ unarmed
+== 무기가 없는
+@@  cannot defend himself: He dies.
+== {은} 자신을 지킬 수 없습니다. 그는 죽습니다.
+@@ Almost as soon as the 
+== {}
+@@  breathes his last breath, a cloud of sinister black fog envelops him, and when the fog lifts, the carcass has disappeared.
+== {이} 마지막 숨을 거두자마자 불길한 검은 안개가 그를 감싸고, 안개가 걷히고 나니 시체는 사라지고 없습니다.
+@@ Your sword has begun to glow very brightly.
+== 당신의 검이 아주 밝게 빛나기 시작했습니다.
+@@ Your sword is no longer glowing.
+== 당신의 검이 더 이상 빛나지 않습니다.
+@@ The robber, rummaging through his bag, dropped a few items he found valueless.
+== 도둑이 자루를 뒤적거리더니, 쓸모없다고 여긴 물건 몇 개를 떨어뜨립니다.
+@@ You suddenly notice that the 
+== 문득 보니 
+@@  vanished.
+== {이} 사라져 버렸습니다.
+@@ You are in perfect health.
+== 당신은 아주 건강합니다.
+@@ a light wound,
+== 가벼운 상처를 입었습니다.
+@@ a serious wound,
+== 심한 상처를 입었습니다.
+@@ several wounds,
+== 상처를 여러 군데 입었습니다.
+@@ serious wounds,
+== 심한 상처를 여러 군데 입었습니다.
+@@  which will be cured after 
+==  다 나을 때까지 남은 시간은 
+@@  moves.
+== 턴입니다.
+@@ You can 
+== 당신은 
+@@ expect death soon
+== 곧 죽을 것 같습니다
+@@ be killed by one more light wound
+== 가벼운 상처 하나만 더 입어도 죽습니다
+@@ be killed by a serious wound
+== 심한 상처 하나면 죽습니다
+@@ survive one serious wound
+== 심한 상처 하나쯤은 견딜 수 있습니다
+@@ survive several wounds
+== 상처 여러 개쯤은 견딜 수 있습니다
+@@ You have been killed 
+== 당신은 지금까지 
+@@ once
+== 한 번 죽었습니다
+@@ twice
+== 두 번 죽었습니다
+@@ Your score is 
+== 점수는 
+@@  (total of 350 points), in 
+== 점(만점 350점)이며, 지금까지 걸린 시간은 
+@@  move.
+== 턴입니다.
+@@ This gives you the rank of 
+== 당신의 등급은 
+@@ Master Adventurer
+== 모험가의 대가입니다
+@@ Wizard
+== 마법사입니다
+@@ Master
+== 달인입니다
+@@ Adventurer
+== 모험가입니다
+@@ Junior Adventurer
+== 견습 모험가입니다
+@@ Novice Adventurer
+== 신참 모험가입니다
+@@ Amateur Adventurer
+== 아마추어 모험가입니다
+@@ Beginner
+== 초보자입니다
+@@ \nIt takes a talented person to be killed while already dead. YOU are such a talent. Unfortunately, it takes a talented person to deal with it. I am not such a talent. Sorry.
+== \n이미 죽은 상태에서 또 죽으려면 대단한 재능이 필요합니다. 당신이 바로 그런 재능의 소유자입니다. 불행히도, 그런 일을 수습하는 데에도 대단한 재능이 필요합니다. 저는 그런 재능이 없습니다. 미안합니다.
+@@ Bad luck, huh?
+== 운이 나빴군요, 그렇죠?
+@@  \n    ****  You have died  **** \n\n
+==  \n    ****  당신은 죽었습니다  **** \n\n
+@@ You clearly are a suicidal maniac. We don't allow psychotics in the cave, since they may harm other adventurers. Your remains will be installed in the Land of the Living Dead, where your fellow adventurers may gloat over them.
+== 당신은 틀림없이 자살 충동에 사로잡힌 미치광이입니다. 다른 모험가들을 해칠지도 모르니 정신 나간 사람은 동굴에 들일 수 없습니다. 당신의 유해는 '살아 있는 죽은 자들의 땅'에 안치될 것이고, 동료 모험가들이 그것을 보며 고소해할 것입니다.
+@@ As you take your last breath, you feel relieved of your burdens. The feeling passes as you find yourself before the gates of Hell, where the spirits jeer at you and deny you entry. Your senses are disturbed. The objects in the dungeon appear indistinct, bleached of color, even unreal.
+== 마지막 숨을 내쉬는 순간, 모든 짐을 내려놓은 듯 홀가분해집니다. 그 느낌도 잠시, 정신을 차려 보니 지옥의 문 앞에 서 있고, 망령들이 당신을 비웃으며 들여보내 주지 않습니다. 감각이 어지럽습니다. 지하 세계의 물건들이 흐릿하고, 색이 바랜 듯하며, 심지어 실재하지 않는 것처럼 보입니다.
+@@ Now, let's take a look here... Well, you probably deserve another chance. I can't quite fix you up completely, but you can't have everything.
+== 자, 어디 한번 볼까요... 음, 한 번 더 기회를 줄 만하군요. 완벽하게 고쳐 드리지는 못하지만, 세상일이 다 뜻대로 되지는 않는 법입니다.
+@@  are safely inside; there's no need to do that.
+== {은} 안에 안전하게 들어 있습니다. 그럴 필요는 없습니다.
+@@ There are lots of 
+== 안에 
+@@  in there.
+== {이} 잔뜩 들어 있습니다.
+@@ Don't be silly. It wouldn't be a 
+== 바보 같은 소리 마십시오. 그러면 더 이상 
+@@  anymore.
+== {이} 아니게 될 겁니다.
+@@ It looks pretty much like a 
+== 생긴 건 영락없는 
+@@ What the heck! You won't make friends this way, but nobody around here is too friendly anyhow. Gulp!
+== 에라 모르겠다! 이래서는 친구를 사귈 수 없겠지만, 어차피 이 근처에 상냥한 녀석은 아무도 없습니다. 꿀꺽!
+@@ The chain is secure.
+== 쇠사슬은 단단히 고정되어 있습니다.
+@@ Perhaps you should do that to the basket.
+== 그건 바구니에다 해 보는 게 좋겠습니다.
+@@ The chain secures a basket within the shaft.
+== 쇠사슬에 바구니가 매달려 수직굴 안에 걸려 있습니다.
+@@ ayer of getting the coffin down there.
+== 관을 들고 거기로 내려간다는 건 꿈도 꾸지 마십시오.
+@@ You have come to a dead end in the mine.
+== 탄광의 막다른 곳에 다다랐습니다.
+@@  has no effect.
+== {은} 아무 반응이 없습니다.
+@@ You have two choices: 1. Leave  2. Become dinner.
+== 당신에게는 두 가지 선택지가 있습니다: 1. 떠난다  2. 저녁밥이 된다.
+@@ over your head.
+== 머리 위까지 찼습니다.
+@@ Storm-tossed trees block your way.
+== 폭풍에 쓰러진 나무들이 길을 막고 있습니다.
+@@ Oh, no! You have walked into the slavering fangs of a lurking grue!
+== 이런! 숨어 있던 그루의 침 흘리는 송곳니 속으로 걸어 들어가고 말았습니다!
+@@  knocks out the 
+==  자루에 얻어맞고 쓰러지는 
+@@ At the end of the chain is a basket.
+== 쇠사슬 끝에 바구니가 달려 있습니다.
+@@ On the ground is a red hot bell.
+== 땅바닥에 시뻘겋게 달아오른 종이 있습니다.
+@@ On the altar is a large black book, open to page 569.
+== 제단 위에 커다란 검은 책이 569쪽이 펼쳐진 채로 놓여 있습니다.
+@@ On the table is an elongated brown sack, smelling of hot peppers.
+== 식탁 위에 매운 고추 냄새가 나는 길쭉한 갈색 자루가 있습니다.
+@@ On the shore lies Poseidon's own crystal trident.
+== 강기슭에 포세이돈이 쓰던 수정 삼지창이 놓여 있습니다.
+@@ On the two ends of the altar are burning candles.
+== 제단 양쪽 끝에 양초가 타고 있습니다.
+@@ On the ground is a pile of leaves.
+== 땅바닥에 낙엽 더미가 있습니다.
+@@ On the ground is a large platinum bar.
+== 땅바닥에 커다란 백금 막대가 있습니다.
+@@ At the end of the rainbow is a pot of gold.
+== 무지개 끝에 금 단지가 있습니다.
+@@     
+==     
+@@ With great effort, you open the window far enough to allow entry.
+== 낑낑대며 힘을 써서, 들어갈 수 있을 만큼 창문을 열었습니다.
+@@  parries.
+== {이} 막아 냅니다.
+@@  and devoured you!
+== {으로} 스르르 기어 들어와 당신을 집어삼켰습니다!
+@@ Too late for that.
+== 이미 늦었습니다.
+@@  by an inch.
+== {을} 간발의 차이로 빗나갑니다.
+@@  by a mile.
+== {을} 한참이나 빗나갑니다.
+@@  and knocks it spinning.
+== {을} 쳐서 빙글빙글 날려 버립니다.
+@@ An ornamented sceptre, tapering to a sharp point, is here.
+== 끝이 뾰족하게 가늘어지는 화려한 홀이 여기 있습니다.
+@@ "	Flood Control Dam #3\n\nFCD#3 was constructed in year 783 of the Great Underground Empire to harness the mighty Frigid River. This work was supported by a grant of 37 million zorkmids from your omnipotent local tyrant Lord Dimwit Flathead the Excessive. This impressive structure is composed of 370,000 cubic feet of concrete, is 256 feet tall at the center, and 193 feet wide at the top. The lake created behind the dam has a volume of 1.7 billion cubic feet, an area of 12 million square feet, and a shore line of 36 thousand feet.\n\nThe construction of FCD#3 took 112 days from ground breaking to the dedication. It required a work force of 384 slaves, 34 slave drivers, 12 engineers, 2 turtle doves, and a partridge in a pear tree. The work was managed by a command team composed of 2345 bureaucrats, 2347 secretaries (at least two of whom could type), 12,256 paper shufflers, 52,469 rubber stampers, 245,193 red tape processors, and nearly one million dead trees.\n\nWe will now point out some of the more interesting features of FCD#3 as we conduct you on a guided tour of the facilities:\n\n        1) You start your tour here in the Dam Lobby. You will notice on your right that....
+== "	3호 홍수 조절 댐\n\n3호 댐은 위대한 지하 제국 783년, 거센 얼음장 강을 다스리기 위해 건설되었습니다. 이 공사는 전능하신 우리 고장의 폭군, 과잉왕 딤윗 플랫헤드 경께서 하사하신 3천7백만 조크미드의 보조금으로 이루어졌습니다. 이 인상적인 구조물은 콘크리트 37만 세제곱피트로 이루어져 있으며, 한가운데 높이가 256피트, 꼭대기 폭이 193피트입니다. 댐 뒤에 생긴 호수는 부피 17억 세제곱피트, 넓이 1천2백만 제곱피트, 호숫가 길이 3만6천 피트에 이릅니다.\n\n3호 댐은 첫 삽을 뜬 날부터 준공식까지 112일이 걸렸습니다. 공사에는 노예 384명, 노예 감독 34명, 기술자 12명, 멧비둘기 두 마리, 그리고 배나무 위의 자고새 한 마리가 동원되었습니다. 공사는 관료 2345명, 비서 2347명(그중 적어도 두 명은 타자를 칠 줄 알았음), 서류 뒤적이는 사람 12,256명, 도장 찍는 사람 52,469명, 형식 절차 처리원 245,193명, 그리고 죽어 간 나무 백만 그루 가까이로 이루어진 지휘부가 관리했습니다.\n\n이제 시설을 안내해 드리면서 3호 댐의 흥미로운 특징 몇 가지를 짚어 드리겠습니다:\n\n        1) 견학은 이곳 댐 로비에서 시작합니다. 오른쪽을 보시면....
+@@ That was just a bit too far down.
+== 내려가기엔 조금, 아주 조금 너무 높았습니다.
+@@ The axe sweeps past as you jump aside.
+== 당신이 옆으로 뛰어 피하자 도끼가 휙 스쳐 지나갑니다.
+@@ The axe crashes against the rock, throwing sparks!
+== 도끼가 바위에 부딪혀 불꽃이 튑니다!
+@@ The axe gets you right in the side. Ouch!
+== 도끼가 당신의 옆구리를 정통으로 찍습니다. 아야!
+@@ An axe stroke makes a deep wound in your leg.
+== 도끼질 한 번에 다리에 깊은 상처가 났습니다.
+@@ The axe hits your 
+== 도끼가 당신의 
+@@ The axe knocks your 
+== 도끼가 당신의 
+@@ A hot pepper sandwich is here.
+== 매운 고추 샌드위치가 여기 있습니다.
+@@ The blow lands, making a shallow gash in the 
+== 일격이 적중하여, 
+@@ The butt of his stiletto cracks you on the skull, and you stagger back.
+== 단검 손잡이 끝이 당신의 머리통을 딱 때리고, 당신은 비틀거리며 물러섭니다.
+@@ This is a forest, with trees in all directions. To the east, there appears to be sunlight.
+== 사방이 나무로 둘러싸인 숲입니다. 동쪽으로 햇빛이 비치는 것 같습니다.
+@@ This is a dimly lit forest, with large trees all around.
+== 커다란 나무들이 빙 둘러선 어둑한 숲입니다.
+@@ This is a path winding through a dimly lit forest. The path heads north-south here. One particularly large tree with some low branches stands at the edge of the path.
+== 어둑한 숲 사이로 구불구불 이어지는 길입니다. 여기서 길은 남북으로 뻗어 있습니다. 길가에 낮은 가지가 몇 개 달린 유난히 큰 나무 한 그루가 서 있습니다.
+@@ This is the attic. The only exit is a stairway leading down.
+== 다락방입니다. 나가는 길은 아래로 내려가는 계단뿐입니다.
+@@ This is a small room with passages to the east and south and a forbidding hole leading west. Bloodstains and deep scratches (perhaps made by an axe) mar the walls.
+== 동쪽과 남쪽으로 통로가 나 있고, 서쪽으로 으스스한 구멍이 뚫린 작은 방입니다. 벽은 핏자국과 (아마 도끼로 낸 듯한) 깊은 긁힌 자국으로 엉망입니다.
+@@ The chasm probably leads straight to the infernal regions.
+== 이 깊은 틈은 아마 곧장 지옥으로 이어질 것입니다.
+@@ This is an art gallery. Most of the paintings have been stolen by vandals with exceptional taste. The vandals left through either the north or west exits.
+== 미술 화랑입니다. 그림은 대부분 안목이 뛰어난 도둑들이 훔쳐 갔습니다. 도둑들은 북쪽 아니면 서쪽 출구로 나갔습니다.
+@@ This appears to have been an artist's studio. The walls and floors are splattered with paints of 69 different colors. Strangely enough, nothing of value is hanging here. At the south end of the room is an open door (also covered with paint). A dark and narrow chimney leads up from a fireplace; although you might be able to get up it, it seems unlikely you could get back down.
+== 화가의 작업실이었던 곳 같습니다. 벽과 바닥에 69가지 색깔의 물감이 튀어 있습니다. 이상하게도 값나가는 것은 하나도 걸려 있지 않습니다. 방 남쪽 끝에는 (역시 물감투성이인) 열린 문이 있습니다. 벽난로에서 어둡고 좁은 굴뚝이 위로 이어져 있습니다. 올라갈 수는 있을지 몰라도, 다시 내려오기는 어려워 보입니다.
+@@ This is part of a maze of twisty little passages, all alike.
+== 서로 똑같이 생긴 작고 꼬불꼬불한 통로들로 이루어진 미로의 일부입니다.
+@@ This is part of a maze of twisty little passages, all alike. A skeleton, probably the remains of a luckless adventurer, lies here.
+== 서로 똑같이 생긴 작고 꼬불꼬불한 통로들로 이루어진 미로의 일부입니다. 운 나쁜 모험가의 유해인 듯한 해골이 여기 누워 있습니다.
+@@ The cyclops doesn't look like he'll let you past.
+== 외눈박이 거인은 당신을 지나가게 해 줄 것 같지 않습니다.
+@@ This is a long passage. To the west is one entrance. On the east there is an old wooden door, with a large opening in it (about cyclops sized).
+== 긴 통로입니다. 서쪽에 입구가 하나 있습니다. 동쪽에는 낡은 나무 문이 있는데, 거기에 (대략 외눈박이 거인만 한) 커다란 구멍이 뚫려 있습니다.
+@@ This is a large room, whose east wall is solid granite. A number of discarded bags, which crumble at your touch, are scattered about on the floor. There is an exit down a staircase.
+== 동쪽 벽이 단단한 화강암으로 된 커다란 방입니다. 손만 대도 바스러지는 버려진 자루 여러 개가 바닥에 흩어져 있습니다. 아래로 내려가는 계단 출구가 있습니다.
+@@ The channel is too narrow.
+== 물길이 너무 좁습니다.
+@@ This is a tiny cave with entrances west and north, and a staircase leading down.
+== 서쪽과 북쪽에 입구가 있고, 아래로 내려가는 계단이 있는 아주 작은 동굴입니다.
+@@ This is a tiny cave with entrances west and north, and a dark, forbidding staircase leading down.
+== 서쪽과 북쪽에 입구가 있고, 아래로 내려가는 어둡고 으스스한 계단이 있는 아주 작은 동굴입니다.
+@@ This is a cold and damp corridor where a long east-west passageway turns into a southward path.
+== 동서로 길게 뻗은 통로가 남쪽 길로 꺾이는, 춥고 눅눅한 복도입니다.
+@@ This is a long and narrow corridor where a long north-south passageway briefly narrows even further.
+== 남북으로 길게 뻗은 통로가 잠깐 더욱 좁아지는, 길고 좁은 복도입니다.
+@@ This is a winding passage. It seems that there are only exits on the east and north.
+== 꼬불꼬불한 통로입니다. 출구는 동쪽과 북쪽에만 있는 것 같습니다.
+@@ This is an ancient room, long under water. There is an exit to the south and a staircase leading up.
+== 오랫동안 물에 잠겨 있던 고대의 방입니다. 남쪽에 출구가 있고, 위로 올라가는 계단이 있습니다.
+@@ This is a narrow east-west passageway. There is a narrow stairway leading down at the north end of the room.
+== 동서로 뻗은 좁은 통로입니다. 방 북쪽 끝에 아래로 내려가는 좁은 계단이 있습니다.
+@@ This is a circular stone room with passages in all directions. Several of them have unfortunately been blocked by cave-ins.
+== 사방으로 통로가 나 있는 둥근 돌방입니다. 안타깝게도 그중 몇 개는 무너져 내린 돌에 막혀 있습니다.
+@@ This cave has exits to the west and east, and narrows to a crack toward the south. The earth is particularly damp here.
+== 이 동굴은 서쪽과 동쪽에 출구가 있고, 남쪽으로 갈수록 좁아져 틈이 됩니다. 이곳의 흙은 유난히 축축합니다.
+@@ This is a high north-south passage, which forks to the northeast.
+== 남북으로 뻗은 천장 높은 통로로, 북동쪽으로 갈라지는 길이 있습니다.
+@@ This is a room which looks like an Egyptian tomb. There is an ascending staircase to the west.
+== 이집트의 무덤처럼 생긴 방입니다. 서쪽에 위로 올라가는 계단이 있습니다.
+@@ This is the north end of a large temple. On the east wall is an ancient inscription, probably a prayer in a long-forgotten language. Below the prayer is a staircase leading down. The west wall is solid granite. The exit to the north end of the room is through huge marble pillars.
+== 커다란 신전의 북쪽 끝입니다. 동쪽 벽에는 오래된 비문이 새겨져 있는데, 아마 오래전에 잊힌 언어로 쓰인 기도문인 듯합니다. 기도문 아래에는 아래로 내려가는 계단이 있습니다. 서쪽 벽은 단단한 화강암입니다. 방 북쪽 끝의 출구는 거대한 대리석 기둥들 사이로 나 있습니다.
+@@ This is the south end of a large temple. In front of you is what appears to be an altar. In one corner is a small hole in the floor which leads into darkness. You probably could not get back up it.
+== 커다란 신전의 남쪽 끝입니다. 눈앞에 제단으로 보이는 것이 있습니다. 한쪽 구석 바닥에 어둠 속으로 이어지는 작은 구멍이 있습니다. 내려가면 아마 다시 올라오지는 못할 것입니다.
+@@ This room appears to have been the waiting room for groups touring the dam. There are open doorways here to the north and east marked "Private", and there is a path leading south over the top of the dam.
+== 이 방은 댐을 견학하는 단체 관광객들의 대기실이었던 것 같습니다. 북쪽과 동쪽에 "관계자 외 출입 금지"라고 적힌 열린 출입구가 있고, 남쪽으로 댐 꼭대기를 지나는 길이 있습니다.
+@@ This is what appears to have been the maintenance room for Flood Control Dam #3. Apparently, this room has been ransacked recently, for most of the valuable equipment is gone. On the wall in front of you is a group of buttons colored blue, yellow, brown, and red. There are doorways to the west and south.
+== 3호 홍수 조절 댐의 정비실이었던 곳 같습니다. 값나가는 장비가 거의 사라진 것을 보니 최근에 누군가 이 방을 털어 간 모양입니다. 앞쪽 벽에 파란색, 노란색, 갈색, 빨간색 단추들이 모여 있습니다. 서쪽과 남쪽에 출입구가 있습니다.
+@@ This is a sand-filled cave whose exit is to the southwest.
+== 모래로 가득 찬 동굴로, 출구는 남서쪽에 있습니다.
+@@ This is a large room, in the middle of which is a small shaft descending through the floor into darkness below. To the west and the north are exits from this room. Constructed over the top of the shaft is a metal framework to which a heavy iron chain is attached.
+== 커다란 방으로, 한가운데에 바닥을 뚫고 아래 어둠 속으로 내려가는 작은 수직굴이 있습니다. 서쪽과 북쪽에 출구가 있습니다. 수직굴 위에는 금속 틀이 세워져 있고, 거기에 무거운 쇠사슬이 매여 있습니다.
+@@ This is a small nondescript room. However, from the direction of a small descending staircase a foul odor can be detected. To the south is a narrow tunnel.
+== 별다른 특징 없는 작은 방입니다. 그러나 아래로 내려가는 작은 계단 쪽에서 고약한 냄새가 풍겨 옵니다. 남쪽에 좁은 굴이 있습니다.
+@@ This is a small room which smells strongly of coal gas. There is a short climb up some stairs and a narrow tunnel leading east.
+== 석탄 가스 냄새가 진동하는 작은 방입니다. 위로 짧게 올라가는 계단이 있고, 동쪽으로 좁은 굴이 이어집니다.
+@@ This is a very small room. In the corner is a rickety wooden ladder, leading downward. It might be safe to descend. There is also a staircase leading upward.
+== 아주 작은 방입니다. 구석에 아래로 이어지는 삐걱거리는 나무 사다리가 있습니다. 내려가도 괜찮을지도 모릅니다. 위로 올라가는 계단도 있습니다.
+@@ This is a rather wide room. On one side is the bottom of a narrow wooden ladder. To the west and the south are passages leaving the room.
+== 꽤 넓은 방입니다. 한쪽에 좁은 나무 사다리의 아래쪽 끝이 있습니다. 서쪽과 남쪽으로 방을 나가는 통로가 있습니다.
+@@ This is a long and narrow passage, which is cluttered with broken timbers. A wide passage comes from the east and turns at the west end of the room into a very narrow passageway. From the west comes a strong draft.
+== 부러진 각목들이 어지럽게 널린 길고 좁은 통로입니다. 동쪽에서 오는 넓은 통로가 방 서쪽 끝에서 아주 좁은 통로로 바뀝니다. 서쪽에서 강한 바람이 불어옵니다.
+@@ This is a small drafty room in which is the bottom of a long shaft. To the south is a passageway and to the east a very narrow passage. In the shaft can be seen a heavy iron chain.
+== 기다란 수직굴의 바닥이 있는, 바람이 숭숭 드는 작은 방입니다. 남쪽에 통로가 있고, 동쪽에는 아주 좁은 통로가 있습니다. 수직굴 안에 무거운 쇠사슬이 보입니다.
+@@ This is a nondescript part of a coal mine.
+== 탄광의 별다른 특징 없는 한 구석입니다.
+@@ This is a small chamber, which appears to have been part of a coal mine. On the south wall of the chamber the letters "Granite Wall" are etched in the rock. To the east is a long passage, and there is a steep metal slide twisting downward. To the north is a small opening.
+== 탄광의 일부였던 것 같은 작은 방입니다. 방 남쪽 벽의 바위에 "화강암 벽"이라는 글자가 새겨져 있습니다. 동쪽에 긴 통로가 있고, 아래로 비비 꼬이며 내려가는 가파른 금속 미끄럼틀이 있습니다. 북쪽에 작은 구멍이 있습니다.
+@@ Wheeeeeeeeee!!!!!
+== 야호오오오오오오!!!!!
+@@ What a concept!
+== 참 기발한 발상이군요!
+@@ The cyclops, tired of all of your games and trickery, grabs you firmly. As he licks his chops, he says "Mmm. Just like Mom used to make 'em." It's nice to be appreciated.
+== 당신의 장난과 속임수에 질린 외눈박이 거인이 당신을 꽉 움켜쥡니다. 거인은 입맛을 다시며 말합니다. "음냐. 엄마가 해 주던 맛이랑 똑같군." 인정받는다는 건 기분 좋은 일입니다.
+@@ The cyclops seems somewhat agitated.
+== 외눈박이 거인이 다소 흥분한 것 같습니다.
+@@ The cyclops appears to be getting more agitated.
+== 외눈박이 거인이 점점 더 흥분하는 것 같습니다.
+@@ The cyclops is moving about the room, looking for something.
+== 외눈박이 거인이 무언가를 찾으며 방 안을 돌아다닙니다.
+@@ The cyclops was looking for salt and pepper. No doubt they are condiments for his upcoming snack.
+== 외눈박이 거인은 소금과 후추를 찾고 있었습니다. 틀림없이 곧 먹을 간식에 칠 양념일 것입니다.
+@@ The cyclops is moving toward you in an unfriendly manner.
+== 외눈박이 거인이 험악한 기세로 당신에게 다가옵니다.
+@@ The candles grow shorter.
+== 양초가 점점 짧아집니다.
+@@ The candles are becoming quite short.
+== 양초가 꽤 짧아졌습니다.
+@@ The candles won't last long now.
+== 이제 양초가 얼마 못 갈 것 같습니다.
+@@  square in the heart: He dies.
+== 의 심장 한복판에 꽂힙니다. 그는 죽었습니다.
+@@ You parry a lightning thrust, and the thief salutes you with a grim nod.
+== 번개 같은 찌르기를 막아 내자, 도둑이 굳은 표정으로 고개를 끄덕여 경의를 표합니다.
+@@ You parry a low thrust, and your 
+== 낮게 찔러 오는 공격을 막아 냈지만, 손에 든 
+@@ The deceased adventurer's useless lantern is here.
+== 죽은 모험가가 쓰던 쓸모없는 램프가 여기 있습니다.
+@@ "WELCOME TO ZORK!\n\nZORK is a game of adventure, danger, and low cunning. In it you will explore some of the most amazing territory ever seen by mortals. No computer should be without one!"
+== "조크에 오신 것을 환영합니다!\n\n조크는 모험과 위험, 그리고 얕은 꾀의 게임입니다. 여러분은 이 게임에서 인간이 일찍이 본 적 없는 가장 놀라운 땅을 탐험하게 됩니다. 컴퓨터라면 하나쯤 꼭 갖춰야 할 필수품!"
+@@   !!!!FROBOZZ MAGIC BOAT COMPANY!!!!\n\nHello, Sailor!\n\nInstructions for use:\n\n   To get into a body of water, say "Launch".\n   To get to shore, say "Land" or the direction in which you want to maneuver the boat.\n\nWarranty:\n\n  This boat is guaranteed against all defects for a period of 76 milliseconds from date of purchase or until first used, whichever comes first.\n\nWarning:\n   This boat is made of thin plastic.\n   Good Luck!
+==   !!!!프로보즈 마법 배 회사!!!!\n\nHello, Sailor!\n\n사용 설명:\n\n   물에 띄우려면 "Launch"라고 말하십시오.\n   기슭에 대려면 "Land"라고 말하거나, 배를 몰고 갈 방향을 말하십시오.\n\n품질 보증:\n\n  이 배는 구입일로부터 76밀리초 동안, 또는 처음 사용할 때까지 중 먼저 도래하는 시점까지 모든 결함에 대해 보증됩니다.\n\n경고:\n   이 배는 얇은 플라스틱으로 만들어졌습니다.\n   행운을 빕니다!
+@@ The door is boarded and you can't remove the boards.
+== 문에 판자가 덧대어져 있고, 판자를 떼어 낼 수 없습니다.
+@@ The door is nailed shut.
+== 문이 못질되어 꽉 닫혀 있습니다.
+@@ The dam blocks your way.
+== 댐이 길을 막고 있습니다.
+@@ A valiant attempt.
+== 용감한 시도였습니다.
+@@ The door reluctantly opens to reveal a rickety staircase descending into darkness.
+== 문이 마지못해 열리며, 어둠 속으로 내려가는 삐걱거리는 계단이 드러납니다.
+@@ The door swings shut and closes.
+== 문이 휙 닫힙니다.
+@@  away.
+== {을} 쳐 날려 버립니다.
+@@ The engravings translate to "This space intentionally left blank."
+== 새겨진 글을 해독하면 "이 공간은 일부러 비워 두었습니다."라는 뜻입니다.
+@@ The engravings were incised in the living rock of the cave wall by an unknown hand. They depict, in symbolic form, the beliefs of the ancient Zorkers. Skillfully interwoven with the bas reliefs are excerpts illustrating the major religious tenets of that time. Unfortunately, a later age seems to have considered them blasphemous and just as skillfully excised them.
+== 이 조각들은 누군지 모를 손이 동굴 벽의 생바위에 새긴 것입니다. 고대 조크 사람들의 믿음을 상징적으로 묘사하고 있습니다. 얕은 돋을새김 사이사이에는 당시의 주요 교리를 보여 주는 글귀가 솜씨 좋게 엮여 있습니다. 안타깝게도 후대 사람들은 그것을 신성모독이라 여겼는지, 똑같이 솜씨 좋게 깎아 내 버린 것 같습니다.
+@@ The east wall is solid rock.
+== 동쪽 벽은 단단한 바위입니다.
+@@ 's weapon is knocked to the floor, leaving him unarmed.
+== 의 무기가 바닥에 떨어져, 그는 맨손이 되었습니다.
+@@ jewels
+== 보석
+@@ The forest becomes impenetrable to the north.
+== 북쪽으로는 숲이 너무 빽빽해 지나갈 수 없습니다.
+@@ The forest thins out, revealing impassable mountains.
+== 숲이 성겨지면서, 넘을 수 없는 산들이 모습을 드러냅니다.
+@@ You should have looked before you leaped.
+== 뛰어내리기 전에 아래를 살폈어야 했습니다.
+@@ Goodbye.
+== 안녕히 가십시오.
+@@ You splash around for a while, fighting the current, then you drown.
+== 한동안 물살과 싸우며 허우적거리다가, 결국 물에 빠져 죽습니다.
+@@ You seem to be digging a hole here.
+== 여기에 구멍을 파고 있는 것 같습니다.
+@@ The fatal blow strikes the 
+== 치명적인 일격이 
+@@ The force of your blow knocks the 
+== 당신의 강력한 일격이 
+@@ The flat of the troll's axe hits you delicately on the head, knocking you out.
+== 트롤의 도끼 넓적한 면이 당신의 머리를 살짝 때려, 당신은 정신을 잃습니다.
+@@ The flat of the troll's axe skins across your forearm.
+== 트롤의 도끼 넓적한 면이 당신의 팔뚝을 스치며 살갗을 벗겨 냅니다.
+@@ You stagger back under a hail of axe strokes.
+== 빗발치는 도끼질에 당신은 비틀거리며 물러섭니다.
+@@ You try to ascend the ramp, but it is impossible, and you slide back down.
+== 비탈을 오르려 해 보지만 도저히 안 되고, 도로 미끄러져 내려옵니다.
+@@ The grating is closed.
+== 쇠창살이 닫혀 있습니다.
+@@ Are you out of your mind?
+== 제정신입니까?
+@@ Are you enjoying yourself?
+== 재미있으십니까?
+@@  hits you squarely in the head. Normally, this wouldn't do much damage, but by incredible mischance, you fall over backwards trying to duck, and break your neck, justice being swift and merciful in the Great Underground Empire.
+== {이} 당신의 머리에 정통으로 맞습니다. 보통은 별 피해가 없었겠지만, 믿기 어려운 불운으로 피하려다 뒤로 넘어지면서 목이 부러지고 맙니다. 위대한 지하 제국의 정의는 신속하고도 자비롭습니다.
+@@ The grating opens.
+== 쇠창살이 열립니다.
+@@ The grating opens to reveal trees above you.
+== 쇠창살이 열리자, 머리 위로 나무들이 보입니다.
+@@ A furious exchange, and the 
+== 격렬한 공방 끝에 
+@@ The hole collapses, smothering you.
+== 구멍이 무너져 내려 당신을 파묻어 버립니다.
+@@ The hole is getting deeper, but that's about it.
+== 구멍이 깊어지고 있지만, 그게 전부입니다.
+@@ The haft of your 
+== 당신이 휘두른 
+@@  removes his head.
+== {이} 그의 목을 베어 냅니다.
+@@  on the wrist, but it's not serious.
+== 의 손목을 살짝 베었지만, 심각한 상처는 아닙니다.
+@@ Slash! Your blow lands! That one hit an artery, it could be serious!
+== 베었다! 일격이 적중했습니다! 동맥을 건드렸으니, 심각할 수도 있습니다!
+@@ Slash! Your stroke connects! This could be serious!
+== 베었다! 공격이 들어갔습니다! 심각할 수도 있습니다!
+@@ Look around.
+== 주위를 둘러보십시오.
+@@ \n      ** BOOOOOOOOOOOM **
+== \n      ** 콰과과과과과광 **
+@@  arm.
+== {을} 든 팔을 벱니다.
+@@ Fortunately, there is still one chance for you to be a vandal, for on the far wall is a painting of unparalleled beauty.
+== 다행히도 당신에게도 아직 도둑이 될 기회가 하나 남아 있습니다. 저쪽 벽에 비할 데 없이 아름다운 그림이 한 점 걸려 있기 때문입니다.
+@@ Beside the skeleton is a rusty knife.
+== 해골 옆에 녹슨 칼이 있습니다.
+@@ Beside you on the branch is a small bird's nest.
+== 당신 옆 나뭇가지 위에 작은 새 둥지가 있습니다.
+@@ You would need a machete to go further west.
+== 서쪽으로 더 가려면 정글도가 있어야 할 것 같습니다.
+@@ You would drown.
+== 물에 빠져 죽을 겁니다.
+@@ You wouldn't fit and would die if you could.
+== 몸이 들어가지도 않을뿐더러, 들어간다 해도 죽을 겁니다.
+@@ Pushing the 
+== 밀어 보았지만 
+@@ coins
+== 동전
+@@  is battered into unconsciousness.
+== {은} 두들겨 맞고 정신을 잃습니다.
+@@ A large coil of rope is lying in the corner.
+== 구석에 커다랗게 감긴 밧줄이 놓여 있습니다.
+@@ Just in time you steer away from the rocks.
+== 아슬아슬하게 배를 돌려 바위를 피했습니다.
+@@ A troll is here.
+== 트롤이 여기 있습니다.
+@@ The leaves burn, and so do you.
+== 낙엽이 타오르고, 당신도 함께 탑니다.
+@@ The lamp appears a bit dimmer.
+== 램프가 조금 흐려진 것 같습니다.
+@@ The lamp is definitely dimmer now.
+== 이제 램프가 확실히 흐려졌습니다.
+@@ The lamp is nearly out.
+== 램프가 거의 꺼져 갑니다.
+@@  is confused and can't fight back.
+== {은} 혼란에 빠져 반격하지 못합니다.
+@@ The map shows a forest with three clearings. The largest clearing contains a house. Three paths leave the large clearing. One of these paths, leading southwest, is marked "To Stone Barrow".
+== 지도에는 빈터가 세 군데 있는 숲이 그려져 있습니다. 가장 큰 빈터에는 집이 한 채 있습니다. 큰 빈터에서 길 세 갈래가 뻗어 나갑니다. 그중 남서쪽으로 가는 길에 "돌무덤 가는 길"이라고 적혀 있습니다.
+@@ The mountains are impassable.
+== 산은 넘을 수 없습니다.
+@@ An unconscious troll is sprawled on the floor. All passages out of the room are open.
+== 정신을 잃은 트롤이 바닥에 큰대자로 뻗어 있습니다. 방에서 나가는 통로가 모두 열려 있습니다.
+@@  is disarmed by a subtle feint past his guard.
+== {은} 교묘한 속임수에 방어가 뚫려 무기를 놓칩니다.
+@@ The monster smashes his huge fist into your chest, breaking several ribs.
+== 괴물이 거대한 주먹으로 당신의 가슴을 내리쳐, 갈비뼈 몇 대가 부러집니다.
+@@ The monster grabs you on the wrist, squeezes, and you drop your 
+== 괴물이 당신의 손목을 움켜쥐고 꽉 쥐어짜자, 당신은 고통에 못 이겨 
+@@  into dreamland.
+== {을} 꿈나라로 보내 버립니다.
+@@ Finishing you off, the thief inserts his blade into your heart.
+== 마무리를 짓듯, 도둑이 당신의 심장에 칼날을 찔러 넣습니다.
+@@ A long, theatrical slash. You catch it on your 
+== 과장되게 길게 휘두른 일격이 날아옵니다. 당신은 손에 든 
+@@ From the chain is suspended a basket.
+== 쇠사슬에 바구니가 매달려 있습니다.
+@@ Congratulations!\n\nYou are the privileged owner of ZORK I: The Great Underground Empire, a self-contained and self-maintaining universe. If used and maintained in accordance with normal operating practices for small universes, ZORK will provide many months of trouble-free operation.
+== 축하합니다!\n\n당신은 스스로 완결되고 스스로 유지되는 우주, '조크 I: 위대한 지하 제국'의 영광스러운 소유자가 되셨습니다. 소형 우주의 일반적인 운용 수칙에 따라 사용하고 관리하시면, 조크는 여러 달 동안 고장 없이 작동할 것입니다.
+@@ Only Santa Claus climbs down chimneys.
+== 굴뚝을 타고 내려가는 건 산타클로스뿐입니다.
+@@ It's a long way...
+== 까마득히 멉니다...
+@@ Well, you seem to have been brushing your teeth with some sort of glue. As a result, your mouth gets glued together (with your nose) and you die of respiratory failure.
+== 저런, 무슨 접착제 같은 것으로 이를 닦은 모양입니다. 그 결과 입이 (코와 함께) 딱 붙어 버려, 당신은 숨이 막혀 죽고 맙니다.
+@@ Well, you really did it that time. Is suicide painless?
+== 이번엔 정말 저질렀군요. 자살은 고통이 없던가요?
+@@ It's curtains for the 
+== 이것으로 끝장입니다. 
+@@  out of your hand. It falls to the floor.
+== {을} 손에서 쳐 냅니다. 무기가 바닥에 떨어집니다.
+@@  out of your hands, and it drops to the floor.
+== {을} 손에서 튕겨 내고, 무기는 바닥에 떨어집니다.
+@@ A battery-powered brass lantern is on the trophy case.
+== 배터리로 켜지는 놋쇠 램프가 트로피 진열장 위에 놓여 있습니다.
+@@ The prayer is inscribed in an ancient script, rarely used today. It seems to be a philippic against small insects, absent-mindedness, and the picking up and dropping of small objects. The final verse consigns trespassers to the land of the dead. All evidence indicates that the beliefs of the ancient Zorkers were obscure.
+== 기도문은 오늘날 거의 쓰이지 않는 고대 문자로 새겨져 있습니다. 작은 벌레들, 건망증, 그리고 작은 물건을 주웠다 떨어뜨렸다 하는 짓을 맹렬히 규탄하는 글인 듯합니다. 마지막 구절은 침입자들을 죽은 자의 땅으로 보내 버리겠다고 선언합니다. 모든 증거로 보아 고대 조크인들의 신앙은 꽤나 난해했던 모양입니다.
+@@ The path is too narrow.
+== 길이 너무 좁습니다.
+@@ Unfortunately, the magic boat doesn't provide protection from the rocks and boulders one meets at the bottom of waterfalls. Including this one.
+== 안타깝게도 마법 배는 폭포 아래에서 만나게 되는 바위와 돌덩이로부터 당신을 지켜 주지 못합니다. 이 폭포도 예외는 아닙니다.
+@@ A good slash, but it misses the 
+== 멋진 베기였지만, 
+@@ A good stroke, but it's too slow; the 
+== 좋은 일격이지만 너무 느립니다. 
+@@ ---> Frobozz Magic Gunk Company <---\n	  All-Purpose Gunk
+== ---> 프로보즈 마법 끈적이 회사 <---\n	  만능 끈적이
+@@ Very good. Now you can go to the second grade.
+== 참 잘했어요. 이제 2학년으로 올라가도 되겠군요.
+@@ A booming voice says "Wrong, cretin!" and you notice that you have turned into a pile of dust. How, I can't imagine.
+== 쩌렁쩌렁한 목소리가 "틀렸다, 얼간이야!" 하고 외치더니, 정신을 차려 보니 당신은 한 줌의 먼지가 되어 있습니다. 어떻게 그렇게 되었는지는 저도 모르겠습니다.
+@@ The quickness of your thrust knocks the 
+== 재빠른 찌르기에 
+@@ The rank undergrowth prevents eastward movement.
+== 무성한 덤불 때문에 동쪽으로 갈 수 없습니다.
+@@ The river turns a corner here making it impossible to see the Dam. The White Cliffs loom on the east bank and large rocks prevent landing on the west.
+== 강이 여기서 굽이쳐 흘러 댐이 보이지 않습니다. 동쪽 기슭에는 하얀 절벽이 우뚝 솟아 있고, 서쪽은 큰 바위들 때문에 배를 댈 수 없습니다.
+@@ The river descends here into a valley. There is a narrow beach on the west shore below the cliffs. In the distance a faint rumbling can be heard.
+== 강이 여기서 골짜기로 내려갑니다. 서쪽 기슭의 절벽 아래에 좁은 해변이 있습니다. 멀리서 희미하게 우르릉거리는 소리가 들립니다.
+@@ The river is running faster here and the sound ahead appears to be that of rushing water. On the east shore is a sandy beach. A small area of beach can also be seen below the cliffs on the west shore.
+== 여기서는 물살이 더 빨라지고, 앞쪽에서 들려오는 소리는 거세게 쏟아지는 물소리 같습니다. 동쪽 기슭에는 모래 해변이 있습니다. 서쪽 기슭의 절벽 아래에도 작은 해변이 보입니다.
+@@ F
+== F
+@@ Kicking the 
+== 발로 차 보았지만, 
+@@ The room is full of water and cannot be entered.
+== 방이 물로 가득 차 있어 들어갈 수 없습니다.
+@@ The rising water carries the boat over the dam, down the river, and over the falls. Tsk, tsk.
+== 불어난 물이 배를 댐 너머로, 강 아래로, 그리고 폭포 너머로 실어 갑니다. 쯧쯧.
+@@  back, stunned.
+== {이} 뒤로 밀려나 정신을 못 차립니다.
+@@ The Cyclops misses, but the backwash almost knocks you over.
+== 외눈박이 거인의 주먹이 빗나갔지만, 그 바람에 하마터면 넘어질 뻔합니다.
+@@ The Cyclops rushes you, but runs into the wall.
+== 외눈박이 거인이 당신에게 달려들지만, 벽에 부딪히고 맙니다.
+@@ The Cyclops sends you crashing to the floor, unconscious.
+== 외눈박이 거인의 일격에 당신은 바닥에 나동그라져 정신을 잃습니다.
+@@ The Cyclops breaks your neck with a massive smash.
+== 외눈박이 거인의 엄청난 일격에 당신의 목이 부러집니다.
+@@ The Cyclops almost knocks the wind out of you with a quick punch.
+== 외눈박이 거인의 재빠른 주먹에 숨이 턱 막힐 뻔합니다.
+@@ The Cyclops lands a punch that knocks the wind out of you.
+== 외눈박이 거인의 주먹이 꽂히자 숨이 턱 막힙니다.
+@@ The Cyclops grabs your 
+== 외눈박이 거인이 당신의 
+@@ The Cyclops seems unable to decide whether to broil or stew his dinner.
+== 외눈박이 거인은 저녁거리를 구울지 삶을지 결정하지 못하는 것 같습니다.
+@@ The Cyclops, no sportsman, dispatches his unconscious victim.
+== 스포츠맨 정신 따위는 없는 외눈박이 거인이 정신을 잃은 희생자를 해치웁니다.
+@@ The solid-gold coffin used for the burial of Ramses II is here.
+== 람세스 2세의 장례에 쓰인 순금 관이 여기 있습니다.
+@@ The stream emerges from a spot too small for you to enter.
+== 개울은 당신이 들어가기에는 너무 작은 틈에서 흘러나옵니다.
+@@ The sound of rushing water is nearly unbearable here. On the east shore is a large landing area.
+== 여기서는 쏟아지는 물소리가 거의 견딜 수 없을 정도입니다. 동쪽 기슭에는 넓은 상륙지가 있습니다.
+@@  isn't notably helpful.
+== {은} 별 도움이 되지 않습니다.
+@@ The structural integrity of the rainbow is severely compromised, leaving you hanging in midair, supported only by water vapor. Bye.
+== 무지개의 구조적 안전성이 심각하게 무너져, 당신은 오직 수증기에 의지한 채 허공에 매달리게 됩니다. 안녕히.
+@@ The stiletto flashes faster than you can follow, and blood wells from your leg.
+== 단검이 눈으로 따라갈 수 없을 만큼 빠르게 번뜩이더니, 당신의 다리에서 피가 솟습니다.
+@@ The stiletto touches your forehead, and the blood obscures your vision.
+== 단검이 당신의 이마를 스치고, 흐르는 피가 시야를 가립니다.
+@@ There is a silver chalice, intricately engraved, here.
+== 정교하게 조각된 은 성배가 여기 있습니다.
+@@ There is an enormous diamond (perfectly cut) here.
+== 완벽하게 연마된 거대한 다이아몬드가 여기 있습니다.
+@@ There is an exquisite jade figurine here.
+== 정교한 비취 조각상이 여기 있습니다.
+@@ There is a brass lantern (battery-powered) here.
+== 놋쇠 램프(배터리식)가 여기 있습니다.
+@@ There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+== "아름다운 3호 댐에 놀러 오세요"라고 적힌 성냥갑이 여기 있습니다.
+@@ There is a folded pile of plastic here which has a small valve attached.
+== 작은 밸브가 달린, 접힌 플라스틱 더미가 여기 있습니다.
+@@ There is a red buoy here (probably a warning).
+== 빨간 부표가 여기 있습니다(아마 경고용일 겁니다).
+@@ There is a suspicious-looking individual, holding a large bag, leaning against one wall. He is armed with a deadly stiletto.
+== 수상쩍어 보이는 사람이 큰 자루를 든 채 벽에 기대어 있습니다. 그는 치명적인 단검으로 무장하고 있습니다.
+@@ Some guidebooks entitled "Flood Control Dam #3" are on the reception desk.
+== "3호 홍수 조절 댐"이라는 제목의 안내서 몇 권이 안내 데스크 위에 놓여 있습니다.
+@@ There is an old trunk here, bulging with assorted jewels.
+== 갖가지 보석으로 불룩한 낡은 보석 상자가 여기 있습니다.
+@@ There is an object which looks like a tube of toothpaste here.
+== 치약 튜브처럼 생긴 물건이 여기 있습니다.
+@@ There are old engravings on the walls here.
+== 이곳 벽에는 오래된 조각이 새겨져 있습니다.
+@@ There is a somewhat ruined egg here.
+== 좀 망가진 알이 여기 있습니다.
+@@ There is a golden clockwork canary nestled in the egg. It has ruby eyes and a silver beak. Through a crystal window below its left wing you can see intricate machinery inside. It appears to have wound down.
+== 알 속에 황금 태엽 카나리아가 둥지를 틀고 있습니다. 루비 눈과 은 부리를 가졌습니다. 왼쪽 날개 아래의 수정 창을 통해 안쪽의 정교한 기계 장치가 보입니다. 태엽이 다 풀린 것 같습니다.
+@@ There is a golden clockwork canary nestled in the egg. It seems to have recently had a bad experience. The mountings for its jewel-like eyes are empty, and its silver beak is crumpled. Through a cracked crystal window below its left wing you can see the remains of intricate machinery. It is not clear what result winding it would have, as the mainspring seems sprung.
+== 알 속에 황금 태엽 카나리아가 둥지를 틀고 있습니다. 최근에 험한 일을 당한 것 같습니다. 보석 같은 눈이 박혀 있던 자리는 비어 있고, 은 부리는 찌그러져 있습니다. 왼쪽 날개 아래의 금 간 수정 창을 통해 정교했던 기계 장치의 잔해가 보입니다. 태엽 스프링이 튀어나온 것 같아서, 태엽을 감으면 어떻게 될지는 알 수 없습니다.
+@@ There is no tree here suitable for climbing.
+== 여기에는 올라갈 만한 나무가 없습니다.
+@@ The troll fends you off with a menacing gesture.
+== 트롤이 위협적인 몸짓으로 당신을 막아섭니다.
+@@ Some invisible force prevents you from passing through the gate.
+== 보이지 않는 힘이 당신이 문을 지나가지 못하게 막습니다.
+@@ There is no safe landing spot here.
+== 여기에는 안전하게 배를 댈 곳이 없습니다.
+@@ There is a suspicious-looking individual, holding a bag, leaning against one wall. He is armed with a vicious-looking stiletto.
+== 수상쩍어 보이는 사람이 자루를 든 채 벽에 기대어 있습니다. 그는 사나워 보이는 단검으로 무장하고 있습니다.
+@@ There is a suspicious-looking individual lying unconscious on the ground.
+== 수상쩍어 보이는 사람이 정신을 잃고 바닥에 쓰러져 있습니다.
+@@ There is a worthless piece of canvas here.
+== 쓸모없는 캔버스 조각이 여기 있습니다.
+@@  is knocked out!
+== {은} 정신을 잃었습니다!
+@@ The troll swings his axe, but it misses.
+== 트롤이 도끼를 휘두르지만 빗나갑니다.
+@@ The troll's axe barely misses your ear.
+== 트롤의 도끼가 당신의 귀를 아슬아슬하게 스쳐 지나갑니다.
+@@ The troll neatly removes your head.
+== 트롤이 깔끔하게 당신의 목을 벱니다.
+@@ The troll's axe stroke cleaves you from the nave to the chops.
+== 트롤의 도끼질이 당신을 배꼽에서 턱까지 갈라 버립니다.
+@@ The troll's axe removes your head.
+== 트롤의 도끼가 당신의 목을 벱니다.
+@@ The troll's swing almost knocks you over as you barely parry in time.
+== 트롤의 일격을 간신히 막아 냈지만, 그 바람에 하마터면 넘어질 뻔합니다.
+@@ The troll swings his axe, and it nicks your arm as you dodge.
+== 트롤이 도끼를 휘두르고, 당신은 피하지만 도끼날이 팔을 살짝 벱니다.
+@@ The troll charges, and his axe slashes you on your 
+== 트롤이 돌진하며 도끼로 당신의 
+@@ The troll's axe swings down, gashing your shoulder.
+== 트롤의 도끼가 내리찍혀 당신의 어깨를 가릅니다.
+@@ The troll hits you with a glancing blow, and you are momentarily stunned.
+== 트롤의 빗맞은 일격에 당신은 잠시 정신이 멍해집니다.
+@@ The troll swings; the blade turns on your armor but crashes broadside into your head.
+== 트롤이 도끼를 휘두릅니다. 도끼날이 갑옷에 미끄러지지만 도끼의 옆면이 당신의 머리를 강타합니다.
+@@ The troll's mighty blow drops you to your knees.
+== 트롤의 강력한 일격에 당신은 무릎을 꿇습니다.
+@@ The troll swings, you parry, but the force of his blow knocks your 
+== 트롤이 휘두르고 당신이 막아 내지만, 그 일격의 힘에 당신의 
+@@ The troll hesitates, fingering his axe.
+== 트롤이 도끼를 만지작거리며 머뭇거립니다.
+@@ The troll scratches his head ruminatively:  Might you be magically protected, he wonders?
+== 트롤이 곰곰이 생각하며 머리를 긁적입니다. 혹시 이 녀석, 마법의 보호를 받고 있는 걸까?
+@@ The thief stabs nonchalantly with his stiletto and misses.
+== 도둑이 무심하게 단검을 찔러 보지만 빗나갑니다.
+@@ The thief tries to sneak past your guard, but you twist away.
+== 도둑이 빈틈을 노리고 파고들지만, 당신은 몸을 비틀어 피합니다.
+@@ The thief knocks you out.
+== 도둑이 당신을 기절시킵니다.
+@@ The thief comes in from the side, feints, and inserts the blade into your ribs.
+== 도둑이 옆에서 파고들어 속임수를 쓰더니, 칼날을 당신의 갈비뼈 사이로 찔러 넣습니다.
+@@ The thief bows formally, raises his stiletto, and with a wry grin, ends the battle and your life.
+== 도둑이 정중하게 고개 숙여 인사하고 단검을 치켜든 뒤, 씁쓸한 미소와 함께 싸움과 당신의 목숨을 끝냅니다.
+@@ The thief draws blood, raking his stiletto across your arm.
+== 도둑이 단검으로 당신의 팔을 그어 피를 냅니다.
+@@ The thief slowly approaches, strikes like a snake, and leaves you wounded.
+== 도둑이 천천히 다가오더니 뱀처럼 공격하여 당신에게 상처를 입힙니다.
+@@ The thief strikes like a snake! The resulting wound is serious.
+== 도둑이 뱀처럼 공격합니다! 상처가 심각합니다.
+@@ The thief stabs a deep cut in your upper arm.
+== 도둑이 당신의 위팔을 깊이 벱니다.
+@@ The thief strikes at your wrist, and suddenly your grip is slippery with blood.
+== 도둑이 당신의 손목을 노리고, 갑자기 손아귀가 피로 미끌미끌해집니다.
+@@ The thief rams the haft of his blade into your stomach, leaving you out of breath.
+== 도둑이 칼자루로 당신의 배를 들이받아 숨이 턱 막힙니다.
+@@ The thief attacks, and you fall back desperately.
+== 도둑이 공격해 오고, 당신은 필사적으로 물러섭니다.
+@@ The thief neatly flips your 
+== 도둑이 솜씨 좋게 당신의 
+@@ The thief, a man of superior breeding, pauses for a moment to consider the propriety of finishing you off.
+== 가문 좋은 신사인 도둑은 당신의 숨통을 끊는 것이 예의에 맞는 일인지 잠시 생각에 잠깁니다.
+@@ The thief amuses himself by searching your pockets.
+== 도둑이 당신의 주머니를 뒤지며 즐거워합니다.
+@@ The thief entertains himself by rifling your pack.
+== 도둑이 당신의 짐을 뒤적이며 즐거워합니다.
+@@ The thief, forgetting his essentially genteel upbringing, cuts your throat.
+== 본디 점잖은 가정교육을 받았다는 사실을 잊은 도둑이 당신의 목을 그어 버립니다.
+@@ The thief, a pragmatist, dispatches you as a threat to his livelihood.
+== 실용주의자인 도둑은 생계에 위협이 되는 당신을 해치웁니다.
+@@ A painting by a neglected genius is here.
+== 불우한 천재가 그린 그림이 여기 있습니다.
+@@ Loosely attached to a wall is a small piece of paper.
+== 벽에 작은 종이 한 장이 느슨하게 붙어 있습니다.
+@@ A bottle is sitting on the table.
+== 식탁 위에 병이 하나 놓여 있습니다.
+@@ Sitting on the pedestal is a flaming torch, made of ivory.
+== 받침대 위에 상아로 만든 횃불이 타오르고 있습니다.
+@@ A nasty-looking troll, brandishing a bloody axe, blocks all passages out of the room.
+== 피 묻은 도끼를 휘두르는 험상궂은 트롤이 방에서 나가는 모든 통로를 막고 있습니다.
+@@ The voice of the guardian of the dungeon booms out from the darkness, "Your disrespect costs you your life!" and places your head on a sharp pole.
+== 던전의 수호자의 목소리가 어둠 속에서 울려 퍼집니다. "불경한 태도의 대가는 네 목숨이다!" 그리고 당신의 머리는 뾰족한 장대 끝에 꽂힙니다.
+@@ 's arm!
+== 의 팔에 얕은 상처를 냅니다!
+@@  is momentarily disoriented and can't fight back.
+== {은} 잠시 정신을 못 차려 반격하지 못합니다.
+@@ The windows are all boarded.
+== 창문은 모두 판자로 막혀 있습니다.
+@@ Playing in this way with the 
+== 이런 식으로 가지고 놀아 봐도, 
+@@ Do you expect me to applaud?
+== 박수라도 쳐 드릴까요?
+@@ Waving the 
+== 흔들어 보았지만, 
+@@ The window closes (more easily than it opened).
+== 창문이 닫힙니다(열 때보다 훨씬 쉽게).
+@@ up to your ankles.
+== 발목까지 찼습니다.
+@@ up to your shin.
+== 정강이까지 찼습니다.
+@@ up to your knees.
+== 무릎까지 찼습니다.
+@@ up to your hips.
+== 엉덩이까지 찼습니다.
+@@ up to your waist.
+== 허리까지 찼습니다.
+@@ up to your chest.
+== 가슴까지 찼습니다.
+@@ up to your neck.
+== 목까지 찼습니다.
+@@ Another pathetic sputter, this time from you, heralds your drowning.
+== 또 한 번의 처량한 꼴깍 소리가, 이번에는 당신에게서 나며, 당신이 익사했음을 알립니다.
+@@  crashes down, knocking the 
+== {이} 내리꽂히며 
+@@ In other words, fighting the fierce currents of the Frigid River. You manage to hold your own for a bit, but then you are carried over a waterfall and into some nasty rocks. Ouch!
+== 다시 말해, 얼음장 강의 거센 물살과 싸우는 것이지요. 잠시 동안은 버텨 보지만, 결국 폭포 너머로 휩쓸려 험한 바위들 사이로 떨어지고 맙니다. 아얏!
+@@ A quick stroke, but the 
+== 재빠른 일격이지만, 
+@@  is on guard.
+== {은} 방어 태세를 갖추고 있습니다.
+@@ A savage blow on the thigh! The 
+== 허벅지에 사나운 일격! 
+@@ A quick punch, but it was only a glancing blow.
+== 재빠른 주먹이지만, 빗맞았을 뿐입니다.
+@@ Heedless of your weapons, the Cyclops tosses you against the rock wall of the room.
+== 당신의 무기 따위는 아랑곳하지 않고, 외눈박이 거인은 당신을 방의 바위벽에 내동댕이칩니다.
+@@ A quick thrust pinks your left arm, and blood starts to trickle down.
+== 재빠른 찌르기가 당신의 왼팔을 찌르고, 피가 흘러내리기 시작합니다.
+@@ , but the thief twists his knife, and the 
+== {으로} 받아 내지만, 도둑이 칼을 비틀자 
+@@ Nice view, lousy place to jump.
+== 경치는 좋지만, 뛰어내리기엔 최악의 장소입니다.
+@@ Hello.
+== 안녕하세요.
+@@ Nice weather we've been having lately.
+== 요즘 날씨가 참 좋지요.
+@@  in pain.
+== {을} 고통 속에 떨어뜨립니다.
+@@ Geronimo...
+== 제로니모...
+@@ Fiddling with the 
+== 만지작거려 보았지만, 
+@@ A sceptre, possibly that of ancient Egypt itself, is in the coffin. The sceptre is ornamented with colored enamel, and tapers to a sharp point.
+== 관 속에 홀이 있습니다. 아마 고대 이집트 왕의 것인 듯합니다. 홀은 색색의 법랑으로 장식되어 있고, 끝으로 갈수록 가늘어져 날카롭게 뾰족합니다.
+@@ A chasm runs southwest to northeast and the path follows it. You are on the south side of the chasm, where a crack opens into a passage.
+== 깊은 틈이 남서쪽에서 북동쪽으로 뻗어 있고, 길이 그것을 따라 이어집니다. 당신은 깊은 틈의 남쪽에 있으며, 이곳에서 갈라진 틈이 통로로 이어집니다.
+@@ If you insist.... Poof, you're dead!
+== 정 그러시다면.... 펑, 당신은 죽었습니다!
+@@ An interesting idea...
+== 흥미로운 생각이군요...
+@@  is struck on the arm; blood begins to trickle down.
+== {은} 팔을 맞아 피가 흘러내리기 시작합니다.
+@@  is stunned but can still fight!
+== {은} 비틀거리지만 아직 싸울 수 있습니다!
+@@  is staggered, and drops to his knees.
+== {은} 비틀거리다가 무릎을 꿇습니다.
+@@ Conquering his fears, the troll puts you to death.
+== 두려움을 이겨 낸 트롤이 당신의 숨통을 끊습니다.
+@@  goes flying.
+== {이} 날아가 버립니다.
+@@ Clang! Crash! The 
+== 쨍! 쾅! 
+@@  takes a fatal blow and slumps to the floor dead.
+== {은} 치명타를 맞고 바닥에 쓰러져 죽습니다.
+@@ On a table is a nasty-looking knife.
+== 식탁 위에 험악해 보이는 칼이 놓여 있습니다.
+@@ It is too narrow for most insects.
+== 대부분의 곤충에게도 너무 좁습니다.
+@@ A pathetically babbling troll is here.
+== 처량하게 횡설수설하는 트롤이 여기 있습니다.
+@@ Your 
+== 당신의 
+@@  jumps nimbly aside.
+== {이} 날렵하게 옆으로 피합니다.
+@@  as your 
+== {은} 끝장입니다. 당신의 
+@@  pinks the 
+== {이} 
+@@ Your stroke lands, but it was only the flat of the blade.
+== 당신의 일격이 맞았지만, 칼날의 옆면으로 친 것일 뿐입니다.
+@@ Commandment #12592\n\nOh ye who go about saying unto each:  "Hello sailor":\nDost thou know the magnitude of thy sin before the gods?\nYea, verily, thou shalt be ground between two stones.\nShall the angry gods cast thy body into the whirlpool?\nSurely, thy eye shall be put out with a sharp stick!\nEven unto the ends of the earth shalt thou wander and\nUnto the land of the dead shalt thou be sent at last.\nSurely thou shalt repent of thy cunning.
+== 계명 제12592조\n\n오, 만나는 자마다 "Hello sailor"라 말하며 다니는 자여:\n너는 신들 앞에서 네 죄가 얼마나 큰지 아느냐?\n진실로, 진실로 너는 두 맷돌 사이에 갈리리라.\n노한 신들이 네 몸을 소용돌이에 던지지 않겠느냐?\n반드시 네 눈은 뾰족한 막대기에 찔려 멀리라!\n땅끝까지 너는 떠돌 것이요\n마침내 죽은 자의 땅으로 보내지리라.\n반드시 너는 네 잔꾀를 뉘우치게 되리라.
+@@ As the knife approaches its victim, your mind is submerged by an overmastering will. Slowly, your hand turns, until the rusty blade is an inch from your neck. The knife seems to sing as it savagely slits your throat.
+== 칼이 제물에 다가가자, 당신의 정신은 압도적인 의지에 짓눌립니다. 천천히 당신의 손이 돌아가, 녹슨 칼날이 당신의 목에서 한 치 앞에 멈춥니다. 칼은 노래라도 부르듯 사납게 당신의 목을 그어 버립니다.
+@@ I'm afraid that the leap you attempted has done you in.
+== 유감스럽게도 방금 시도한 도약이 당신의 목숨을 앗아 갔습니다.
+@@ I'm afraid you have done drowned yourself.
+== 유감스럽게도 당신은 스스로 물에 빠져 죽고 말았습니다.
+@@  misses the 
+== {이} 
+@@   
+==   
+@@ Good day.
+== 좋은 하루 되세요.
+@@ Have your eyes checked.
+== 눈 검사를 좀 받아 보시지요.
+@@  receives a deep gash in his side.
+== {은} 옆구리에 깊은 상처를 입습니다.
+@@  slips out of your hand.
+== {이} 손에서 미끄러져 빠져나갑니다.
+@@ A small leaflet is on the ground.
+== 작은 전단지가 땅에 놓여 있습니다.
+@@ You are standing in front of a massive barrow of stone. In the east face is a huge stone door which is open. You cannot see into the dark of the tomb.
+== 당신은 거대한 돌무덤 앞에 서 있습니다. 동쪽 면에는 거대한 돌문이 열려 있습니다. 무덤 속의 어둠 안은 들여다볼 수 없습니다.
+@@ You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees.
+== 당신은 하얀 집의 북쪽 면을 마주하고 있습니다. 이쪽에는 문이 없고, 창문은 모두 판자로 막혀 있습니다. 북쪽으로 좁은 길이 나무들 사이로 구불구불 이어집니다.
+@@ You are facing the south side of a white house. There is no door here, and all the windows are boarded.
+== 당신은 하얀 집의 남쪽 면을 마주하고 있습니다. 이쪽에는 문이 없고, 창문은 모두 판자로 막혀 있습니다.
+@@ You are in a small clearing in a well marked forest path that extends to the east and west.
+== 당신은 동서로 뻗은, 잘 다져진 숲길의 작은 빈터에 있습니다.
+@@ You are on the east edge of a chasm, the bottom of which cannot be seen. A narrow passage goes north, and the path you are on continues to the east.
+== 당신은 바닥이 보이지 않는 깊은 틈의 동쪽 가장자리에 있습니다. 좁은 통로가 북쪽으로 나 있고, 지금 서 있는 길은 동쪽으로 이어집니다.
+@@ You are standing on a path beside a gently flowing stream. The path follows the stream, which flows from west to east.
+== 당신은 잔잔히 흐르는 개울 옆 길에 서 있습니다. 길은 서쪽에서 동쪽으로 흐르는 개울을 따라갑니다.
+@@ You are on the gently flowing stream. The upstream route is too narrow to navigate, and the downstream route is invisible due to twisting walls. There is a narrow beach to land on.
+== 당신은 잔잔히 흐르는 개울 위에 있습니다. 상류 쪽은 너무 좁아 지나갈 수 없고, 하류 쪽은 구불구불한 벽 때문에 보이지 않습니다. 배를 댈 수 있는 좁은 해변이 있습니다.
+@@ You are at the base of Flood Control Dam #3, which looms above you and to the north. The river Frigid is flowing by here. Along the river are the White Cliffs which seem to form giant walls stretching from north to south along the shores of the river as it winds its way downstream.
+== 당신은 3호 홍수 조절 댐의 아래에 있습니다. 댐이 북쪽 위로 우뚝 솟아 있습니다. 얼음장 강이 이곳을 지나 흐릅니다. 강을 따라 하얀 절벽이 늘어서 있는데, 강이 하류로 굽이쳐 흐르는 동안 기슭을 따라 남북으로 뻗은 거대한 벽을 이루는 것 같습니다.
+@@ You are on the Frigid River in the vicinity of the Dam. The river flows quietly here. There is a landing on the west shore.
+== 당신은 댐 근처의 얼음장 강 위에 있습니다. 이곳의 강은 조용히 흐릅니다. 서쪽 기슭에 배를 댈 곳이 있습니다.
+@@ You are on a narrow strip of beach which runs along the base of the White Cliffs. There is a narrow path heading south along the Cliffs and a tight passage leading west into the cliffs themselves.
+== 당신은 하얀 절벽 아래를 따라 이어진 좁은 해변에 있습니다. 절벽을 따라 남쪽으로 좁은 길이 나 있고, 서쪽으로는 절벽 속으로 들어가는 비좁은 통로가 있습니다.
+@@ You are on a rocky, narrow strip of beach beside the Cliffs. A narrow path leads north along the shore.
+== 당신은 절벽 옆의 바위투성이 좁은 해변에 있습니다. 좁은 길이 기슭을 따라 북쪽으로 이어집니다.
+@@ You are on the east shore of the river. The water here seems somewhat treacherous. A path travels from north to south here, the south end quickly turning around a sharp corner.
+== 당신은 강의 동쪽 기슭에 있습니다. 이곳의 물살은 꽤 위험해 보입니다. 길이 남북으로 나 있으며, 남쪽 끝은 곧 급한 모퉁이를 돌아 사라집니다.
+@@ You are on a large sandy beach on the east shore of the river, which is flowing quickly by. A path runs beside the river to the south here, and a passage is partially buried in sand to the northeast.
+== 당신은 빠르게 흐르는 강의 동쪽 기슭에 있는 넓은 모래 해변에 있습니다. 강을 따라 남쪽으로 길이 나 있고, 북동쪽에는 모래에 반쯤 파묻힌 통로가 있습니다.
+@@ You are on top of a rainbow (I bet you never thought you would walk on a rainbow), with a magnificent view of the Falls. The rainbow travels east-west here.
+== 당신은 무지개 꼭대기에 있습니다(무지개 위를 걷게 되리라고는 생각도 못 했겠지요). 폭포의 멋진 경치가 보입니다. 무지개는 이곳에서 동서로 뻗어 있습니다.
+@@ You are on a small, rocky beach on the continuation of the Frigid River past the Falls. The beach is narrow due to the presence of the White Cliffs. The river canyon opens here and sunlight shines in from above. A rainbow crosses over the falls to the east and a narrow path continues to the southwest.
+== 당신은 폭포를 지나 계속 흐르는 얼음장 강 가의 작은 바위 해변에 있습니다. 하얀 절벽 때문에 해변이 좁습니다. 강의 협곡이 여기서 트여 위에서 햇빛이 비쳐 듭니다. 동쪽으로는 무지개가 폭포 위를 가로지르고, 좁은 길이 남서쪽으로 이어집니다.
+@@ You are beneath the walls of the river canyon which may be climbable here. The lesser part of the runoff of Aragain Falls flows by below. To the north is a narrow path.
+== 당신은 강 협곡의 벽 아래에 있습니다. 이곳의 벽은 올라갈 수 있을 것 같습니다. 아라게인 폭포에서 흘러내린 물의 작은 갈래가 아래로 흐릅니다. 북쪽으로 좁은 길이 있습니다.
+@@ You are on a ledge about halfway up the wall of the river canyon. You can see from here that the main flow from Aragain Falls twists along a passage which it is impossible for you to enter. Below you is the canyon bottom. Above you is more cliff, which appears climbable.
+== 당신은 강 협곡 벽의 중간쯤에 있는 바위 턱 위에 있습니다. 여기서 보니 아라게인 폭포의 본류는 당신이 들어갈 수 없는 통로를 따라 굽이쳐 흐릅니다. 아래로는 협곡 바닥이 있습니다. 위로는 절벽이 더 이어지는데, 올라갈 수 있을 것 같습니다.
+@@ You are at the top of the Great Canyon on its west wall. From here there is a marvelous view of the canyon and parts of the Frigid River upstream. Across the canyon, the walls of the White Cliffs join the mighty ramparts of the Flathead Mountains to the east. Following the Canyon upstream to the north, Aragain Falls may be seen, complete with rainbow. The mighty Frigid River flows out from a great dark cavern. To the west and south can be seen an immense forest, stretching for miles around. A path leads northwest. It is possible to climb down into the canyon from here.
+== 당신은 대협곡 서쪽 벽의 꼭대기에 있습니다. 여기서는 협곡과 얼음장 강 상류 일부가 한눈에 내려다보이는 멋진 경치가 펼쳐집니다. 협곡 건너편 동쪽으로는 하얀 절벽의 벽이 플랫헤드 산맥의 웅장한 성벽과 이어집니다. 협곡을 따라 북쪽 상류로 눈을 돌리면 무지개까지 걸린 아라게인 폭포가 보입니다. 웅장한 얼음장 강은 거대하고 어두운 동굴에서 흘러나옵니다. 서쪽과 남쪽으로는 몇 마일에 걸쳐 펼쳐진 광대한 숲이 보입니다. 길이 북서쪽으로 이어집니다. 여기서 협곡 아래로 내려갈 수 있습니다.
+@@ You are standing at the entrance of what might have been a coal mine. The shaft enters the west wall, and there is another exit on the south end of the room.
+== 당신은 탄광이었던 것 같은 곳의 입구에 서 있습니다. 갱도는 서쪽 벽으로 들어가고, 방의 남쪽 끝에 또 다른 출구가 있습니다.
+@@ You are in a small room. Strange squeaky sounds may be heard coming from the passage at the north end. You may also escape to the east.
+== 당신은 작은 방에 있습니다. 북쪽 끝의 통로에서 이상하게 끽끽거리는 소리가 들려옵니다. 동쪽으로도 빠져나갈 수 있습니다.
+@@       
+==       
+@@         
+==         
+@@           
+==           
+@@ You are lifted up by the rising river! You try to swim, but the currents are too strong. You come closer, closer to the awesome structure of Flood Control Dam #3. The dam beckons to you. The roar of the water nearly deafens you, but you remain conscious as you tumble over the dam toward your certain doom among the rocks at its base.
+== 불어난 강물에 당신은 둥실 떠오릅니다! 헤엄쳐 보려 하지만 물살이 너무 셉니다. 3호 홍수 조절 댐의 무시무시한 구조물에 점점, 점점 가까워집니다. 댐이 당신을 손짓해 부릅니다. 물소리에 귀가 먹을 지경이지만, 당신은 정신을 잃지 않은 채 댐 너머로 굴러떨어져 그 아래 바위들 사이에서 확실한 최후를 맞으러 갑니다.
+@@ You are surrounded by a wall of sand on all sides.
+== 당신은 사방이 모래 벽으로 둘러싸여 있습니다.
+@@ , tastes it, and throws it to the ground in disgust.
+== {을} 움켜쥐고 맛을 보더니, 역겹다는 듯 땅바닥에 내던집니다.
+@@ Shifting in the midst of a thrust, the thief knocks you unconscious with the haft of his stiletto.
+== 찌르는 도중에 자세를 바꾼 도둑이 단검 자루로 당신을 쳐서 기절시킵니다.
+@@ You cannot climb any higher.
+== 더 이상 올라갈 수 없습니다.
+@@ You cannot go down without fracturing many bones.
+== 뼈가 여러 군데 부러지지 않고서는 내려갈 수 없습니다.
+@@ You cannot reach the rope.
+== 밧줄에 손이 닿지 않습니다.
+@@ You cannot go upstream due to strong currents.
+== 거센 물살 때문에 상류로 갈 수 없습니다.
+@@ You can land either to the east or the west.
+== 동쪽이나 서쪽 어느 쪽으로든 배를 댈 수 있습니다.
+@@ You cannot fit through this passage with that load.
+== 그런 짐을 진 채로는 이 통로를 지나갈 수 없습니다.
+@@ You can't swim in the dungeon.
+== 던전에서는 수영할 수 없습니다.
+@@ You can't be serious.
+== 설마 진심은 아니시겠지요.
+@@ high in your lungs.
+== 폐 속 깊이까지 찼습니다.
+@@ You charge, but the 
+== 당신이 돌진하지만, 
+@@ Above the trophy case hangs an elvish sword of great antiquity.
+== 트로피 진열장 위에는 아주 오래된 요정의 검이 걸려 있습니다.
+@@ The White Cliffs prevent your landing here.
+== 하얀 절벽 때문에 여기에는 배를 댈 수 없습니다.
+@@  it at the time.
+==  있었습니다.
+@@ You dodge as the thief comes in low.
+== 도둑이 낮게 파고들자 당신은 몸을 피합니다.
+@@ It appears that that last blow was too much for you. I'm afraid you are dead.
+== 방금 그 일격은 당신에게 너무 버거웠던 모양입니다. 유감스럽게도 당신은 죽었습니다.
+@@ Lying in one corner of the room is a beautifully carved crystal skull. It appears to be grinning at you rather nastily.
+== 방 한쪽 구석에 아름답게 조각된 수정 해골이 놓여 있습니다. 당신을 향해 꽤나 고약하게 히죽거리는 것 같습니다.
+@@ Lying half buried in the mud is an old trunk, bulging with jewels.
+== 낡은 보석 상자가 진흙 속에 반쯤 파묻혀 있습니다. 보석으로 불룩합니다.
+@@  doesn't seem to work.
+== {은} 아무 효과가 없는 것 같습니다.
+@@ In the trophy case is an ancient parchment which appears to be a map.
+== 트로피 진열장 안에 지도처럼 보이는 오래된 양피지가 있습니다.
+@@ In the bird's nest is a large egg encrusted with precious jewels, apparently scavenged by a childless songbird. The egg is covered with fine gold inlay, and ornamented in lapis lazuli and mother-of-pearl. Unlike most eggs, this one is hinged and closed with a delicate looking clasp. The egg appears extremely fragile.
+== 새 둥지 안에 귀한 보석이 박힌 커다란 알이 있습니다. 새끼 없는 노래하는 새가 어디선가 주워 온 모양입니다. 알은 정교한 금 상감으로 덮여 있고, 청금석과 자개로 장식되어 있습니다. 여느 알과 달리 이 알에는 경첩이 달려 있고, 섬세해 보이는 걸쇠로 닫혀 있습니다. 알은 몹시 깨지기 쉬워 보입니다.
+@@ In the movies, your life would be passing before your eyes.
+== 영화에서라면 지금쯤 당신의 인생이 눈앞에 주마등처럼 스쳐 지나가겠지요.
+@@  dodges.
+== {이} 몸을 피합니다.
+@@ A glancing blow from the Cyclops' fist.
+== 외눈박이 거인의 주먹이 빗맞습니다.
