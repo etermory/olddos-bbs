@@ -321,7 +321,20 @@ SMALL['Cyclops Room'] = [
 def slug(n):
 	return ''.join(c.lower() if c.isalnum() else '_' for c in n)
 
+# 작은 크기로 그린 나머지 방들: art_small.txt ("@@ 방 이름" 다음 7 줄, 줄마다 26 점)
+small_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'art_small.txt')
+if os.path.exists(small_file):
+	name = None
+	for l in open(small_file, encoding='utf-8'):
+		l = l.rstrip('\r\n')
+		if l.startswith('@@ '): name = l[3:].strip(); SMALL[name] = []
+		elif name and l.strip(): SMALL[name].append(l.strip())
+	for n, rows in SMALL.items():
+		assert len(rows) == H_OUT and all(len(r) == W_OUT and set(r) <= set(COL) for r in rows), n
+
 os.makedirs(OUT, exist_ok=True)
-for name, rows in ART.items():
-	open(os.path.join(OUT, slug(name) + ".ans"), "wb").write((render(SMALL[name], True) if name in SMALL else render(rows)).encode("cp949"))
-print(len(ART), 'pictures')
+names = list(ART) + [n for n in SMALL if n not in ART]
+for name in names:
+	pic = render(SMALL[name], True) if name in SMALL else render(ART[name])
+	open(os.path.join(OUT, slug(name) + ".ans"), "wb").write(pic.encode("cp949"))
+print(len(names), 'pictures')

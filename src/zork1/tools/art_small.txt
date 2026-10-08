@@ -1,0 +1,445 @@
+# 조크 I 방 그림 (작은 크기: 7 줄 x 26 점). make_art.py 가 읽는다.
+# 색: . 바탕(파랑) k 검정 b 파랑 g 초록 c 청록 r 빨강 m 자주 y 갈색 w 회색
+
+@@ Stone Barrow
+..........................
+.........wwwwwwww.........
+.......wwwwwwwwwwww.......
+.gg...wwwwwwkkwwwwww...gg.
+ggg..wwwwwwwkkwwwwwww..ggg
+ggggwwwwwwwwkkwwwwwwwwgggg
+gggggggggggggggggggggggggg
+@@ North of House
+..........................
+.....rrrrrrrrrrrrrr....gg.
+....rrrrrrrrrrrrrrrr..gggg
+.....wwwwwwwwwwwwww...gggg
+.....wwyyywwwwyyyww....y..
+gggggwwyyywwwwyyywwggggygg
+gggggggggggggggggggggggggg
+@@ South of House
+..........................
+.gg.......rrrrrr......gg..
+gggg....rrrrrrrrrr...gggg.
+gggg...wwwwwwwwwwww..gggg.
+.yy....wyyywwwwyyyw...yy..
+gyyggggwyyywwwwyyywgggyygg
+gggggggggggggggggggggggggg
+@@ Behind House
+..........................
+...rrrrrrrrrrrrrrrrrrrr...
+..rrrrrrrrrrrrrrrrrrrrrr..
+...wwwwwwwwwwwwwwwwwwww...
+...wwwwwwccckwwwwwwwwww...
+gggwwwwwwccckwwwwwwwwwwggg
+gggggggggggggggggggggggggg
+@@ Attic
+kkkkkkkkkkkkyykkkkkkkkkkkk
+kkkkkkkkkkyykkyykkkkkkkkkk
+kkkkkkkkyykkkkkkyykkkkkkkk
+kkkkkkyykkkkkkkkkkyykkkkkk
+kkkkyykwwwwkkkkkkkkkyykkkk
+kkyykkwwkkwwkkkkkkkkkkyykk
+yyyyyyywwwwyyyyyyyyyyyyyyy
+@@ East of Chasm
+wwkkkkkkkkkkkkkkkkwwwwwwww
+wwwkkkkkkkkkkkkkkwwwwwwwww
+wwwkkkkkkkkkkkkkkyyyyyyyyy
+wwkkkkkkkkkkkkkkkwwwwwwwww
+wwwkkkkkkkkkkkkkkkwwwwwwww
+wwkkkkkkkkkkkkkkkkkwwwwwww
+wwwkkkkkkkkkkkkkkkkkwwwwww
+@@ Studio
+wwwwwwwwwwwkkkkwwwwwwwwwww
+wrwwwwgwwwwkkkkwwwwbwwwmww
+wwwbwwwwwmwkkkkwwrwwwwwwgw
+wwwwwwrwwwwyyyywwwwwgwwwww
+wgwwwmwwwwwykkywwwwwwwbwrw
+wwwwwwwwbwwykkywwrwwwwwwww
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+@@ Dead End
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwkkkkkkkkkkkkkkkkwwwww
+wwwwwwwkkkwwwwwwkkkwwwwwww
+wwwwwwwkkkwwwwwwkkkwwwwwww
+wwwwwwwkkkwwwwwwkkkwwwwwww
+wwwwwkkkkkkkkkkkkkkkkwwwww
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+@@ Grating Room
+kkkkkkkkwgwgwgwgwkkkkkkkkk
+kkkkkkkkwwwwwwwwwkkkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wkkkkkkkkkkkkkkkkkkkkkkkkw
+wwkkkkkkkkkkkkkkkkkkkkkkww
+wwwkkkkkgkgkkggkkkkkkkkwww
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Strange Passage
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwwwwwwwwwwwwwwwwkkww
+kkkkkkkkkkkkkkkkkkkkkkkyyw
+kkkkkkkkkkkkkkkkkkkkkkyyyw
+kkkkkkkkkkkkkkkkkkkkkkkyyw
+yyyyyyyyyyyyyyyyyyyyyykkww
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Reservoir South
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwkkkkkkkkkkkkkkkkkkkkkkww
+bbbbbbbbbbbbbbbbbbbbbbbbbb
+bbcccbbbbbbbbccbbbbbbcccbb
+bbbbbbbbbbbbbbbbbbbbbbbbbb
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+wwyyyyywwwyyyyyyyywwyyyyyw
+@@ Reservoir
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwwyyyyyyyyyyyyyyyyyyyywww
+bbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbcbbbbbbbbbbbbbbbbbcbbbb
+bbbbbbbbyyyyyyyyyybbbbbbbb
+bccbbbbbbyyyyyyyybbbbbccbb
+bbbbbbbbbbbbbbbbbbbbbbbbbb
+@@ Reservoir North
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwkkkkkkkkkkkkkkkkkkkkwww
+wwkkkkkkkkkkkkkkkkkkkkkkww
+wkkkkkkkkkkkkkkkkkkkkkkkkw
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+bbbbbbbbbbbbbbbbbbbbbbbbbb
+bbccbbbbbbbcccbbbbbbbbccbb
+@@ Stream View
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwwwkkkkkkkkkkkkkkkkkkkkkk
+wkkwwwkkkkkkkkkkkkkkkkkkkk
+ccccccccccckkkkkkkkkkkkkkk
+wwkkkkkkccccccccccccckkkkk
+yyyyyyyyyyyyyyyyyyyccccccc
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+@@ Stream
+wwwkkkkkkkkkkkkkkkkkkkkwww
+wwwwkkkkkkkkkkkkkkkkkwwwww
+wwwwwcccccccccccccccwwwwww
+wwwwcccccccyyyyccccccwwwww
+wwwcccccyyyyyyyyccccccwwww
+wwccccccccccccccccccccccww
+wccccccccccccccccccccccccw
+@@ Mirror Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkyyyyyyyyyyyyyyyykkkkk
+kkkkkywwwwwwwwwwwwwcykkkkk
+kkkkkywwwcwwwwwwwwwwykkkkk
+kkkkkywwwwwwwwwcwwwwykkkkk
+kkkkkyyyyyyyyyyyyyyyykkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Cave
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwkkkkkkkkkkkkkkwwwwww
+wwwwwkkkkkkkkkkkkkkkkwwwww
+wwwwkkkkkkkkkkkkyyyykkwwww
+wwwkkkkkkkkkyyyykkkkkkkwww
+wwkkkkkkyyyykkkkkkkkkkkkww
+@@ Cold Passage
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wcwwwcwwwwcwwwwcwwwwcwwwcw
+kckkkckkkkkkkkkckkkkkkkkck
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkcccckkkkkkkkkccccckkkkk
+kkkkkkkkkkcccccckkkkkkkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+
+@@ Narrow Passage
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwwwkkkkkkkwwwwwwwwww
+wwwwwwwwwwkkkkkwwwwwwwwwww
+wwwwwwwwwwkkkkkkwwwwwwwwww
+wwwwwwwwwwwkkkkkwwwwwwwwww
+wwwwwwwwwwkkkkkwwwwwwwwwww
+wwwwwwwwwkkkkkkkwwwwwwwwww
+@@ Winding Passage
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kwwwwwkkkkkkkkkkkkkwwwwwkk
+kkkkwwkkkkkkkkkkkkkwwkkkkk
+kkkkwwwwwwwwwwwwwwwwwkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kwwwwwwwwwwkkkkkkkkkkkkkkk
+kkkkkkkkkkwwwwwwwwwwwwwwwk
+@@ Twisting Passage
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkwwwwwwkkkkkkkkwwwwwwwkkk
+kkwkkkkwkkkkkkkkwkkkkkwkkk
+kkwkkkkwwwwwwwwwwkkkkkwkkk
+kkwkkkkkkkkkkkkkkkkkkkwkkk
+kkwwwwwwwwwkkkkkwwwwwwwkkk
+kkkkkkkkkkwwwwwwwkkkkkkkkk
+@@ East-West Passage
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwwwwwwwwwwwwwwwwwwww
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Round Room
+kkkkkkkkwwwwwwwwwwkkkkkkkk
+kkkkkwwwwkkwwwwkkwwwwkkkkk
+kkkwwwwwwwwwwwwwwwwwwwwkkk
+kkkkwwwwwwwkkkkwwwwwwwkkkk
+kkkwwwwwwwwwwwwwwwwwwwwkkk
+kkkkkwwwwkkwwwwkkwwwwkkkkk
+kkkkkkkkwwwwwwwwwwkkkkkkkk
+@@ Deep Canyon
+wwwwwwwwwwwkkkkwwwwwwwwwww
+wwwwwwwwwwkkkkkkwwwwwwwwww
+wwwwwwwwwkkkkkkkkwwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwkkkkkkbbbkkkkkwwwwww
+wwwwwkkkkkkbbcbbkkkkkwwwww
+@@ Damp Cave
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkwwwwwwwwwwwwwwwwwwwwwkkk
+kkwwbwwwwwwbwwwwwwbwwwwkkk
+kkkkbkkkkkkbkkkkkkbkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkbkkkkkkkkkkbkkkkkkbkkk
+ggggggggggwwgggggggggggggg
+@@ Loud Room
+kkkkkkkwwwwwwwwwwwwkkkkkkk
+kkkkwwwkkkkkkkkkkkkwwwkkkk
+kkwwkkcckkkkkkkkcckkkwwkkk
+kwkkkcckkcckkcckkcckkkkwkk
+kwkkkcckkcckkcckkcckkkkwkk
+kkwwkkcckkkkkkkkcckkkwwkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ North-South Passage
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwkkkkkkkkkkkkkkwwwwww
+wwwwwwkkkkkkkkkkkkkkwwwwww
+@@ Chasm
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwwwwwwwwkkkkkkkkwwwwwwwww
+wwwwwwwwwkkkkkkkkwwwwwwwww
+yyyyyyyywkkkkkkkkwwwwwwwww
+wwwwwwwwwkkkkkkkkwwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+wwwwwwwwkkkkkkkkkkwwwwwwww
+@@ Land of the Dead
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkwwwkkkkkkkkkkkkkwwwkkkk
+kkwkwkwkkkkwwwkkkkwkwkwkkk
+kkwwwwwkkkwkwkwkkkwwwwwkkk
+kkkwkwkkkkwwwwwkkkkwkwkkkk
+kkkkkkkkkkkwkwkkkkkkkkkkkk
+mmmmmwmmmwwmmmmmwmmmmwmmmm
+@@ Engravings Cave
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kwwwwwwwwwwwwwwwwwwwwwwwwk
+kwykyywyykywyyykwykyywykwk
+kwyykywykyywkyywyykywyywwk
+kwkyyywyykywyykywyykywykwk
+kwwwwwwwwwwwwwwwwwwwwwwwwk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+@@ Dome Room
+kkkkkkkwwwwwwwwwwwwkkkkkkk
+kkkkwwwkkkkkkkkkkkkwwwkkkk
+kkwwkkkkkkkkkkkkkkkkkkwwkk
+kwkkkkkkkkkkkykkkkkkkkkkwk
+yyyyyyyyyyyyyykkkkkkkkkkkw
+ykkykkykkykkykykkkkkkkkkkw
+kkkkkkkkkkkkkkykkkkkkkkkkk
+@@ Torch Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkkkkrkkkkkkkkkkkkk
+kkkkkkkkkkkryrkkkkkkkkkkkk
+kkkkkkkkkkkkykkkkkkkkkkkkk
+kkkkkkkkkwwwwwwwkkkkkkkkkk
+kkkkkkkkkkwwwwwkkkkkkkkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Dam Lobby
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwkkkwwwwwwwwwwwwwwwwkkkww
+wwkkkwwwwrbwgwwwwwwwwkkkww
+wwkkkwyyyyyyyyyyyywwwkkkww
+wwkkkwyyyyyyyyyyyywwwkkkww
+wwkkkwykkkkkkkkkkywwwkkkww
+yyyyyyyyyyyyyyyyyyyyyyyyyy
+@@ Maintenance Room
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwkkkkkkkkwwwwwwwwwwwww
+wwwwwkykrkbkgkwwwwwwwwwwww
+wwwwwkkkkkkkkkwwrrrrwrrrrw
+wwwwwwwwwwwwwwwwrrrrwrrrrw
+wwwwwwwwwwwwwwwwrrrrwrrrrw
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+@@ Dam Base
+..........................
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wkwwwkwwwkwwwkwwwkwwwkwwkw
+wwwwwwwwwwwwwwwwwwwwwwwwww
+ggggggggggmmmmgggggggggggg
+gggggggggmmmmmmggggggggggg
+cccbbbbcccbbbbcccbbbbcccbb
+@@ Frigid River
+..........................
+gggg..................gggg
+gggggbbbbbbbbbbbbbbbbggggg
+ggggbbcbbbbyykkkyybcbbgggg
+gggbbbbbcbbbyyyyybbbbbbggg
+ggbbcbbbbbbcbbbbbcbbbcbbgg
+gbbbbbcbbbbbbbcbbbbbbbcbbg
+
+@@ White Cliffs Beach
+..........................
+wwwww.....................
+wwwwww....................
+wwwwwww...................
+wwwwwwwyyy................
+wwwwwwwyyyyybbbbbbbbbbbbbb
+wwwwwwwwyyyyyybbbbbbbbbbbb
+@@ Shore
+..........................
+...............wwwwkkkkkkk
+..............wwwwwwkkkkkk
+gggggg........wbwbwwwkkkkk
+ggggggyybbbbbbbbbbbbwwkkkk
+gggggyyyybbbbcbbbbbbbbwwkk
+ggggyyyyyybbbbbbbbcbbbbbbb
+@@ Sandy Beach
+..........................
+....................kkwwww
+..................kkkkwwww
+bbbbbbb...........kkkkwwww
+bbbbbbbbyyyyyyyyyyyyyyyyww
+bbbbbbbyyyyyyyyyyyyyyyyyyy
+bbbbbbyyyyyyyyyyyykyyyyyyy
+@@ Sandy Cave
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwkkkkkkkkkkkkkkkkwwwww
+wwwwkkkkkkkkkkkkkkkkkkwwww
+wwwkkkkkkkkkkkkkkkkkkkkwww
+wwyyyyyyyyyyyyyyyyyyyyyyww
+yyyyyyyyyyyyyyykyyyyyyyyyy
+@@ Canyon Bottom
+yyyy..................wwyy
+yyyyy..........ww....wwyyy
+yyyyyy........wwww..yyyyyy
+yyyyyyy.......wbbw.yyyyyyy
+yyyyyyyy......wbbwyyyyyyyy
+yyyyyyyggggggbbbbbbggyyyyy
+yyyyyyggggbbbbbbbbbbbbyyyy
+@@ Rocky Ledge
+..........................
+wwwwwww..............yy...
+wwwwwww.............yyyy..
+wwwwwwwyyyy.........yyyy..
+wwwwwww.............ggg...
+wwwwwww...................
+wwwwwww.......bbbbbbbbbbbb
+@@ Canyon View
+..........................
+.............ww...........
+yy........wwwwwwww......yy
+yyyy....wwwwwwwwwwww...yyy
+yyyyyy.wwwwwwwwwwwwww.yyyy
+yyyyyyyyyy......yyyyyyyyyy
+yyyyyyyyyyybbbbyyyyyyyyyyy
+@@ Mine Entrance
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwyyyyyyyyyyyyyywwwwww
+wwwwwwyyyyyyyyyyyyyywwwwww
+wwwwwwyykkkkkkkkkkyywwwwww
+wwwwwwyykkkkkkkkkkyywwwwww
+wwwwwwyykkkkkkkkkkyywwwwww
+yyyyyyyykkkkkkkkkkyyyyyyyy
+@@ Squeaky Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkwkkkwkkkkkkkkkkkwkkkwkkk
+kkkwkwkkkkkkkkkkkkkwkwkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkkwwwwkkkkkkkkkkkk
+kkkkkkkkkwwwwwwrwkkkkkkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Bat Room
+wwwwwwwwwwwwwwwwwwwwwwwwww
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkmmkkmmmmkkmmkkkkkk
+kkkkkkkmmmmmmrmrmmmmmmkkkk
+kkkkkkmmkkkkmmmmkkkkmmkkkk
+kkkkkkkkkkkkkwwkkkkkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+@@ Shaft Room
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwkkkkkkkkwkkkkkkkwwwww
+wwwwwkkkkkkkkwkkkkkkkwwwww
+wwwwwkkkkkkkkwkkkkkkkwwwww
+wwwwwkkkkkkyyyyykkkkkwwwww
+wwwwwkkkkkkkyyykkkkkkwwwww
+wwwwwkkkkkkkkkkkkkkkkwwwww
+@@ Smelly Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkgkkkkkgkkkkkkkkkk
+kkkkkkkkgkkkkkgkkkkkgkkkkk
+kkkkkkkkkgkkkkkgkkkkkgkkkk
+kkkkkkkkgkkkkkgkkkkkgkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Gas Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkgggkkkkkkkkggggkkkkkkk
+kkggggggggkkkkggggggggkkkk
+kkkkkggggggggggggkkkggggkk
+kkgggggkkkgggggggggggkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Ladder Top
+wwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwwkkkkkkkkkkkkwwwwwww
+wwwwwwwwwwwykkkkykkwwwwwww
+kkkkkkkkkkkyyyyyykkkkkkkkk
+kkkkkkkkkkkykkkkykkkkkkkkk
+@@ Ladder Bottom
+kkkkkkkkkkkykkkkykkkkkkkkk
+kkkkkkkkkkkyyyyyykkkkkkkkk
+kkkkkkkkkkkykkkkykkkkkkkkk
+kkkkkkkkkkkyyyyyykkkkkkkkk
+kkkkkkkkkkkykkkkykkkkkkkkk
+kkkkkkkkkkkyyyyyykkkkkkkkk
+wwwwwwwwwwwywwwwywwwwwwwww
+@@ Timber Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkyykkkkkkkkkkkkkkkkkyykkk
+kkkyykkkkkkkkkkkkkkyykkkkk
+kkkkyyykkkkkkyyyyyykkkkkkk
+kkkkkkyykkkkkkkkkkkkkkkkkk
+kkyyyyyyyykkkkkkkkkyyyyykk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Drafty Room
+wwwwwwwwkkkkkkkkkwwwwwwwww
+wwwwwwwwkkkkykkkkwwwwwwwww
+wwwwwwwwkkkkykkkkwwwwwwwww
+kkkkkkkkkkkkykkkkkkkkkkkkk
+kkcckkkkkkyyyyykkkkkkcckkk
+kkkkcckkkkkyyykkkkkcckkkkk
+wwwwwwwwwwwwwwwwwwwwwwwwww
+@@ Coal Mine
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkwkkkkkkkkkkkkkkkkkkkwkkk
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+kkkkkkkwkkkkkkkkkkwkkkkkkk
+kkkkwwwkkkkkkkkkkwwwwkkkkk
+wwwwkkkwwwwwwwwwwkkkkwwwww
+@@ Slide Room
+kkkkkkkkkkkkkkkkkkkkkkkkkk
+yyyyywwkkkkkkkkkkkkkkkkkkk
+kkkkyyyywwwkkkkkkkkkkkkkkk
+kkkkkkkyyyyywwwkkkkkkkkkkk
+kkkkkkkkkkkyyyyywwwkkkkkkk
+kkkkkkkkkkkkkkkyyyyywwwkkk
+kkkkkkkkkkkkkkkkkkkyyyyyww
