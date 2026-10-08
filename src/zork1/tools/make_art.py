@@ -7,11 +7,30 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else '.'
 COL = {'k': 0, 'b': 1, 'g': 2, 'c': 3, 'r': 4, 'm': 5, 'y': 6, 'w': 7, '.': 1}
 W = 32
 
-def render(rows):
+H_OUT, W_OUT = 7, 26		# 화면에 낼 크기 (줄, 점). 원래 도트 그림은 10 줄 x 32 점
+
+def shrink(rows, h, w):
+	"""옆 줄(칸)과 가장 비슷한 줄(칸)부터 빼서 h x w 로 줄인다 (그림 모양을 덜 망가뜨린다)"""
+	rows = [(r + '.' * W)[:W] for r in rows]
+	# 그림에 드물게 쓰인 색(눈, 불꽃 같은 작은 부분)이 달라지는 줄은 빼기 아깝게 무게를 준다
+	allc = ''.join(rows)
+	rare = dict((c, 1 + 6 * (1 - allc.count(c) / float(len(allc)))) for c in set(allc))
+	diff = lambda a, b: sum(max(rare[x], rare[y]) for x, y in zip(a, b) if x != y)
+	def cut(lines, n):
+		lines = list(lines)
+		while len(lines) > n:
+			best = min(range(1, len(lines)), key=lambda i: (diff(lines[i - 1], lines[i]), -i))
+			del lines[best]
+		return lines
+	rows = cut(rows, h)
+	cols = cut([''.join(r[i] for r in rows) for i in range(W)], w)
+	return [''.join(c[j] for c in cols) for j in range(len(rows))]
+
+def render(rows, small=False):
 	out = []
+	if not small: rows = shrink(rows, H_OUT, W_OUT)
 	for r in rows:
-		r = (r + '.' * W)[:W]
-		line = ' ' * 7
+		line = ' ' * 13
 		cur = None
 		for ch in r:
 			c = COL.get(ch, 1)
@@ -269,10 +288,40 @@ ART['Kitchen'] = [
 	'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
 ]
 
+# 자동으로 줄이면 작은 부분(눈, 지붕)이 빠지는 그림은 작은 크기(7 줄 x 26 점)로 따로 그린다
+SMALL = {}
+SMALL['West of House'] = [
+	'..........................',
+	'........rrrrrrrrrr........',
+	'......rrrrrrrrrrrrrr......',
+	'.......wwwwwwwwwwww.......',
+	'.......wykykwwwkykw...ww..',
+	'gggggggwkykywwwwwwwgggkkgg',
+	'ggggggggggggggggggggggyggg',
+]
+SMALL['The Troll Room'] = [
+	'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+	'kkkkkkkkkggggggkkkkkkwwwkk',
+	'kkkkkkkkggrggrggkkkkwwwwwk',
+	'kkkkkkkkkgwwwwgkkkkkkykkkk',
+	'kkkkkkggggggggggggggggykkk',
+	'kkkkkggkkggggggkkkkkkykkkk',
+	'kkkkkkkkkggkkggkkkkkkkkkkk',
+]
+SMALL['Cyclops Room'] = [
+	'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+	'kkkkkkkkyyyyyyyyyykkkkkkkk',
+	'kkkkkkkyyyywwwwyyyykkkkkkk',
+	'kkkkkkkyyyywkkwyyyykkkkkkk',
+	'kkkkkkkyyyyyyyyyyyykkkkkkk',
+	'kkkkkkkkyyrrrrrryykkkkkkkk',
+	'kkkkkkkkkywkwwkwykkkkkkkkk',
+]
+
 def slug(n):
 	return ''.join(c.lower() if c.isalnum() else '_' for c in n)
 
 os.makedirs(OUT, exist_ok=True)
 for name, rows in ART.items():
-	open(os.path.join(OUT, slug(name) + '.ans'), 'wb').write(render(rows).encode('cp949'))
+	open(os.path.join(OUT, slug(name) + ".ans"), "wb").write((render(SMALL[name], True) if name in SMALL else render(rows)).encode("cp949"))
 print(len(ART), 'pictures')
