@@ -21,7 +21,6 @@
 // ESC[0m 은 이야기에서 바탕과 글자색을 터미널 기본값으로 바꿔 버리므로 쓰지 않는다.
 // 밝은 배경(8~15)은 DOS 화면에서 깜빡임으로 처리될 수 있어 0~7 만 쓴다.
 #define BG_OFF   "\033[=1G"
-#define BG_TRACK 0		// 막대의 빈 칸 (검정)
 
 struct rhythm {
 	const char *name;
@@ -88,11 +87,20 @@ static void bar(int k, double v)
 {
 	int n = (int)floor(fabs(v) * 20 + 0.5), i, cur = -1;
 	if ( n > 20 ) n = 20;
-	for ( i = 0; i < 20; i++ ) paint(&cur, (v < 0 && i >= 20 - n) ? R[k].bg : BG_TRACK, ' ');
+	// 빈 칸은 바탕 그대로 두고 흐린 점으로 자리만 보인다
+	printf(C_DARK);
+	for ( i = 0; i < 20; i++ ) {
+		if ( v < 0 && i >= 20 - n ) paint(&cur, R[k].bg, ' ');
+		else paint(&cur, -1, '.');
+	}
 	paint(&cur, -1, ' ');
-	printf(C_GRAY "|" C_WHITE);
-	for ( i = 0; i < 20; i++ ) paint(&cur, (v > 0 && i < n) ? R[k].bg : BG_TRACK, ' ');
+	printf(C_GRAY "|" C_DARK);
+	for ( i = 0; i < 20; i++ ) {
+		if ( v > 0 && i < n ) paint(&cur, R[k].bg, ' ');
+		else paint(&cur, -1, '.');
+	}
 	paint(&cur, -1, ' ');
+	printf(C_WHITE);
 }
 
 static void today_lines(long t)
