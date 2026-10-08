@@ -1,5 +1,6 @@
 #include "../main.h"
 #include <iconv.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <map>
@@ -322,7 +323,7 @@ static std::string resolve_particles(const std::string &s)
 }
 
 // 쌓인 글을 화면으로: 조사 고르기, 완성형으로, 78 칸에서 줄 바꾸기, 화면이 차면 잠깐 멈춤
-static void flush_out(void)
+static void flush_out(std::vector<std::string> *into = NULL)
 {
 	end_line(false);
 	if ( out.empty() ) return;
@@ -331,6 +332,13 @@ static void flush_out(void)
 	std::vector<std::string> lines = split_string(text, '\n');
 	bool trailing = !text.empty() && text[text.size() - 1] == '\n';
 	if ( trailing && !lines.empty() && lines.back().empty() ) lines.pop_back();
+	if ( into ) {		// 화면을 다시 그릴 때: 줄로만 모은다
+		for ( unsigned int i = 0; i < lines.size(); i++ ) {
+			std::vector<std::string> parts = wrap_words(lines[i], 78);
+			for ( unsigned int k = 0; k < parts.size(); k++ ) into->push_back(parts[k]);
+		}
+		return;
+	}
 	for ( unsigned int i = 0; i < lines.size(); i++ ) {
 		std::vector<std::string> parts = wrap_words(lines[i], 78);
 		for ( unsigned int k = 0; k < parts.size(); k++ ) {
@@ -735,6 +743,37 @@ static void visible_under(int o, std::vector<int> &list, int depth)
 }
 
 // ------------------------------------------------------------------
+// 줄 모으기: 화면을 지우고 다시 그릴 때는 지도/메뉴/그림을 바로 찍지 않고 줄로 모은다
+// ------------------------------------------------------------------
+static std::vector<std::string> *cap = NULL;
+static std::string cap_part;
+
+static void lprintf(const char *fmt, ...)
+{
+	char buf[8192];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	if ( !cap ) { fputs(buf, stdout); return; }
+	cap_part += buf;
+	size_t q;
+	while ( (q = cap_part.find("\r\n")) != std::string::npos ) {
+		cap->push_back(cap_part.substr(0, q));
+		cap_part.erase(0, q + 2);
+	}
+}
+
+static void capture_begin(std::vector<std::string> &into) { cap = &into; cap_part.clear(); }
+static void capture_end(void)
+{
+	if ( cap && !cap_part.empty() && cap_part.find_first_not_of(" ") != std::string::npos
+	     && cap_part.find_first_not_of(" ") != cap_part.find("\033") ) cap->push_back(cap_part);
+	cap = NULL;
+	cap_part.clear();
+}
+
+// ------------------------------------------------------------------
 // 둘레 지도: 지금 방을 가운데에, 8 방향 이웃 방을 둘레에 그린다 (위/아래/안/밖은 아랫줄).
 //   가 본 방(TOUCHBIT)은 이름, 안 가 본 방은 '?', 함수로 정해지는 길(어디로 갈지 모름)도 '?'.
 // ------------------------------------------------------------------
@@ -789,7 +828,7 @@ static void show_map(void)
 	// 칸 16 + 사이 4 + 칸 16 + 사이 4 + 칸 16 = 56, 앞 여백 4
 	std::string pad = "    ";
 	bool top = r[NW] || r[N] || r[NE], bottom = r[SW] || r[S] || r[SE];		// 비는 줄은 찍지 않는다
-	if ( top ) printf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[NW], false).c_str(), map_cell(r[N], false).c_str(), map_cell(r[NE], false).c_str());
+	if ( top ) lprintf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[NW], false).c_str(), map_cell(r[N], false).c_str(), map_cell(r[NE], false).c_str());
 	// 대각선과 세로선: 칸(16) 사이(4) 칸(16) 사이(4) 칸(16) 에서 17, 27, 38 번째 칸
 	std::string up(56, ' '), down(56, ' ');
 	if ( r[NW] ) up[17] = '\\';
@@ -798,11 +837,11 @@ static void show_map(void)
 	if ( r[SW] ) down[17] = '/';
 	if ( r[S] ) down[27] = '|';
 	if ( r[SE] ) down[38] = '\\';
-	if ( top ) printf("%s%s%s%s\r\n", pad.c_str(), D, up.c_str(), X);
-	printf("%s%s%s%s%s%s%s%s\r\n", pad.c_str(), map_cell(r[W], false).c_str(), D, r[W] ? "----" : "    ", X,
+	if ( top ) lprintf("%s%s%s%s\r\n", pad.c_str(), D, up.c_str(), X);
+	lprintf("%s%s%s%s%s%s%s%s\r\n", pad.c_str(), map_cell(r[W], false).c_str(), D, r[W] ? "----" : "    ", X,
 		map_cell(here, true).c_str(), (std::string(D) + (r[E] ? "----" : "    ") + X).c_str(), map_cell(r[E], false).c_str());
-	if ( bottom ) printf("%s%s%s%s\r\n", pad.c_str(), D, down.c_str(), X);
-	if ( bottom ) printf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[SW], false).c_str(), map_cell(r[S], false).c_str(), map_cell(r[SE], false).c_str());
+	if ( bottom ) lprintf("%s%s%s%s\r\n", pad.c_str(), D, down.c_str(), X);
+	if ( bottom ) lprintf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[SW], false).c_str(), map_cell(r[S], false).c_str(), map_cell(r[SE], false).c_str());
 	// 위/아래/안/밖
 	static const char *vk[4] = { "위", "아래", "안", "밖" };
 	std::string l;
@@ -812,7 +851,7 @@ static void show_map(void)
 		std::string name = x < 0 ? "?" : (attr(x, A_TOUCH) ? ko_name(x) : "?");
 		l += std::string("  ") + "\033[=7F" + vk[i] + ":\033[=15F " + (x > 0 && attr(x, A_TOUCH) ? "\033[=11F" : "\033[=8F") + name + "\033[=15F";
 	}
-	if ( !l.empty() ) printf("%s%s\r\n", pad.c_str(), l.c_str());
+	if ( !l.empty() ) lprintf("%s%s\r\n", pad.c_str(), l.c_str());
 }
 
 // ------------------------------------------------------------------
@@ -841,9 +880,9 @@ static bool show_art(int room)
 		if ( a[i] == '\r' ) continue;
 		if ( a[i] == '\n' ) o += "\r\n"; else o += a[i];
 	}
-	printf("%s", o.c_str());
-	if ( o.size() < 2 || o.compare(o.size() - 2, 2, "\r\n") != 0 ) printf("\r\n");
-	printf("\033[=15F\033[=1G");
+	lprintf("%s", o.c_str());
+	if ( o.size() < 2 || o.compare(o.size() - 2, 2, "\r\n") != 0 ) lprintf("\r\n");
+	lprintf("\033[=15F\033[=1G");
 	return true;
 }
 
@@ -891,14 +930,14 @@ static void menu_line(const std::string &head, const std::vector<std::string> &i
 	for ( unsigned int i = 0; i < items.size(); i++ ) {
 		int iw = shown_width(items[i]);
 		if ( w + iw > 78 && w > indent ) {
-			printf("%s\r\n", l.c_str());
+			lprintf("%s\r\n", l.c_str());
 			l = std::string(indent, ' ');
 			w = indent;
 		}
 		l += items[i];
 		w += iw;
 	}
-	printf("%s\r\n", l.c_str());
+	lprintf("%s\r\n", l.c_str());
 }
 
 static void show_menu(void)
@@ -950,22 +989,74 @@ static void show_menu(void)
 		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), ko_name(inv[i]).c_str());
 		have.push_back(b);
 	}
-	static const char *gk[7] = { "둘러보기", "소지품", "기다리기", "점수", "지도", "그림", "도움말" };
-	static const char *ge[7] = { "look", "inventory", "wait", "score", "/map", "/art", "/?" };
+	static const char *gk[6] = { "둘러보기", "소지품", "기다리기", "점수", "지도", "그림" };
+	static const char *ge[6] = { "look", "inventory", "wait", "score", "/map", "/art" };
 	std::vector<std::string> etc;
-	for ( int i = 0; i < 7; i++ ) {
+	for ( int i = 0; i < 6; i++ ) {
 		if ( i == 5 && access(art_path(here).c_str(), F_OK) != 0 ) continue;	// 그림이 있는 방만
 		menu_item m; m.cmd = ge[i]; m.obj = 0; menu.push_back(m);
 		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), gk[i]);
 		etc.push_back(b);
 	}
-	printf("\033[=8F------------------------------------------------------------------------------\033[=15F\r\n");
+	lprintf("\033[=8F------------------------------------------------------------------------------\033[=15F\r\n");
 	menu_line("\033[=7F갈 곳     :\033[=15F", go);
-	if ( !lit ) printf("\033[=7F보이는 것 :\033[=15F \033[=8F(어두워서 아무것도 보이지 않습니다)\033[=15F\r\n");
+	if ( !lit ) lprintf("\033[=7F보이는 것 :\033[=15F \033[=8F(어두워서 아무것도 보이지 않습니다)\033[=15F\r\n");
 	else menu_line("\033[=7F보이는 것 :\033[=15F", see);
 	menu_line("\033[=7F가진 것   :\033[=15F", have);
 	menu_line("\033[=7F그 밖     :\033[=15F", etc);
-	printf("\033[=8F번호를 고르거나 영어 명령을 넣으세요.  메뉴 /m  지도 /g  끄기/켜기   그만하기 /x\033[=15F\r\n");
+	lprintf("\033[=8F번호나 영어 명령.  /? 도움말  /m 메뉴  /g 지도  /s 화면 지우기  /x 그만(저장)\033[=15F\r\n");
+}
+
+// ------------------------------------------------------------------
+// 한 화면 그리기: 상태 줄, (그림), 이번 턴의 글, 지도, 메뉴, 입력 줄.  글이 길면 [계속] 으로 나눈다
+// ------------------------------------------------------------------
+static bool page_mode = true;
+static std::string last_cmd;
+
+static std::string status_line(void)
+{
+	int here = rw(GLOB);
+	char right[64];
+	snprintf(right, sizeof(right), "점수 %d   횟수 %d ", (short)rw(GLOB + 2), (short)rw(GLOB + 4));
+	std::string left = " " + (here ? ko_name(here) : std::string("조크 I"));
+	int pad = 80 - shown_width(left) - (int)strlen(right);
+	if ( pad < 1 ) pad = 1;
+	return "\033[=3G\033[=15F" + left + std::string(pad, ' ') + right + "\033[=1G\033[=15F";
+}
+
+static void draw_screen(const std::vector<std::string> &art, const std::vector<std::string> &text)
+{
+	std::vector<std::string> map, menu_lines;
+	if ( map_on ) { capture_begin(map); show_map(); capture_end(); }
+	if ( menu_on ) { capture_begin(menu_lines); show_menu(); capture_end(); }
+	else menu.clear();
+	const int ROWS = 24;		// 25 줄 가운데 마지막 한 줄은 입력
+	int fixed = 1 + (int)map.size() + (int)menu_lines.size();
+	int avail = ROWS - fixed;
+	if ( avail < 4 ) { map.clear(); fixed = 1 + (int)menu_lines.size(); avail = ROWS - fixed; }
+	std::vector<std::string> body;
+	if ( !last_cmd.empty() ) body.push_back("\033[=8F> " + last_cmd + "\033[=15F");
+	if ( !art.empty() && (int)(art.size() + text.size() + body.size()) <= avail ) body.insert(body.end(), art.begin(), art.end());
+	body.insert(body.end(), text.begin(), text.end());
+	// 넘치면 앞부분을 [계속] 으로 먼저 보여 준다
+	size_t at = 0;
+	while ( (int)(body.size() - at) > avail ) {
+		printf(ESC_CLEAR);
+		printf("%s\r\n", status_line().c_str());
+		for ( int i = 0; i < ROWS - 2 && at < body.size(); i++, at++ ) printf("%s\r\n", body[at].c_str());
+		printf("\033[=7F[계속: Enter]\033[=15F");
+		fflush(stdout);
+		press_enter();
+	}
+	printf(ESC_CLEAR);
+	printf("%s\r\n", status_line().c_str());
+	int used = 0;
+	for ( ; at < body.size(); at++, used++ ) printf("%s\r\n", body[at].c_str());
+	for ( ; used < avail; used++ ) printf("\r\n");		// 지도와 메뉴는 늘 아래에
+	for ( unsigned int i = 0; i < map.size(); i++ ) printf("%s\r\n", map[i].c_str());
+	for ( unsigned int i = 0; i < menu_lines.size(); i++ ) printf("%s\r\n", menu_lines[i].c_str());
+	printf(">");
+	fflush(stdout);
 }
 
 // 숫자만 들어 있으면 그 수, 아니면 -1
@@ -1083,21 +1174,32 @@ static void sread(unsigned int text, unsigned int parse)
 	if ( prompt ) line.pop_back();
 	int here_now = rw(GLOB);
 	bool moved = prompt && here_now && here_now != last_here;
-	// 처음 들어온 방(또는 게임을 막 시작/이어 했을 때)이면 그림을 방 설명보다 먼저
-	if ( moved && (touched_prev.empty() || ((int)touched_prev.size() > here_now && !touched_prev[here_now])) ) show_art(here_now);
+	bool paged = prompt && page_mode && pending_input.empty();
+	std::vector<std::string> scr_text, art;
+	if ( paged ) {
+		// 화면 모드: 방에 들어온 턴이면 그림, 글은 줄로 모아 한 화면에
+		if ( moved ) { capture_begin(art); show_art(here_now); capture_end(); }
+		flush_out(&scr_text);
+	} else {
+		// 흘러가는 모드: 처음 들어온 방이면 그림을 방 설명보다 먼저
+		if ( moved && (touched_prev.empty() || ((int)touched_prev.size() > here_now && !touched_prev[here_now])) ) show_art(here_now);
+		flush_out();
+	}
 	if ( prompt ) { last_here = here_now; remember_touched(); }
-	flush_out();
 	std::string line;
 	if ( !pending_input.empty() ) {
 		line = pending_input;
 		pending_input.clear();
 		printf("%s\r\n", line.c_str());
 	} else {
-		bool map_now = moved && map_on;
+		bool map_now = moved && map_on && !paged;
 		while ( 1 ) {
-			if ( map_now ) { show_map(); map_now = false; }
-			if ( prompt && menu_on ) show_menu();
-			if ( prompt ) printf(">");
+			if ( paged ) draw_screen(art, scr_text);
+			else {
+				if ( map_now ) { show_map(); map_now = false; }
+				if ( prompt && menu_on ) show_menu();
+				if ( prompt ) printf(">");
+			}
 			char buf[128];
 			printf(ESC_ENG);
 			fflush(stdout);
@@ -1105,6 +1207,12 @@ static void sread(unsigned int text, unsigned int parse)
 			line = buf;
 			printf("\r\n");
 			std::string t0 = trim(line);
+			if ( t0 == "/s" ) {
+				page_mode = !page_mode;
+				printf("\033[=7F%s\033[=15F\r\n", page_mode ? "매 턴 화면을 지우고 다시 그립니다." : "화면을 지우지 않고 이어서 보여 줍니다 (다시 바꾸기: /s).");
+				paged = page_mode;
+				continue;
+			}
 			if ( t0 == "/g" ) {
 				map_on = !map_on;
 				printf("\033[=7F방을 옮길 때 지도를 %s.\033[=15F\r\n", map_on ? "보여 줍니다" : "보여 주지 않습니다 (다시 켜기: /g, 한 번 보기: 메뉴의 지도)");
@@ -1120,7 +1228,11 @@ static void sread(unsigned int text, unsigned int parse)
 			if ( prompt && t0.empty() ) continue;		// 빈 Enter: 메뉴만 다시
 			int k = prompt && menu_on ? number_of(t0) : -1;
 			if ( k < 0 ) break;
-			if ( k < 1 || k > (int)menu.size() ) { printf("\033[=12F목록에 없는 번호입니다.\033[=15F\r\n"); continue; }
+			if ( k < 1 || k > (int)menu.size() ) {
+				if ( paged ) scr_text.push_back("\033[=12F목록에 없는 번호입니다.\033[=15F");
+				else printf("\033[=12F목록에 없는 번호입니다.\033[=15F\r\n");
+				continue;
+			}
 			std::string cmd = menu[k - 1].obj ? object_actions(menu[k - 1].obj) : menu[k - 1].cmd;
 			if ( cmd.empty() ) continue;
 			if ( cmd == "/map" ) { show_map(); continue; }
@@ -1132,6 +1244,7 @@ static void sread(unsigned int text, unsigned int parse)
 	}
 	lines_since_input = 0;
 	std::string t = trim(line);
+	last_cmd = t;
 	if ( t == "/x" || t == "/q" || t == "/p" ) bbs_exit(true);
 	if ( t == "/?" ) {
 		printf("\033[=7F메뉴의 번호를 고르면 명령을 만들어 줍니다. 물건 번호를 고르면 그 물건에 할 동작을 고릅니다.\r\n");
