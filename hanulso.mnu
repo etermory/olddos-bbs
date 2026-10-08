@@ -113,6 +113,11 @@
 			<item type="program" prog="aichat" go="ai" door="16" access_level="1">
 				<name>AI 와 이야기 (ai)</name>
 			</item>
+
+			<!-- 도로명주소 검색 API (승인키는 hanulso.cfg 의 <juso><key>) -->
+			<item type="program" prog="zipcode" go="zip" door="17" access_level="1">
+				<name>우편번호 찾기 (zip)</name>
+			</item>
 		</item>
 
 		<item type="menu" text="txt/game_info.txt" go="game" door="7">

@@ -20,7 +20,7 @@ endif
 .c.o: ; $(CC) -c $(CFLAGS) -o $*.o $<
 .cpp.o: ; $(CXX) -c $(CFLAGS) -o $*.o $<
 
-all: ctime main guest pass sysop weather exchange lunar hero rain omok baseball mine blackjack tgsend lotto coin sun worldtime english love tojeong today fortune mudlink memo biorhythm chattclient chattserver mbti_gs aichat typing cafeimport
+all: ctime main guest pass sysop weather exchange lunar hero rain omok baseball mine blackjack tgsend lotto coin sun worldtime english love tojeong today fortune mudlink memo biorhythm chattclient chattserver mbti_gs aichat typing cafeimport zipcode
 
 # 글쓰기 화면 편집기 pico (src/pico/pico, 한글 고침). ncurses-devel 이 필요하다.
 # all 에는 넣지 않는다 (서버에 ncurses-devel 이 없으면 BBS 업데이트가 통째로 실패하므로).
@@ -103,6 +103,11 @@ worldtime: worldtime.o utility.o pugixml.o
 
 english: english.o utility.o pugixml.o
 	$(CXX) -o ../bin/$@ pugixml.o english.o utility.o \
+			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
+	$(STRIP) ../bin/$@
+
+zipcode: zipcode.o utility.o pugixml.o
+	$(CXX) -o ../bin/$@ pugixml.o zipcode.o utility.o \
 			$(LIBMYSQL) -lz -lpthread -lrt -lcrypt
 	$(STRIP) ../bin/$@
 

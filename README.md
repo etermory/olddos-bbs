@@ -77,6 +77,8 @@
 - 사랑의 별점 (이름 획수 궁합, 별자리 + 띠 궁합, 회원과 궁합), 토정비결 (144 괘, 올해 / 내년)
 - AI 와 이야기 (`go ai`): 구글 Gemini 와 한 줄씩 묻고 답하기. 무료 키를 `hanulso.cfg` 에
   `<ai><key>AIza...</key></ai>` 로 넣는다 (https://aistudio.google.com 의 Get API key).
+- 우편번호 찾기 (`go zip`): 도로명/지번 주소나 건물 이름으로 5 자리 우편번호를 찾는다 (행정안전부 도로명주소 검색 API).
+  무료 승인키를 https://business.juso.go.kr 에서 받아 `hanulso.cfg` 에 `<juso><key>승인키</key></juso>` 로 넣는다.
   `<model>`, `<url>` (OpenAI 방식이면 다른 곳도), 한 사람의 하루 질문 수 `<daily>` (기본 50) 도 바꿀 수 있다
 
 <img width="850" alt="생활정보 화면" src="docs/screenshots/life_info.png" />
