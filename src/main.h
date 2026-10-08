@@ -230,7 +230,7 @@ void show_stats(void);
 void print_news_title(const char *title);
 
 void print_board_header(char *table_name, char *title, int page_count, int page_no);
-void print_biorhythm(char *user_id);
+void print_biorhythm(char *user_id, bool full = false);
 void print_luck(char *user_id);
 void print_user_info(char *user_id);
 

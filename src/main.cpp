@@ -1965,8 +1965,10 @@ void prompt(char *cmd, bool enable_write, bool enable_del)
 
 		// 바이오 리듬
 		} else if ( !strcasecmp(args[0].c_str(), "bio") ) {
-			printf("\r\n\r\n");
-			print_biorhythm(login_user_id);
+			printf(ESC_CLEAR);
+			print_news_title("바이오리듬");
+			printf("\033[4;1H");
+			print_biorhythm(login_user_id, true);
 			printf("\r\n [Enter] 를 누르세요.");
 			press_enter();
 
@@ -2088,7 +2090,7 @@ bool run_menu_program(pugi::xml_node node, const std::string &type)
 		// 다른 생활정보 화면과 같은 타이틀
 		print_news_title("바이오리듬");
 		printf("\033[4;1H");
-		print_biorhythm(login_user_id);
+		print_biorhythm(login_user_id, true);
 		printf("\r\n [Enter] 를 누르세요.");
 		press_enter();
 
@@ -2139,7 +2141,8 @@ void run_mbti_gs()
 	system(buf);
 }
 
-void print_biorhythm(char *user_id) 
+// full: 앞뒤 2 주 그래프와 위험일까지 (생활정보 메뉴, bio 명령). 아니면 오늘 것만 짧게 (로그인 화면)
+void print_biorhythm(char *user_id, bool full)
 {
 	bool exist;
 	std::map<std::string, std::string> user = database::user_info(user_id, &exist);
@@ -2149,7 +2152,7 @@ void print_biorhythm(char *user_id)
 	sscanf(user["BIRTHDAY"].c_str(), "%d-%d-%d", &year, &month, &day);
 
 	char buf[1024];
-	sprintf(buf, "%s/bin/biorhythm %d %d %d", getenv("HANULSO"), year, month, day);
+	sprintf(buf, "%s/bin/biorhythm %d %d %d%s", getenv("HANULSO"), year, month, day, full ? " full" : "");
 	// 먼저 출력한 내용(화면 지우기 등)이 버퍼에 남아 있다가 그래프 뒤에 나가지 않도록
 	fflush(stdout);
 	system(buf);
