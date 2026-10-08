@@ -734,6 +734,140 @@ static void visible_under(int o, std::vector<int> &list, int depth)
 	}
 }
 
+// ------------------------------------------------------------------
+// 둘레 지도: 지금 방을 가운데에, 8 방향 이웃 방을 둘레에 그린다 (위/아래/안/밖은 아랫줄).
+//   가 본 방(TOUCHBIT)은 이름, 안 가 본 방은 '?', 함수로 정해지는 길(어디로 갈지 모름)도 '?'.
+// ------------------------------------------------------------------
+static const int A_TOUCH = 3;
+static bool map_on = true;
+
+// 방향 d (0 북 .. 12 뭍) 로 가면 나오는 방. 길이 없으면 0, 어딘지 모르면 -1
+static int exit_room(int room, int d)
+{
+	unsigned int p = prop_addr(room, 31 - d);
+	if ( !p ) return 0;
+	int len = (mem[p - 1] >> 5) + 1;
+	if ( len == 2 ) return 0;								// 못 가는 길 (안내 문장)
+	if ( len == 3 ) return -1;								// 함수가 정하는 길
+	if ( len == 4 && mem[p + 1] >= 16 && rw(GLOB + 2 * (mem[p + 1] - 16)) == 0 ) return 0;	// 조건이 아직 안 된 길
+	return mem[p];
+}
+
+// 완성형 문자열을 w 칸으로 (넘치면 자르고, 모자라면 가운데 맞춤)
+static std::string fit(const std::string &s, int w)
+{
+	std::string o;
+	int n = 0;
+	for ( size_t i = 0; i < s.size(); ) {
+		int cw = ((unsigned char)s[i] >= 0x80) ? 2 : 1;
+		if ( n + cw > w ) break;
+		o += s.substr(i, cw);
+		n += cw; i += cw;
+	}
+	int left = (w - n) / 2;
+	return std::string(left, ' ') + o + std::string(w - n - left, ' ');
+}
+
+static std::string map_cell(int room, bool center)
+{
+	const int W = 16;
+	if ( room == 0 ) return std::string(W, ' ');
+	if ( room < 0 ) return "\033[=8F" + fit("[ ? ]", W) + "\033[=15F";
+	if ( center ) return "\033[=14F" + fit("[" + ko_name(room) + "]", W) + "\033[=15F";
+	if ( !attr(room, A_TOUCH) ) return "\033[=8F" + fit("[ ? ]", W) + "\033[=15F";
+	return "\033[=11F" + fit("[" + ko_name(room) + "]", W) + "\033[=15F";
+}
+
+static void show_map(void)
+{
+	int here = rw(GLOB);
+	if ( !here ) return;
+	int r[13];
+	for ( int d = 0; d < 13; d++ ) r[d] = exit_room(here, d);
+	enum { N = 0, E = 1, W = 2, S = 3, NE = 4, NW = 5, SE = 6, SW = 7, UP = 8, DOWN = 9, IN = 10, OUT = 11 };
+	const char *D = "\033[=8F", *X = "\033[=15F";
+	// 칸 16 + 사이 4 + 칸 16 + 사이 4 + 칸 16 = 56, 앞 여백 4
+	std::string pad = "    ";
+	bool top = r[NW] || r[N] || r[NE], bottom = r[SW] || r[S] || r[SE];		// 비는 줄은 찍지 않는다
+	if ( top ) printf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[NW], false).c_str(), map_cell(r[N], false).c_str(), map_cell(r[NE], false).c_str());
+	// 대각선과 세로선: 칸(16) 사이(4) 칸(16) 사이(4) 칸(16) 에서 17, 27, 38 번째 칸
+	std::string up(56, ' '), down(56, ' ');
+	if ( r[NW] ) up[17] = '\\';
+	if ( r[N] ) up[27] = '|';
+	if ( r[NE] ) up[38] = '/';
+	if ( r[SW] ) down[17] = '/';
+	if ( r[S] ) down[27] = '|';
+	if ( r[SE] ) down[38] = '\\';
+	if ( top ) printf("%s%s%s%s\r\n", pad.c_str(), D, up.c_str(), X);
+	printf("%s%s%s%s%s%s%s%s\r\n", pad.c_str(), map_cell(r[W], false).c_str(), D, r[W] ? "----" : "    ", X,
+		map_cell(here, true).c_str(), (std::string(D) + (r[E] ? "----" : "    ") + X).c_str(), map_cell(r[E], false).c_str());
+	if ( bottom ) printf("%s%s%s%s\r\n", pad.c_str(), D, down.c_str(), X);
+	if ( bottom ) printf("%s%s    %s    %s\r\n", pad.c_str(), map_cell(r[SW], false).c_str(), map_cell(r[S], false).c_str(), map_cell(r[SE], false).c_str());
+	// 위/아래/안/밖
+	static const char *vk[4] = { "위", "아래", "안", "밖" };
+	std::string l;
+	for ( int i = 0; i < 4; i++ ) {
+		int x = r[UP + i];
+		if ( !x ) continue;
+		std::string name = x < 0 ? "?" : (attr(x, A_TOUCH) ? ko_name(x) : "?");
+		l += std::string("  ") + "\033[=7F" + vk[i] + ":\033[=15F " + (x > 0 && attr(x, A_TOUCH) ? "\033[=11F" : "\033[=8F") + name + "\033[=15F";
+	}
+	if ( !l.empty() ) printf("%s%s\r\n", pad.c_str(), l.c_str());
+}
+
+// ------------------------------------------------------------------
+// 장면 그림: src/zork1/art/<방 이름>.ans (완성형 안시, 방 이름은 영어 이름을 소문자로, 글자/숫자 밖은 _)
+//   그 방에 처음 들어갈 때 방 설명보다 먼저 보여 준다. 메뉴의 '그림' 으로 다시 볼 수 있다.
+// ------------------------------------------------------------------
+static int last_here = -1;
+static std::vector<bool> touched_prev;
+
+static std::string art_path(int room)
+{
+	std::string n = obj_name(room), slug;
+	for ( size_t i = 0; i < n.size(); i++ ) {
+		unsigned char c = (unsigned char)n[i];
+		slug += isalnum(c) ? (char)tolower(c) : '_';
+	}
+	return home + "/src/zork1/art/" + slug + ".ans";
+}
+
+static bool show_art(int room)
+{
+	std::string a = read_file(art_path(room).c_str());
+	if ( a.empty() ) return false;
+	std::string o;
+	for ( size_t i = 0; i < a.size(); i++ ) {
+		if ( a[i] == '\r' ) continue;
+		if ( a[i] == '\n' ) o += "\r\n"; else o += a[i];
+	}
+	printf("%s", o.c_str());
+	if ( o.size() < 2 || o.compare(o.size() - 2, 2, "\r\n") != 0 ) printf("\r\n");
+	printf("\033[=15F\033[=1G");
+	return true;
+}
+
+// 물건(방) 수
+static int object_count(void)
+{
+	static int n = 0;
+	if ( n ) return n;
+	unsigned int lowest = 0xFFFF;
+	for ( int o = 1; o < 256; o++ ) {
+		if ( obj_addr(o) + 9 > lowest ) break;
+		if ( prop_table(o) < lowest ) lowest = prop_table(o);
+		n = o;
+	}
+	return n;
+}
+
+static void remember_touched(void)
+{
+	int n = object_count();
+	touched_prev.assign(n + 1, false);
+	for ( int o = 1; o <= n; o++ ) touched_prev[o] = attr(o, A_TOUCH);
+}
+
 struct menu_item { std::string cmd; int obj; };
 static std::vector<menu_item> menu;
 
@@ -816,10 +950,11 @@ static void show_menu(void)
 		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), ko_name(inv[i]).c_str());
 		have.push_back(b);
 	}
-	static const char *gk[5] = { "둘러보기", "소지품", "기다리기", "점수", "도움말" };
-	static const char *ge[5] = { "look", "inventory", "wait", "score", "/?" };
+	static const char *gk[7] = { "둘러보기", "소지품", "기다리기", "점수", "지도", "그림", "도움말" };
+	static const char *ge[7] = { "look", "inventory", "wait", "score", "/map", "/art", "/?" };
 	std::vector<std::string> etc;
-	for ( int i = 0; i < 5; i++ ) {
+	for ( int i = 0; i < 7; i++ ) {
+		if ( i == 5 && access(art_path(here).c_str(), F_OK) != 0 ) continue;	// 그림이 있는 방만
 		menu_item m; m.cmd = ge[i]; m.obj = 0; menu.push_back(m);
 		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), gk[i]);
 		etc.push_back(b);
@@ -830,7 +965,7 @@ static void show_menu(void)
 	else menu_line("\033[=7F보이는 것 :\033[=15F", see);
 	menu_line("\033[=7F가진 것   :\033[=15F", have);
 	menu_line("\033[=7F그 밖     :\033[=15F", etc);
-	printf("\033[=8F번호를 고르거나 영어 명령을 넣으세요.  메뉴 끄기/켜기 /m   그만하기 /x\033[=15F\r\n");
+	printf("\033[=8F번호를 고르거나 영어 명령을 넣으세요.  메뉴 /m  지도 /g  끄기/켜기   그만하기 /x\033[=15F\r\n");
 }
 
 // 숫자만 들어 있으면 그 수, 아니면 -1
@@ -946,6 +1081,11 @@ static void sread(unsigned int text, unsigned int parse)
 	// 게임이 찍은 '>' 는 메뉴 뒤로 옮긴다
 	bool prompt = !line.empty() && (line.back().kind == 0 || line.back().kind == 3) && trim(line.back().s) == ">";
 	if ( prompt ) line.pop_back();
+	int here_now = rw(GLOB);
+	bool moved = prompt && here_now && here_now != last_here;
+	// 처음 들어온 방(또는 게임을 막 시작/이어 했을 때)이면 그림을 방 설명보다 먼저
+	if ( moved && (touched_prev.empty() || ((int)touched_prev.size() > here_now && !touched_prev[here_now])) ) show_art(here_now);
+	if ( prompt ) { last_here = here_now; remember_touched(); }
 	flush_out();
 	std::string line;
 	if ( !pending_input.empty() ) {
@@ -953,7 +1093,9 @@ static void sread(unsigned int text, unsigned int parse)
 		pending_input.clear();
 		printf("%s\r\n", line.c_str());
 	} else {
+		bool map_now = moved && map_on;
 		while ( 1 ) {
+			if ( map_now ) { show_map(); map_now = false; }
 			if ( prompt && menu_on ) show_menu();
 			if ( prompt ) printf(">");
 			char buf[128];
@@ -963,6 +1105,13 @@ static void sread(unsigned int text, unsigned int parse)
 			line = buf;
 			printf("\r\n");
 			std::string t0 = trim(line);
+			if ( t0 == "/g" ) {
+				map_on = !map_on;
+				printf("\033[=7F방을 옮길 때 지도를 %s.\033[=15F\r\n", map_on ? "보여 줍니다" : "보여 주지 않습니다 (다시 켜기: /g, 한 번 보기: 메뉴의 지도)");
+				continue;
+			}
+			if ( t0 == "/map" ) { show_map(); continue; }
+			if ( t0 == "/art" ) { if ( !show_art(rw(GLOB)) ) printf("\033[=7F이 방에는 그림이 없습니다.\033[=15F\r\n"); continue; }
 			if ( t0 == "/m" ) {
 				menu_on = !menu_on;
 				printf("\033[=7F고르기 메뉴를 %s.\033[=15F\r\n", menu_on ? "켰습니다" : "껐습니다 (다시 켜기: /m)");
@@ -974,6 +1123,8 @@ static void sread(unsigned int text, unsigned int parse)
 			if ( k < 1 || k > (int)menu.size() ) { printf("\033[=12F목록에 없는 번호입니다.\033[=15F\r\n"); continue; }
 			std::string cmd = menu[k - 1].obj ? object_actions(menu[k - 1].obj) : menu[k - 1].cmd;
 			if ( cmd.empty() ) continue;
+			if ( cmd == "/map" ) { show_map(); continue; }
+			if ( cmd == "/art" ) { show_art(rw(GLOB)); continue; }
 			if ( cmd[0] != '/' ) printf("\033[=8F> %s\033[=15F\r\n", cmd.c_str());
 			line = cmd;
 			break;
