@@ -151,41 +151,41 @@ static int shift_date(int y, int m, int d, int n, int *mon)
 	return tmv.tm_mday;
 }
 
-// 앞뒤 2 주 그래프: 2 일 전 ~ 10 일 뒤 (13 일).
-// 날마다 신체/감성/지성/지각 막대 4 개를 0 줄 위아래로 칠한다 (한 칸 = 20%).
+// 앞뒤 2 주 그래프: 2 일 전 ~ 12 일 뒤 (15 일). 하루를 4 칸으로 나눠 * 로 선을 그린다 (세로 11 줄)
 static void chart(long t, int y, int m, int d)
 {
-	enum { FROM = -2, DAYS = 13, HALF = 5, ROWS = HALF * 2 + 1 };
-	int r, i, k;
+	enum { FROM = -2, DAYS = 15, STEP = 4, COLS = DAYS * STEP, ROWS = 11 };
+	signed char who[ROWS][COLS];
+	int r, x, k;
+	memset(who, -1, sizeof(who));
+	for ( x = 0; x < COLS; x++ ) {
+		double tt = (double)t + FROM + (double)x / STEP;
+		for ( k = 3; k >= 0; k-- ) {	// 겹치면 앞의 리듬(신체)이 보인다
+			double v = sin(2 * PI * tt / R[k].days);
+			who[(int)floor((1 - v) / 2 * (ROWS - 1) + 0.5)][x] = (signed char)k;
+		}
+	}
 	for ( r = 0; r < ROWS; r++ ) {
-		const char *label = r == 0 ? "+100" : r == HALF ? "   0" : r == ROWS - 1 ? "-100" : "    ";
-		int cur = -1;
-		printf(" " C_GRAY "%s " C_WHITE, label);
-		if ( r == HALF ) {
-			// 0 줄
-			printf(C_DARK);
-			for ( i = 0; i < DAYS; i++ ) printf(i == -FROM ? C_YELLOW "----" C_DARK "-" : "-----");
-			printf(C_WHITE "\r\n");
-			continue;
+		const char *label = r == 0 ? "+100" : r == ROWS / 2 ? "   0" : r == ROWS - 1 ? "-100" : "    ";
+		int last = -2;
+		printf(" " C_GRAY "%s |", label);
+		for ( x = 0; x < COLS; x++ ) {
+			int c = who[r][x];
+			// 색이 바뀔 때만 색 코드를 보낸다
+			if ( c != last ) { printf("%s", c >= 0 ? R[c].color : C_DARK); last = c; }
+			if ( c >= 0 ) putchar('*');
+			else if ( x == -FROM * STEP ) putchar(':');		// 오늘
+			else if ( r == ROWS / 2 ) putchar(x % 2 ? ' ' : '.');	// 0 줄
+			else putchar(' ');
 		}
-		for ( i = 0; i < DAYS; i++ ) {
-			for ( k = 0; k < 4; k++ ) {
-				double v = value(k, t + FROM + i);
-				int n = (int)floor(fabs(v) * HALF + 0.5);
-				int on = r < HALF ? (v > 0 && HALF - r <= n) : (v < 0 && r - HALF <= n);
-				paint(&cur, on ? R[k].bg : -1, ' ');
-			}
-			paint(&cur, -1, ' ');
-		}
-		paint(&cur, -1, ' ');
 		printf(C_WHITE "\r\n");
 	}
-	// 날짜 줄: 막대 4 개 아래 가운데
-	printf("      " C_GRAY);
-	for ( i = 0; i < DAYS; i++ ) {
-		int dd = shift_date(y, m, d, FROM + i, NULL);
-		if ( i == -FROM ) printf(C_YELLOW " %2d  " C_GRAY, dd);
-		else printf(" %2d  ", dd);
+	// 날짜 줄: 그날이 시작하는 칸 아래
+	printf(" " C_GRAY "      ");
+	for ( x = 0; x < DAYS; x++ ) {
+		int dd = shift_date(y, m, d, FROM + x, NULL);
+		if ( x == -FROM ) printf(C_YELLOW "%-4d" C_GRAY, dd);
+		else printf("%-4d", dd);
 	}
 	printf(C_WHITE "\r\n");
 }
@@ -243,8 +243,8 @@ int main(int argc, char **argv)
 
 	{
 		int k;
-		printf(" %d년 %d월 %d일생, 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째   " C_GRAY "그래프:", uy, um, ud, t);
-		for ( k = 0; k < 4; k++ ) printf(" \033[=%dG  " BG_OFF "%s%s", R[k].bg, R[k].color, R[k].name);
+		printf(" %d년 %d월 %d일생, 태어난 지 " C_YELLOW "%ld" C_WHITE " 일째  ", uy, um, ud, t);
+		for ( k = 0; k < 4; k++ ) printf("  %s*%s", R[k].color, R[k].name);
 		printf(C_WHITE "\r\n");
 	}
 	today_lines(t);
