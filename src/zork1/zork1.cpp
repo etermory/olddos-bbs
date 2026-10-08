@@ -652,8 +652,300 @@ static void tokenise(unsigned int text, unsigned int parse)
 	mem[parse + 1] = (u8)nw;
 }
 
+// ------------------------------------------------------------------
+// 고르기 메뉴: 영어 명령을 몰라도 번호로 고르면 명령을 만들어 넣는다
+//   갈 곳(출구), 보이는 것, 가진 것, 자주 쓰는 명령. 물건을 고르면 그 물건에 할 수 있는 동작.
+//   속성/속성 번호는 원작 ZIL 소스의 물건 정의와 게임 파일을 맞대어 알아낸 것 (Zork I Release 119)
+// ------------------------------------------------------------------
+enum {
+	A_INVISIBLE = 7, A_SURFACE = 10, A_OPEN = 11, A_TRANS = 12, A_TURN = 15, A_READ = 16, A_TAKE = 17,
+	A_CONT = 18, A_ON = 19, A_FOOD = 20, A_DRINK = 21, A_DOOR = 22, A_CLIMB = 23, A_VEH = 27,
+	A_WEAPON = 29, A_ACTOR = 30, A_LIGHT = 31
+};
+static const int P_SYNONYM = 18;
+static const int P_GLOBAL = 5;		// 방에 붙은 배경 물건 (창문, 굴뚝 ...): 물건 번호 바이트들
+static bool menu_on = true;
+static int player_obj = -1;
+
+static bool attr(int o, int a) { return o && (mem[obj_addr(o) + a / 8] & (0x80 >> (a % 8))) != 0; }
+
+// 사전에 있는 낱말인가
+static bool in_dict(const std::string &w)
+{
+	unsigned int ns = mem[DICT];
+	unsigned int elen = mem[DICT + 1 + ns];
+	int count = (int)rw(DICT + 2 + ns);
+	unsigned int entries = DICT + 4 + ns;
+	u16 code[2];
+	zencode(w, code);
+	int lo = 0, hi = count - 1;
+	while ( lo <= hi ) {
+		int mid = (lo + hi) / 2;
+		unsigned int e = entries + mid * elen;
+		u16 a = rw(e), b = rw(e + 2);
+		if ( a == code[0] && b == code[1] ) return true;
+		if ( a < code[0] || (a == code[0] && b < code[1]) ) lo = mid + 1;
+		else hi = mid - 1;
+	}
+	return false;
+}
+
+// 명령에 쓸 물건 이름: 이름의 낱말이 모두 사전에 있으면 이름 그대로, 아니면 첫 번째 동의어
+static std::string noun_of(int o)
+{
+	std::string n = obj_name(o);
+	std::vector<std::string> ws = split_string(n, ' ');
+	bool all = !ws.empty();
+	for ( unsigned int i = 0; i < ws.size(); i++ ) if ( ws[i].empty() || !in_dict(ws[i]) ) all = false;
+	if ( all ) return n;
+	unsigned int p = prop_addr(o, P_SYNONYM);
+	if ( p ) {
+		std::string s;
+		zdecode(rw(p), s);
+		return s;
+	}
+	return n;
+}
+
+static std::string ko_name(int o) { return convert(tr(obj_name(o)), "CP949//TRANSLIT", "UTF-8"); }
+
+static int find_player(void)
+{
+	if ( player_obj >= 0 ) return player_obj;
+	player_obj = 0;
+	// 물건표는 가장 낮은 속성표 앞에서 끝난다
+	unsigned int lowest = 0xFFFF;
+	for ( int o = 1; o < 256 && obj_addr(o) + 9 <= lowest; o++ ) {
+		if ( prop_table(o) < lowest ) lowest = prop_table(o);
+		if ( obj_addr(o) + 9 > lowest ) break;
+		if ( obj_name(o) == "cretin" ) { player_obj = o; break; }	// ADVENTURER (gglobals.zil)
+	}
+	return player_obj;
+}
+
+// o 의 아래 물건들 가운데 보이는 것 (열린 그릇, 위에 올려놓는 것, 투명한 것은 안까지)
+static void visible_under(int o, std::vector<int> &list, int depth)
+{
+	if ( depth > 3 ) return;
+	for ( int c = child(o); c; c = sibling(c) ) {
+		if ( c == find_player() || attr(c, A_INVISIBLE) || obj_name(c).empty() ) continue;
+		list.push_back(c);
+		if ( attr(c, A_SURFACE) || attr(c, A_OPEN) || attr(c, A_TRANS) ) visible_under(c, list, depth + 1);
+	}
+}
+
+struct menu_item { std::string cmd; int obj; };
+static std::vector<menu_item> menu;
+
+// 색 코드를 빼고 화면에 보이는 폭 (완성형 한글 2 칸)
+static int shown_width(const std::string &s)
+{
+	int n = 0;
+	for ( size_t i = 0; i < s.size(); i++ ) {
+		if ( s[i] == '\033' ) { while ( i < s.size() && !isalpha((unsigned char)s[i]) ) i++; continue; }
+		n++;
+	}
+	return n;
+}
+
+// "머리말 : 항목 항목 ..." 을 78 칸 안에서 항목 단위로 나눠 찍는다
+static void menu_line(const std::string &head, const std::vector<std::string> &items, int indent = 11)
+{
+	if ( items.empty() ) return;
+	std::string l = head;
+	int w = shown_width(head);
+	for ( unsigned int i = 0; i < items.size(); i++ ) {
+		int iw = shown_width(items[i]);
+		if ( w + iw > 78 && w > indent ) {
+			printf("%s\r\n", l.c_str());
+			l = std::string(indent, ' ');
+			w = indent;
+		}
+		l += items[i];
+		w += iw;
+	}
+	printf("%s\r\n", l.c_str());
+}
+
+static void show_menu(void)
+{
+	menu.clear();
+	int here = rw(GLOB);			// 첫 전역 변수 = 지금 있는 곳
+	int pl = find_player();
+	if ( !here ) return;
+	char b[160];
+	// 갈 곳: 방의 방향 속성 (길이 2 는 '못 가는 길' 안내 문장이라 뺀다)
+	static const char *dk[13] = { "북", "동", "서", "남", "북동", "북서", "남동", "남서", "위", "아래", "안", "밖", "뭍" };
+	static const char *de[13] = { "north", "east", "west", "south", "ne", "nw", "se", "sw", "up", "down", "in", "out", "land" };
+	std::vector<std::string> go;
+	for ( int d = 0; d < 13; d++ ) {
+		unsigned int p = prop_addr(here, 31 - d);
+		int len = p ? (mem[p - 1] >> 5) + 1 : 0;
+		if ( !p || len == 2 ) continue;					// 못 가는 길 (안내 문장)
+		if ( len == 4 && mem[p + 1] >= 16 && rw(GLOB + 2 * (mem[p + 1] - 16)) == 0 ) continue;	// 조건이 아직 안 된 길
+		menu_item m; m.cmd = de[d]; m.obj = 0; menu.push_back(m);
+		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), dk[d]);
+		go.push_back(b);
+	}
+	// 보이는 것 (어두우면 없음)
+	std::vector<int> vis, inv;
+	visible_under(here, vis, 0);
+	{
+		unsigned int gp = prop_addr(here, P_GLOBAL);
+		int gl = gp ? (mem[gp - 1] >> 5) + 1 : 0;
+		for ( int i = 0; i < gl; i++ ) {
+			int g = mem[gp + i];
+			if ( g && !attr(g, A_INVISIBLE) && !obj_name(g).empty() ) vis.push_back(g);
+		}
+	}
+	if ( pl ) visible_under(pl, inv, 0);
+	if ( parent(pl) && parent(pl) != here ) vis.push_back(parent(pl));		// 타고 있는 배 등
+	bool lit = attr(here, A_ON);
+	for ( unsigned int i = 0; i < vis.size() && !lit; i++ ) if ( attr(vis[i], A_LIGHT) && attr(vis[i], A_ON) ) lit = true;
+	for ( unsigned int i = 0; i < inv.size() && !lit; i++ ) if ( attr(inv[i], A_LIGHT) && attr(inv[i], A_ON) ) lit = true;
+	std::vector<std::string> see, have;
+	if ( lit ) {
+		for ( unsigned int i = 0; i < vis.size(); i++ ) {
+			menu_item m; m.cmd = ""; m.obj = vis[i]; menu.push_back(m);
+			snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), ko_name(vis[i]).c_str());
+			see.push_back(b);
+		}
+	}
+	for ( unsigned int i = 0; i < inv.size(); i++ ) {
+		menu_item m; m.cmd = ""; m.obj = inv[i]; menu.push_back(m);
+		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), ko_name(inv[i]).c_str());
+		have.push_back(b);
+	}
+	static const char *gk[5] = { "둘러보기", "소지품", "기다리기", "점수", "도움말" };
+	static const char *ge[5] = { "look", "inventory", "wait", "score", "/?" };
+	std::vector<std::string> etc;
+	for ( int i = 0; i < 5; i++ ) {
+		menu_item m; m.cmd = ge[i]; m.obj = 0; menu.push_back(m);
+		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", (int)menu.size(), gk[i]);
+		etc.push_back(b);
+	}
+	printf("\033[=8F------------------------------------------------------------------------------\033[=15F\r\n");
+	menu_line("\033[=7F갈 곳     :\033[=15F", go);
+	if ( !lit ) printf("\033[=7F보이는 것 :\033[=15F \033[=8F(어두워서 아무것도 보이지 않습니다)\033[=15F\r\n");
+	else menu_line("\033[=7F보이는 것 :\033[=15F", see);
+	menu_line("\033[=7F가진 것   :\033[=15F", have);
+	menu_line("\033[=7F그 밖     :\033[=15F", etc);
+	printf("\033[=8F번호를 고르거나 영어 명령을 넣으세요.  메뉴 끄기/켜기 /m   그만하기 /x\033[=15F\r\n");
+}
+
+// 숫자만 들어 있으면 그 수, 아니면 -1
+static int number_of(const std::string &s)
+{
+	if ( s.empty() || s.size() > 3 ) return -1;
+	for ( size_t i = 0; i < s.size(); i++ ) if ( !isdigit((unsigned char)s[i]) ) return -1;
+	return atoi(s.c_str());
+}
+
+static std::string read_choice(void)
+{
+	char buf[16];
+	printf(ESC_ENG);
+	fflush(stdout);
+	line_input(buf, 3);
+	printf("\r\n");
+	return trim(buf);
+}
+
+// 물건 하나에 할 수 있는 동작을 고른다. 고른 영어 명령 (취소면 "")
+static std::string object_actions(int o)
+{
+	int pl = find_player();
+	bool mine = false;
+	for ( int p = parent(o); p; p = parent(p) ) if ( p == pl ) mine = true;
+	std::string n = noun_of(o);
+	std::vector<std::string> ko_v, en_v;
+	#define ACT(k, e) do { ko_v.push_back(k); en_v.push_back(e); } while (0)
+	ACT("보기", "examine " + n);
+	if ( !mine && attr(o, A_TAKE) ) ACT("집기", "take " + n);
+	if ( mine ) ACT("놓기", "drop " + n);
+	if ( attr(o, A_CONT) || attr(o, A_DOOR) ) {
+		if ( attr(o, A_OPEN) ) ACT("닫기", "close " + n); else ACT("열기", "open " + n);
+	}
+	if ( attr(o, A_CONT) && attr(o, A_OPEN) ) ACT("안 들여다보기", "look in " + n);
+	if ( attr(o, A_READ) ) ACT("읽기", "read " + n);
+	if ( attr(o, A_LIGHT) ) { if ( attr(o, A_ON) ) ACT("끄기", "turn off " + n); else ACT("켜기", "turn on " + n); }
+	if ( attr(o, A_FOOD) ) ACT("먹기", "eat " + n);
+	if ( attr(o, A_DRINK) ) ACT("마시기", "drink " + n);
+	if ( attr(o, A_CLIMB) ) ACT("오르기", "climb " + n);
+	if ( attr(o, A_VEH) ) {
+		if ( parent(pl) == o ) ACT("내리기", "disembark"); else ACT("타기", "board " + n);
+	}
+	if ( attr(o, A_TURN) ) ACT("돌리기", "turn " + n);
+	if ( attr(o, A_ACTOR) ) {
+		// 가진 무기로 공격
+		std::vector<int> inv;
+		visible_under(pl, inv, 0);
+		std::string weapon;
+		for ( unsigned int i = 0; i < inv.size(); i++ ) if ( attr(inv[i], A_WEAPON) ) { weapon = noun_of(inv[i]); break; }
+		ACT("공격", weapon.empty() ? "attack " + n : "attack " + n + " with " + weapon);
+	}
+	if ( !mine && !attr(o, A_TAKE) && !attr(o, A_ACTOR) ) { ACT("밀기", "push " + n); ACT("움직이기", "move " + n); }
+	if ( mine ) ACT("어디에 넣기/올리기", "\x01put");
+	ACT("직접 입력 (영어)", "\x01type");
+	#undef ACT
+
+	printf("\033[=14F%s\033[=15F\r\n", ko_name(o).c_str());
+	std::vector<std::string> items;
+	for ( unsigned int i = 0; i < ko_v.size(); i++ ) {
+		char b[96];
+		snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", i + 1, ko_v[i].c_str());
+		items.push_back(b);
+	}
+	menu_line("", items, 4);
+	printf("번호 (취소: Enter) >> ");
+	int k = number_of(read_choice());
+	if ( k < 1 || k > (int)en_v.size() ) return "";
+	std::string cmd = en_v[k - 1];
+	if ( cmd == "\x01type" ) {
+		char buf[80];
+		printf("\033[=7F%s 다음에 올 영어 명령 (예: push, wave, ring, give to troll) >> \033[=15F", n.c_str());
+		printf(ESC_ENG);
+		fflush(stdout);
+		line_input(buf, 40);
+		printf("\r\n");
+		std::string v = trim(buf);
+		if ( v.empty() ) return "";
+		// "give to troll" 처럼 쓰면 "give <물건> to troll"
+		size_t sp = v.find(' ');
+		return sp == std::string::npos ? v + " " + n : v.substr(0, sp) + " " + n + v.substr(sp);
+	}
+	if ( cmd == "\x01put" ) {
+		// 넣을 곳: 보이는 열린 그릇이나 위에 올려놓을 수 있는 것
+		int here = rw(GLOB);
+		std::vector<int> all, inv, targets;
+		visible_under(here, all, 0);
+		visible_under(pl, inv, 0);
+		all.insert(all.end(), inv.begin(), inv.end());
+		for ( unsigned int i = 0; i < all.size(); i++ ) {
+			if ( all[i] == o ) continue;
+			if ( (attr(all[i], A_CONT) && attr(all[i], A_OPEN)) || attr(all[i], A_SURFACE) ) targets.push_back(all[i]);
+		}
+		if ( targets.empty() ) { printf("\033[=7F넣거나 올려놓을 만한 열린 곳이 보이지 않습니다.\033[=15F\r\n"); return ""; }
+		std::string t;
+		for ( unsigned int i = 0; i < targets.size(); i++ ) {
+			char b[96];
+			snprintf(b, sizeof(b), " \033[=14F%d\033[=15F.%s", i + 1, ko_name(targets[i]).c_str());
+			t += b;
+		}
+		printf("어디에? %s\r\n번호 (취소: Enter) >> ", t.c_str());
+		int q = number_of(read_choice());
+		if ( q < 1 || q > (int)targets.size() ) return "";
+		int tg = targets[q - 1];
+		return "put " + n + (attr(tg, A_SURFACE) ? " on " : " in ") + noun_of(tg);
+	}
+	return cmd;
+}
+
 static void sread(unsigned int text, unsigned int parse)
 {
+	// 게임이 찍은 '>' 는 메뉴 뒤로 옮긴다
+	bool prompt = !line.empty() && (line.back().kind == 0 || line.back().kind == 3) && trim(line.back().s) == ">";
+	if ( prompt ) line.pop_back();
 	flush_out();
 	std::string line;
 	if ( !pending_input.empty() ) {
@@ -661,19 +953,40 @@ static void sread(unsigned int text, unsigned int parse)
 		pending_input.clear();
 		printf("%s\r\n", line.c_str());
 	} else {
-		char buf[128];
-		printf(ESC_ENG);
-		fflush(stdout);
-		line_input(buf, 76);
-		line = buf;
-		printf("\r\n");
+		while ( 1 ) {
+			if ( prompt && menu_on ) show_menu();
+			if ( prompt ) printf(">");
+			char buf[128];
+			printf(ESC_ENG);
+			fflush(stdout);
+			line_input(buf, 76);
+			line = buf;
+			printf("\r\n");
+			std::string t0 = trim(line);
+			if ( t0 == "/m" ) {
+				menu_on = !menu_on;
+				printf("\033[=7F고르기 메뉴를 %s.\033[=15F\r\n", menu_on ? "켰습니다" : "껐습니다 (다시 켜기: /m)");
+				continue;
+			}
+			if ( prompt && t0.empty() ) continue;		// 빈 Enter: 메뉴만 다시
+			int k = prompt && menu_on ? number_of(t0) : -1;
+			if ( k < 0 ) break;
+			if ( k < 1 || k > (int)menu.size() ) { printf("\033[=12F목록에 없는 번호입니다.\033[=15F\r\n"); continue; }
+			std::string cmd = menu[k - 1].obj ? object_actions(menu[k - 1].obj) : menu[k - 1].cmd;
+			if ( cmd.empty() ) continue;
+			if ( cmd[0] != '/' ) printf("\033[=8F> %s\033[=15F\r\n", cmd.c_str());
+			line = cmd;
+			break;
+		}
 	}
 	lines_since_input = 0;
 	std::string t = trim(line);
 	if ( t == "/x" || t == "/q" || t == "/p" ) bbs_exit(true);
 	if ( t == "/?" ) {
-		printf("\033[=7F명령은 영어로 넣습니다: n s e w ne nw se sw up down, look, inventory(i), take <물건>, drop <물건>,\r\n");
-		printf("open <물건>, examine <물건>, score, save, restore, restart, quit.   그만하기(저장): /x\033[=15F\r\n");
+		printf("\033[=7F메뉴의 번호를 고르면 명령을 만들어 줍니다. 물건 번호를 고르면 그 물건에 할 동작을 고릅니다.\r\n");
+		printf("영어로 직접 넣어도 됩니다: n s e w ne nw se sw up down, look, inventory(i), take <물건>,\r\n");
+		printf("drop <물건>, open <물건>, examine <물건>, put <물건> in <물건>, attack <누구> with <무기>,\r\n");
+		printf("score, save, restore, restart, quit.   메뉴 끄기/켜기 /m   그만하기(저장) /x\033[=15F\r\n");
 		t = "look";
 	}
 	unsigned int maxlen = mem[text];
@@ -963,7 +1276,8 @@ int main(int argc, char **argv)
 
 	printf(ESC_CLEAR);
 	printf("\033[=14F  조크 I : 위대한 지하 제국\033[=15F   \033[=7F(Zork I, Infocom 1980 / 한글판)\033[=15F\r\n");
-	printf("\033[=7F  명령은 영어로 넣습니다 (n, look, take lamp, open mailbox ...).  도움말 /?   그만하기(저장) /x\033[=15F\r\n");
+	printf("\033[=7F  아래 메뉴에서 번호를 고르거나, 영어 명령을 직접 넣습니다 (n, take lamp, open mailbox ...).\033[=15F\r\n");
+	printf("\033[=7F  메뉴 끄기/켜기 /m   도움말 /?   그만하기(저장) /x\033[=15F\r\n");
 	printf("\033[=8F  Zork I source code (c) 2025 Microsoft, MIT License\033[=15F\r\n\r\n");
 
 	restart();
